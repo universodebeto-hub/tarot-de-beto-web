@@ -1,0 +1,363 @@
+@import "tailwindcss";
+
+/* ============================================================
+   TAROT DE BETO — sistema de diseño
+   Paleta: obsidiana / carbón / ceniza / dorado / ámbar / hueso
+   Tipografía: Fraunces (display) + Work Sans (cuerpo) + Space Mono (etiquetas)
+   Portado desde el mockup estático original, mapeado a tokens de Tailwind v4.
+   ============================================================ */
+
+:root {
+  --color-obsidian: #0b0a0c;
+  --color-carbon: #17151a;
+  --color-carbon-2: #1f1c22;
+  --color-ash: #8a8590;
+  --color-ash-dim: #57525c;
+  --color-gold: #e8a33d;
+  --color-gold-soft: #f0c47a;
+  --color-ember: #c6642a;
+  --color-bone: #f3efe8;
+  --color-bone-dim: #cfc9c2;
+
+  --glass-bg: rgba(23, 21, 26, 0.52);
+  --glass-bg-strong: rgba(23, 21, 26, 0.78);
+  --glass-border: rgba(232, 163, 61, 0.16);
+  --glass-border-strong: rgba(232, 163, 61, 0.32);
+
+  --header-h: 84px;
+}
+
+@theme inline {
+  --color-obsidian: var(--color-obsidian);
+  --color-carbon: var(--color-carbon);
+  --color-carbon-2: var(--color-carbon-2);
+  --color-ash: var(--color-ash);
+  --color-ash-dim: var(--color-ash-dim);
+  --color-gold: var(--color-gold);
+  --color-gold-soft: var(--color-gold-soft);
+  --color-ember: var(--color-ember);
+  --color-bone: var(--color-bone);
+  --color-bone-dim: var(--color-bone-dim);
+
+  --font-display: var(--font-fraunces);
+  --font-body: var(--font-worksans);
+  --font-mono: var(--font-spacemono);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--color-obsidian);
+  color: var(--color-bone);
+  font-family: var(--font-body), sans-serif;
+  font-weight: 400;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display), serif;
+  font-weight: 500;
+  color: var(--color-bone);
+  margin: 0 0 0.4em;
+  letter-spacing: 0.005em;
+}
+
+h1 {
+  font-size: clamp(2.4rem, 5vw, 4.1rem);
+  line-height: 1.06;
+}
+
+h2 {
+  font-size: clamp(1.7rem, 3.2vw, 2.5rem);
+}
+
+h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+h1 em,
+h2 em {
+  font-style: italic;
+  color: var(--color-gold-soft);
+  font-weight: 400;
+}
+
+p {
+  color: var(--color-bone-dim);
+  margin: 0 0 1em;
+}
+
+/* ---------- fondo místico ---------- */
+.sky {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 40% at 18% 8%, rgba(198, 100, 42, 0.16), transparent 60%),
+    radial-gradient(ellipse 55% 45% at 85% 18%, rgba(232, 163, 61, 0.13), transparent 62%),
+    radial-gradient(ellipse 70% 60% at 50% 100%, rgba(232, 163, 61, 0.07), transparent 65%),
+    var(--color-obsidian);
+}
+
+#stars {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.eyebrow {
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.eyebrow::before {
+  content: "";
+  width: 22px;
+  height: 1px;
+  background: var(--color-gold);
+  display: inline-block;
+}
+
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+  opacity: 0.35;
+}
+
+/* ---------- panel de vidrio + esquinas de carta de tarot ---------- */
+.glass {
+  position: relative;
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  box-shadow:
+    0 20px 60px -20px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.arcana {
+  position: relative;
+  padding: 34px;
+}
+
+.arcana::before,
+.arcana::after {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--color-gold);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.arcana::before {
+  top: 10px;
+  left: 10px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.arcana::after {
+  bottom: 10px;
+  right: 10px;
+  border-left: none;
+  border-top: none;
+}
+
+.arcana-num {
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  color: var(--color-gold);
+  opacity: 0.75;
+  letter-spacing: 0.08em;
+}
+
+/* ---------- botones ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono), monospace;
+  font-size: 12.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 15px 30px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
+  border: 1px solid transparent;
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, var(--color-gold-soft), var(--color-ember));
+  color: #1a0f05;
+  box-shadow: 0 10px 30px -8px rgba(232, 163, 61, 0.45);
+}
+
+.btn-gold:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px -8px rgba(232, 163, 61, 0.6);
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--color-gold-soft);
+  border-color: var(--glass-border-strong);
+}
+
+.btn-ghost:hover {
+  background: rgba(232, 163, 61, 0.08);
+  transform: translateY(-2px);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ---------- carta de tarot ilustrada (hero) ---------- */
+.tarot-card {
+  width: 260px;
+  height: 410px;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(232, 163, 61, 0.16), transparent 55%),
+    linear-gradient(165deg, #201b23, #0e0c10 70%);
+  border: 1px solid var(--glass-border-strong);
+  box-shadow:
+    0 40px 80px -25px rgba(0, 0, 0, 0.7),
+    0 0 0 6px rgba(232, 163, 61, 0.04);
+  position: relative;
+  animation: floatCard 6s ease-in-out infinite;
+  transform: rotate(-4deg);
+}
+
+.tarot-card::before {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border: 1px solid rgba(232, 163, 61, 0.4);
+  border-radius: 10px;
+}
+
+.tarot-card .glyph {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tarot-card .glyph svg {
+  width: 108px;
+  height: 108px;
+  opacity: 0.9;
+}
+
+.tarot-card .mark {
+  position: absolute;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  color: var(--color-gold);
+  letter-spacing: 0.1em;
+}
+
+.tarot-card .mark.tl {
+  top: 22px;
+  left: 22px;
+}
+
+.tarot-card .mark.br {
+  bottom: 22px;
+  right: 22px;
+  transform: rotate(180deg);
+}
+
+.tarot-card.behind {
+  position: absolute;
+  top: 26px;
+  left: 50%;
+  transform: translateX(-50%) rotate(8deg);
+  opacity: 0.5;
+  filter: blur(0.4px);
+  animation-delay: -3s;
+  z-index: -1;
+}
+
+@keyframes floatCard {
+  0%,
+  100% {
+    transform: rotate(-4deg) translateY(0);
+  }
+  50% {
+    transform: rotate(-2deg) translateY(-14px);
+  }
+}
+
+/* ---------- reveal-on-scroll ---------- */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s ease;
+}
+
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tarot-card {
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
