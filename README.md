@@ -54,6 +54,7 @@ Este proyecto se desarrolló así (Postgres 16.4 portátil, puerto 5433) por no 
 /components/layout      Navbar, Footer, WhatsAppButton
 /components/sections    bloques de página (Hero, ServiceGrid, Testimonials, FAQ...)
 /components/auth        formularios de login/registro/recuperación (Fase 3)
+/components/agenda      explorador de disponibilidad (Fase 4)
 /config                 siteConfig — configuración central de marca desde env
 /lib                     utilidades compartidas
 /server                  lógica de servidor (a partir de Fase 2: acceso a datos)
@@ -86,6 +87,14 @@ Creados por `prisma/seed.ts`, contraseña `Tarot2026!` para ambos:
 - `admin@tarotdebeto.local` — rol `ADMIN` (el panel admin llega en la Fase 7).
 - `cliente@tarotdebeto.local` — rol `CLIENT`.
 
+## Agenda
+
+Motor de disponibilidad en `server/availability.ts` (`getAvailableSlots`): horario semanal (`Availability`, recurrente, minutos locales del negocio) menos bloqueos puntuales (`BlockedTime`, instantes UTC absolutos) menos la duración del servicio y el buffer entre consultas (`Setting.booking_buffer_minutes`, editable por admin en Fase 7). Todo el manejo de zona horaria vive en `lib/timezone.ts` (`date-fns-tz`), con la zona del negocio en `NEXT_PUBLIC_BUSINESS_TIMEZONE` (por defecto `America/Bogota`, sin horario de verano).
+
+**Limitación conocida por diseño**: el motor todavía NO descuenta reservas ya hechas, porque el modelo `Booking` se crea recién en la Fase 5. Cuando exista, `getAvailableSlots` debe excluir también esos horarios — está señalado con un comentario `TODO` en el código.
+
+Vista pública en `/agenda` (selector de servicio + próximos 14 días + horarios). Como la creación real de una reserva llega en la Fase 5, elegir un horario hoy lleva a confirmarlo por WhatsApp con el servicio/fecha/hora ya redactados en el mensaje — no una reserva falsa que parezca completada.
+
 ## Estado del proyecto
 
-En construcción por fases. Fase actual: **Fase 3 — Autenticación y área de cliente**.
+En construcción por fases. Fase actual: **Fase 4 — Sistema de agenda**.

@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { ServiceGrid } from "@/components/sections/ServiceGrid";
 import { CTASection } from "@/components/sections/CTASection";
-import { withReserveHref } from "@/lib/service-cta";
-import { siteConfig } from "@/config/site";
 import { getServices } from "@/server/services";
 
 export const metadata: Metadata = {
@@ -14,8 +12,7 @@ export const metadata: Metadata = {
 // que el catálogo siempre se consulta en vivo — sin necesidad de `revalidate`.
 
 export default async function ServiciosPage() {
-  const allServices = await getServices();
-  const services = withReserveHref(allServices, siteConfig.contact.whatsappNumber);
+  const services = await getServices();
 
   return (
     <>

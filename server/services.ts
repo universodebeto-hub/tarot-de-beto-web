@@ -48,3 +48,9 @@ export async function getFeaturedServices(limit = 3): Promise<Service[]> {
   });
   return rows.map(toService);
 }
+
+/** Un servicio por id, o null si no existe. */
+export async function getServiceById(id: string): Promise<Service | null> {
+  const row = await prisma.service.findUnique({ where: { id } });
+  return row ? toService(row) : null;
+}

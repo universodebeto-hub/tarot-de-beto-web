@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Reveal } from "@/components/ui/Reveal";
-import type { ServiceWithCta } from "@/lib/service-cta";
+import type { Service } from "@/types/content";
 
 const ROMAN = ["0", "I", "II", "III", "IV", "V", "VI", "VII"];
 
 interface ServiceCardProps {
-  service: ServiceWithCta;
+  service: Service;
   index: number;
 }
 
@@ -34,8 +34,8 @@ export function ServiceCard({ service, index }: ServiceCardProps) {
           <span className="text-[11.5px] text-ash">{service.durationMinutes} min</span>
         </div>
 
-        {service.reserveHref ? (
-          <Button href={service.reserveHref} external className="w-full justify-center">
+        {service.available ? (
+          <Button href={`/agenda?service=${service.slug}`} className="w-full justify-center">
             Reservar ahora
           </Button>
         ) : (

@@ -1,6 +1,7 @@
 // Fase 2: contenido dinámico (servicios, testimonios, configuración).
 // Fase 3: usuarios y autenticación.
-// Tablas de reservas/pagos se agregan en fases posteriores (4-6).
+// Fase 4: agenda (disponibilidad y bloqueos).
+// Tablas de reservas/pagos se agregan en fases posteriores (5-6).
 
 generator client {
   provider = "prisma-client-js"
@@ -97,4 +98,35 @@ model PasswordReset {
   createdAt DateTime  @default(now())
 
   @@index([userId])
+}
+
+/// Horario de atención semanal y recurrente, configurable por el admin
+/// (Fase 7). `dayOfWeek` sigue la convención de Date#getDay() (0=domingo,
+/// 6=sábado). Los minutos son locales a la zona horaria del negocio
+/// (siteConfig.timezone, América/Bogotá) — no UTC. Puede haber varias
+/// franjas por día (ej. mañana y tarde).
+model Availability {
+  id          String   @id @default(cuid())
+  dayOfWeek   Int
+  startMinute Int
+  endMinute   Int
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([dayOfWeek, active])
+}
+
+/// Bloqueo puntual (vacaciones, descansos, eventos, horas personales).
+/// Guardado como instante UTC absoluto — a diferencia de `Availability`,
+/// que es un patrón recurrente en hora local.
+model BlockedTime {
+  id        String   @id @default(cuid())
+  startsAt  DateTime
+  endsAt    DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([startsAt, endsAt])
 }

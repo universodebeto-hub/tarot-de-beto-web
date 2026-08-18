@@ -6,8 +6,6 @@ import { FAQSection } from "@/components/sections/FAQSection";
 import { CTASection } from "@/components/sections/CTASection";
 import { Reveal } from "@/components/ui/Reveal";
 import { faqItems } from "@/lib/sample-data";
-import { withReserveHref } from "@/lib/service-cta";
-import { siteConfig } from "@/config/site";
 import { getFeaturedServices } from "@/server/services";
 import { getPublishedTestimonials } from "@/server/testimonials";
 
@@ -16,11 +14,10 @@ import { getPublishedTestimonials } from "@/server/testimonials";
 // servicios/testimonios en vivo.
 
 export default async function HomePage() {
-  const [featuredServices, testimonials] = await Promise.all([
+  const [services, testimonials] = await Promise.all([
     getFeaturedServices(3),
     getPublishedTestimonials(),
   ]);
-  const services = withReserveHref(featuredServices, siteConfig.contact.whatsappNumber);
 
   return (
     <>
@@ -61,7 +58,7 @@ export default async function HomePage() {
             Descubre lo que <em>las cartas tienen para decirte</em>
           </>
         }
-        href="/servicios"
+        href="/agenda"
         cta="Reservar consulta"
       />
 

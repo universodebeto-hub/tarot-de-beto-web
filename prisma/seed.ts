@@ -96,6 +96,25 @@ async function main() {
     update: {},
     create: { key: "site_name", value: JSON.stringify("Tarot de Beto") },
   });
+  await prisma.setting.upsert({
+    where: { key: "booking_buffer_minutes" },
+    update: {},
+    create: { key: "booking_buffer_minutes", value: JSON.stringify(10) },
+  });
+
+  // Horario de atención: todos los días 11:00–23:00 (hora de Colombia), tal
+  // como pide el prompt original. Editable por el admin en la Fase 7; por
+  // ahora se define acá, nunca hardcodeado en el motor de disponibilidad.
+  const WORKDAY_START_MINUTE = 11 * 60;
+  const WORKDAY_END_MINUTE = 23 * 60;
+  for (let dayOfWeek = 0; dayOfWeek <= 6; dayOfWeek++) {
+    const existing = await prisma.availability.findFirst({ where: { dayOfWeek } });
+    if (!existing) {
+      await prisma.availability.create({
+        data: { dayOfWeek, startMinute: WORKDAY_START_MINUTE, endMinute: WORKDAY_END_MINUTE },
+      });
+    }
+  }
 
   const passwordHash = await bcrypt.hash(TEST_PASSWORD, 12);
 
@@ -126,7 +145,7 @@ async function main() {
   });
 
   console.log(
-    "Seed completo: 3 servicios, 3 testimonios publicados, 2 settings base, 2 usuarios de prueba.",
+    "Seed completo: 3 servicios, 3 testimonios publicados, 3 settings, horario semanal (7 días), 2 usuarios de prueba.",
   );
 }
 

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 const QUICK_LINKS = [
   { href: "/quienes-somos", label: "Quiénes somos" },
   { href: "/servicios", label: "Servicios" },
+  { href: "/agenda", label: "Agenda" },
   { href: "/faq", label: "Preguntas frecuentes" },
   { href: "/contacto", label: "Contacto" },
 ];
@@ -26,7 +27,7 @@ export function Footer() {
             ¿Listo para consultar <em>las cartas?</em>
           </h2>
           <div className="flex flex-wrap justify-center gap-4">
-            <Button href="/servicios">Reservar consulta</Button>
+            <Button href="/agenda">Reservar consulta</Button>
             {siteConfig.contact.whatsappNumber ? (
               <Button
                 href={buildWhatsAppLink(

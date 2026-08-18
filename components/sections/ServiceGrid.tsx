@@ -3,10 +3,10 @@
 import { useMemo, useState } from "react";
 import { ServiceCard } from "@/components/sections/ServiceCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import type { ServiceWithCta } from "@/lib/service-cta";
+import type { Service } from "@/types/content";
 
 interface ServiceGridProps {
-  services: ServiceWithCta[];
+  services: Service[];
   withFilters?: boolean;
 }
 
