@@ -1,0 +1,71 @@
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth/session";
+import { logoutUser } from "@/server/auth";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/Button";
+
+export const metadata: Metadata = {
+  title: "Mi cuenta",
+};
+
+export default async function DashboardPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login?callbackUrl=/dashboard");
+
+  return (
+    <section className="py-[88px]">
+      <div className="container mx-auto max-w-[1180px] px-7">
+        <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span className="eyebrow">Mi cuenta</span>
+            <h1 className="mt-3 mb-0">
+              Hola, <em>{user.firstName}</em>
+            </h1>
+          </div>
+          <form action={logoutUser}>
+            <button type="submit" className="btn btn-ghost">
+              Cerrar sesión
+            </button>
+          </form>
+        </div>
+
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+          <GlassCard>
+            <span className="eyebrow mb-4">Mi perfil</span>
+            <dl className="flex flex-col gap-3 text-sm">
+              <div>
+                <dt className="font-mono text-[11px] uppercase tracking-wide text-ash">Nombre</dt>
+                <dd className="mb-0 text-bone">
+                  {user.firstName} {user.lastName ?? ""}
+                </dd>
+              </div>
+              <div>
+                <dt className="font-mono text-[11px] uppercase tracking-wide text-ash">Email</dt>
+                <dd className="mb-0 text-bone">{user.email}</dd>
+              </div>
+              <div>
+                <dt className="font-mono text-[11px] uppercase tracking-wide text-ash">WhatsApp</dt>
+                <dd className="mb-0 text-bone">{user.phone || "Sin registrar"}</dd>
+              </div>
+            </dl>
+          </GlassCard>
+
+          <div>
+            <span className="eyebrow mb-4">Mis reservas</span>
+            <EmptyState
+              title="Todavía no tienes reservas"
+              description="El sistema de agenda y reservas llega en las próximas fases. Mientras tanto, puedes ver los servicios disponibles."
+              action={
+                <Button href="/servicios" className="mt-2">
+                  Ver servicios
+                </Button>
+              }
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

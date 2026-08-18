@@ -11,9 +11,9 @@ import { siteConfig } from "@/config/site";
 import { getFeaturedServices } from "@/server/services";
 import { getPublishedTestimonials } from "@/server/testimonials";
 
-// Revalida cada 60s: servicios/testimonios se editan desde el panel admin
-// (Fase 7) y deben reflejarse sin esperar un redeploy completo.
-export const revalidate = 60;
+// Nota: esta ruta ya es dinámica (el layout raíz lee la cookie de sesión
+// para el Navbar), así que no necesita `revalidate` — cada request consulta
+// servicios/testimonios en vivo.
 
 export default async function HomePage() {
   const [featuredServices, testimonials] = await Promise.all([

@@ -1,0 +1,57 @@
+import "server-only";
+import { cookies } from "next/headers";
+import { prisma } from "@/lib/prisma";
+import { SESSION_COOKIE, SESSION_MAX_AGE, signSession, verifySession } from "@/lib/auth/jwt";
+import type { SessionPayload } from "@/lib/auth/jwt";
+
+export async function createSessionCookie(payload: SessionPayload): Promise<void> {
+  const token = await signSession(payload);
+  const store = await cookies();
+  store.set(SESSION_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: SESSION_MAX_AGE,
+  });
+}
+
+export async function clearSessionCookie(): Promise<void> {
+  const store = await cookies();
+  store.delete(SESSION_COOKIE);
+}
+
+/** Payload crudo de la sesión (solo userId/role), sin ir a la base de datos. */
+export async function getSessionPayload(): Promise<SessionPayload | null> {
+  const store = await cookies();
+  const token = store.get(SESSION_COOKIE)?.value;
+  if (!token) return null;
+  return verifySession(token);
+}
+
+export interface CurrentUser {
+  id: string;
+  firstName: string;
+  lastName: string | null;
+  email: string;
+  phone: string | null;
+  role: "ADMIN" | "CLIENT";
+}
+
+/** Usuario actual (con datos de perfil) o null si no hay sesión válida. */
+export async function getCurrentUser(): Promise<CurrentUser | null> {
+  const payload = await getSessionPayload();
+  if (!payload) return null;
+
+  const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+  if (!user) return null;
+
+  return {
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    phone: user.phone,
+    role: user.role,
+  };
+}

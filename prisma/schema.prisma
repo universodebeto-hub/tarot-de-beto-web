@@ -1,5 +1,6 @@
-// Esquema de la Fase 2: contenido dinámico (servicios, testimonios, configuración).
-// Tablas de reservas/pagos/usuarios se agregan en fases posteriores (3-6).
+// Fase 2: contenido dinámico (servicios, testimonios, configuración).
+// Fase 3: usuarios y autenticación.
+// Tablas de reservas/pagos se agregan en fases posteriores (4-6).
 
 generator client {
   provider = "prisma-client-js"
@@ -59,4 +60,41 @@ model Setting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  ADMIN
+  CLIENT
+}
+
+model User {
+  id           String   @id @default(cuid())
+  firstName    String
+  lastName     String?
+  email        String   @unique
+  phone        String?
+  country      String?
+  passwordHash String
+  role         Role     @default(CLIENT)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  passwordResets PasswordReset[]
+
+  @@index([role])
+}
+
+/// Token de recuperación de contraseña (Fase 3). El envío real por email
+/// queda preparado para la Fase 8 (SMTP); por ahora el link se registra en
+/// consola/logs de servidor en vez de enviarse.
+model PasswordReset {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }

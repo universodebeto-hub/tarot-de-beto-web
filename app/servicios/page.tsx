@@ -10,8 +10,8 @@ export const metadata: Metadata = {
   description: "Tipos de consulta de tarot disponibles con Alberto Arango: duración, modalidad y precio.",
 };
 
-// Revalida cada 60s: el catálogo se edita desde el panel admin (Fase 7).
-export const revalidate = 60;
+// Nota: ruta dinámica (el layout raíz lee la sesión para el Navbar), así
+// que el catálogo siempre se consulta en vivo — sin necesidad de `revalidate`.
 
 export default async function ServiciosPage() {
   const allServices = await getServices();

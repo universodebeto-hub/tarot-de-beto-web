@@ -17,9 +17,10 @@ const NAV_LINKS = [
 
 interface NavbarProps {
   whatsappNumber: string;
+  userFirstName?: string | null;
 }
 
-export function Navbar({ whatsappNumber }: NavbarProps) {
+export function Navbar({ whatsappNumber, userFirstName }: NavbarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -71,6 +72,13 @@ export function Navbar({ whatsappNumber }: NavbarProps) {
           })}
 
           <div className="mt-2 flex flex-col gap-2 sm:mt-0 sm:ml-2 sm:flex-row">
+            <Link
+              href={userFirstName ? "/dashboard" : "/login"}
+              onClick={() => setOpen(false)}
+              className="rounded-full border px-5 py-2.5 text-center font-mono text-[12.5px] uppercase tracking-[0.14em] text-bone-dim border-transparent hover:border-gold/30 hover:bg-gold/6 hover:text-gold-soft transition-all"
+            >
+              {userFirstName ? `Hola, ${userFirstName}` : "Iniciar sesión"}
+            </Link>
             <Button href="/servicios" variant="gold" className="justify-center">
               Reservar consulta
             </Button>

@@ -8,6 +8,7 @@ import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
 import { StarsField } from "@/components/layout/StarsField";
 import { ToastProvider } from "@/components/ui/Toast";
 import { siteConfig } from "@/config/site";
+import { getCurrentUser } from "@/lib/auth/session";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -38,7 +39,14 @@ export const metadata: Metadata = {
     "Tarot, guía espiritual y consultas personalizadas con Alberto Arango. Más de 12 años de experiencia acompañando decisiones de amor, trabajo y camino de vida.",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  // Nota: leer la sesión aquí hace dinámicas todas las rutas anidadas (ya no
+  // se sirven estáticas/ISR). Es el trade-off correcto para tener el estado
+  // de "sesión iniciada" en el Navbar; revisar en la Fase 9 (performance) si
+  // conviene aislarlo en un componente cliente aparte para las páginas 100%
+  // públicas.
+  const user = await getCurrentUser();
+
   return (
     <html
       lang="es"
@@ -47,7 +55,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="min-h-full flex flex-col">
         <StarsField />
         <ToastProvider>
-          <Navbar whatsappNumber={siteConfig.contact.whatsappNumber} />
+          <Navbar whatsappNumber={siteConfig.contact.whatsappNumber} userFirstName={user?.firstName} />
           <main className="relative z-10 flex-1">{children}</main>
           <Footer />
           <WhatsAppButton whatsappNumber={siteConfig.contact.whatsappNumber} />

@@ -1,6 +1,10 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
+
+/** Contraseña de ambos usuarios de prueba (solo desarrollo). */
+const TEST_PASSWORD = "Tarot2026!";
 
 async function main() {
   await prisma.service.upsert({
@@ -93,7 +97,37 @@ async function main() {
     create: { key: "site_name", value: JSON.stringify("Tarot de Beto") },
   });
 
-  console.log("Seed completo: 3 servicios, 3 testimonios publicados, 2 settings base.");
+  const passwordHash = await bcrypt.hash(TEST_PASSWORD, 12);
+
+  await prisma.user.upsert({
+    where: { email: "admin@tarotdebeto.local" },
+    update: {},
+    create: {
+      firstName: "Admin",
+      lastName: "Prueba",
+      email: "admin@tarotdebeto.local",
+      passwordHash,
+      role: "ADMIN",
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: "cliente@tarotdebeto.local" },
+    update: {},
+    create: {
+      firstName: "Cliente",
+      lastName: "Prueba",
+      email: "cliente@tarotdebeto.local",
+      phone: "+57 300 000 0000",
+      country: "Colombia",
+      passwordHash,
+      role: "CLIENT",
+    },
+  });
+
+  console.log(
+    "Seed completo: 3 servicios, 3 testimonios publicados, 2 settings base, 2 usuarios de prueba.",
+  );
 }
 
 main()
