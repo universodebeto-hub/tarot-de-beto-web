@@ -1,0 +1,106 @@
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+async function main() {
+  await prisma.service.upsert({
+    where: { slug: "consulta-15-minutos" },
+    update: {},
+    create: {
+      slug: "consulta-15-minutos",
+      name: "Consulta express",
+      description:
+        "Una pregunta puntual, una tirada corta, una respuesta directa. Ideal cuando necesitas claridad rápida sobre algo concreto.",
+      durationMinutes: 15,
+      price: 10,
+      currency: "USD",
+      available: true,
+      modality: "VIDEOLLAMADA",
+      category: "Express",
+      sortOrder: 0,
+    },
+  });
+
+  await prisma.service.upsert({
+    where: { slug: "consulta-30-minutos" },
+    update: {},
+    create: {
+      slug: "consulta-30-minutos",
+      name: "Lectura general",
+      description:
+        "Una mirada completa a tu presente: amor, trabajo y camino de vida. Qué energías están en juego y hacia dónde se inclina el camino.",
+      durationMinutes: 30,
+      price: 20,
+      currency: "USD",
+      available: true,
+      modality: "VIDEOLLAMADA",
+      category: "General",
+      sortOrder: 1,
+    },
+  });
+
+  await prisma.service.upsert({
+    where: { slug: "consulta-60-minutos" },
+    update: {},
+    create: {
+      slug: "consulta-60-minutos",
+      name: "Consulta extendida",
+      description:
+        "Sesión pausada para acompañar procesos más grandes: decisiones importantes, ciclos que cierran o varias preguntas en una sola consulta.",
+      durationMinutes: 60,
+      price: 35,
+      currency: "USD",
+      available: true,
+      modality: "VIDEOLLAMADA",
+      category: "Extendida",
+      sortOrder: 2,
+    },
+  });
+
+  const testimonials = [
+    {
+      name: "María C.",
+      text: "Sentí una consulta honesta, sin miedo y sin vueltas. Beto me ayudó a ver una decisión de trabajo con mucha más claridad.",
+      rating: 5,
+    },
+    {
+      name: "Andrés R.",
+      text: "Me gustó que no fue un show, fue una conversación real. Las cartas abrieron preguntas que yo ya traía pero no sabía nombrarlas.",
+      rating: 5,
+    },
+    {
+      name: "Paula G.",
+      text: "Cercano y directo. Justo lo que necesitaba para tomar una decisión que llevaba meses posponiendo.",
+      rating: 5,
+    },
+  ];
+
+  for (const t of testimonials) {
+    const existing = await prisma.testimonial.findFirst({ where: { name: t.name, text: t.text } });
+    if (!existing) {
+      await prisma.testimonial.create({ data: { ...t, status: "PUBLISHED" } });
+    }
+  }
+
+  await prisma.setting.upsert({
+    where: { key: "brand_name" },
+    update: {},
+    create: { key: "brand_name", value: JSON.stringify("Universo de Beto") },
+  });
+  await prisma.setting.upsert({
+    where: { key: "site_name" },
+    update: {},
+    create: { key: "site_name", value: JSON.stringify("Tarot de Beto") },
+  });
+
+  console.log("Seed completo: 3 servicios, 3 testimonios publicados, 2 settings base.");
+}
+
+main()
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

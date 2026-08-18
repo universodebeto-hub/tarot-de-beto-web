@@ -1,0 +1,62 @@
+// Esquema de la Fase 2: contenido dinámico (servicios, testimonios, configuración).
+// Tablas de reservas/pagos/usuarios se agregan en fases posteriores (3-6).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ServiceModality {
+  VIDEOLLAMADA
+  LLAMADA
+  PRESENCIAL
+}
+
+model Service {
+  id              String           @id @default(cuid())
+  slug            String           @unique
+  name            String
+  description     String
+  durationMinutes Int
+  price           Decimal          @db.Decimal(10, 2)
+  currency        String           @default("USD")
+  available       Boolean          @default(true)
+  modality        ServiceModality  @default(VIDEOLLAMADA)
+  category        String
+  sortOrder       Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([available, sortOrder])
+}
+
+enum TestimonialStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PUBLISHED
+}
+
+model Testimonial {
+  id        String            @id @default(cuid())
+  name      String
+  text      String
+  rating    Int
+  status    TestimonialStatus @default(PENDING)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([status, createdAt])
+}
+
+/// Configuración editable por el admin (Fase 7): textos de "quiénes somos",
+/// FAQ, contacto, políticas, etc. Clave/valor flexible; `value` guarda JSON.
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

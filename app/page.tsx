@@ -5,12 +5,22 @@ import { Testimonials } from "@/components/sections/Testimonials";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { CTASection } from "@/components/sections/CTASection";
 import { Reveal } from "@/components/ui/Reveal";
-import { faqItems, sampleServices, sampleTestimonials } from "@/lib/sample-data";
+import { faqItems } from "@/lib/sample-data";
 import { withReserveHref } from "@/lib/service-cta";
 import { siteConfig } from "@/config/site";
+import { getFeaturedServices } from "@/server/services";
+import { getPublishedTestimonials } from "@/server/testimonials";
 
-export default function HomePage() {
-  const services = withReserveHref(sampleServices, siteConfig.contact.whatsappNumber);
+// Revalida cada 60s: servicios/testimonios se editan desde el panel admin
+// (Fase 7) y deben reflejarse sin esperar un redeploy completo.
+export const revalidate = 60;
+
+export default async function HomePage() {
+  const [featuredServices, testimonials] = await Promise.all([
+    getFeaturedServices(3),
+    getPublishedTestimonials(),
+  ]);
+  const services = withReserveHref(featuredServices, siteConfig.contact.whatsappNumber);
 
   return (
     <>
@@ -42,7 +52,7 @@ export default function HomePage() {
         <div className="divider" />
       </div>
 
-      <Testimonials testimonials={sampleTestimonials} />
+      <Testimonials testimonials={testimonials} />
 
       <CTASection
         eyebrow="Reserva tu consulta"

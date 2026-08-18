@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
 import { ServiceGrid } from "@/components/sections/ServiceGrid";
 import { CTASection } from "@/components/sections/CTASection";
-import { sampleServices } from "@/lib/sample-data";
 import { withReserveHref } from "@/lib/service-cta";
 import { siteConfig } from "@/config/site";
+import { getServices } from "@/server/services";
 
 export const metadata: Metadata = {
   title: "Servicios",
   description: "Tipos de consulta de tarot disponibles con Alberto Arango: duración, modalidad y precio.",
 };
 
-export default function ServiciosPage() {
-  const services = withReserveHref(sampleServices, siteConfig.contact.whatsappNumber);
+// Revalida cada 60s: el catálogo se edita desde el panel admin (Fase 7).
+export const revalidate = 60;
+
+export default async function ServiciosPage() {
+  const allServices = await getServices();
+  const services = withReserveHref(allServices, siteConfig.contact.whatsappNumber);
 
   return (
     <>
