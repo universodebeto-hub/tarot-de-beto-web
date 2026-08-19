@@ -16,12 +16,21 @@ export function nowInBusinessTz(): Date {
 /**
  * Construye el instante UTC correspondiente a una fecha calendario
  * (yyyy-mm-dd) + minutos desde medianoche, interpretados en la zona
- * horaria del negocio.
+ * horaria del negocio. Soporta minutesFromMidnight >= 1440 (ej. 24*60 para
+ * "medianoche del día siguiente") o negativo, corriendo la fecha de
+ * calendario correspondiente — "24:00:00" no es una hora válida para
+ * `fromZonedTime`, así que hay que normalizarla antes de formatear.
  */
 export function businessLocalToUtc(dateStr: string, minutesFromMidnight: number): Date {
-  const hours = Math.floor(minutesFromMidnight / 60);
-  const minutes = minutesFromMidnight % 60;
-  const localIso = `${dateStr}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const dayOffset = Math.floor(minutesFromMidnight / (24 * 60));
+  const minutesInDay = minutesFromMidnight - dayOffset * 24 * 60;
+  const hours = Math.floor(minutesInDay / 60);
+  const minutes = minutesInDay % 60;
+
+  const rolled = new Date(Date.UTC(year, month - 1, day + dayOffset));
+  const rolledDateStr = rolled.toISOString().slice(0, 10);
+  const localIso = `${rolledDateStr}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
   return fromZonedTime(localIso, BUSINESS_TIMEZONE);
 }
 

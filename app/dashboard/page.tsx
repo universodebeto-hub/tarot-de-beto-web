@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { logoutUser } from "@/server/auth";
+import { getUserBookings } from "@/server/bookings";
+import { minutesInBusinessDay, formatMinutes, businessDateString } from "@/lib/timezone";
+import { fullDateLabel } from "@/lib/date-labels";
+import { BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL } from "@/lib/booking-labels";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
@@ -13,6 +18,8 @@ export const metadata: Metadata = {
 export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login?callbackUrl=/dashboard");
+
+  const bookings = await getUserBookings(user.id);
 
   return (
     <section className="py-[88px]">
@@ -54,15 +61,39 @@ export default async function DashboardPage() {
 
           <div>
             <span className="eyebrow mb-4">Mis reservas</span>
-            <EmptyState
-              title="Todavía no tienes reservas"
-              description="El sistema de agenda y reservas llega en las próximas fases. Mientras tanto, puedes ver los servicios disponibles."
-              action={
-                <Button href="/servicios" className="mt-2">
-                  Ver servicios
-                </Button>
-              }
-            />
+            {bookings.length === 0 ? (
+              <EmptyState
+                title="Todavía no tienes reservas"
+                description="Elige un servicio y un horario disponible para agendar tu primera consulta."
+                action={
+                  <Button href="/agenda" className="mt-2">
+                    Ver disponibilidad
+                  </Button>
+                }
+              />
+            ) : (
+              <div className="flex flex-col gap-3">
+                {bookings.map((booking) => (
+                  <Link key={booking.id} href={`/reservas/${booking.id}`}>
+                    <GlassCard className="flex flex-wrap items-center justify-between gap-3 transition-colors hover:border-gold/40">
+                      <div>
+                        <p className="mb-1 text-bone">{booking.service.name}</p>
+                        <p className="mb-0 font-mono text-[11.5px] uppercase tracking-wide text-ash">
+                          {fullDateLabel(businessDateString(booking.startsAt))} ·{" "}
+                          {formatMinutes(minutesInBusinessDay(booking.startsAt))} · #{booking.bookingNumber}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="mb-0.5 text-sm text-gold-soft">{BOOKING_STATUS_LABEL[booking.status]}</p>
+                        <p className="mb-0 font-mono text-[11px] uppercase tracking-wide text-ash">
+                          {PAYMENT_STATUS_LABEL[booking.paymentStatus]}
+                        </p>
+                      </div>
+                    </GlassCard>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

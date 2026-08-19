@@ -1,7 +1,8 @@
 // Fase 2: contenido dinámico (servicios, testimonios, configuración).
 // Fase 3: usuarios y autenticación.
 // Fase 4: agenda (disponibilidad y bloqueos).
-// Tablas de reservas/pagos se agregan en fases posteriores (5-6).
+// Fase 5: reservas.
+// Tabla de pagos PayPal se agrega en la Fase 6.
 
 generator client {
   provider = "prisma-client-js"
@@ -32,6 +33,8 @@ model Service {
   sortOrder       Int              @default(0)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+
+  bookings Booking[]
 
   @@index([available, sortOrder])
 }
@@ -81,6 +84,7 @@ model User {
   updatedAt    DateTime @updatedAt
 
   passwordResets PasswordReset[]
+  bookings       Booking[]
 
   @@index([role])
 }
@@ -129,4 +133,64 @@ model BlockedTime {
   updatedAt DateTime @updatedAt
 
   @@index([startsAt, endsAt])
+}
+
+/// Contador atómico simple (ej. `booking_number_2026`) para numerar reservas
+/// de forma correlativa sin condiciones de carrera: se actualiza con un
+/// UPDATE ... SET value = value + 1, atómico a nivel de fila en Postgres.
+model Counter {
+  key   String @id
+  value Int    @default(0)
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  EXPIRED
+  RESCHEDULE_REQUESTED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+/// Reserva de una consulta. `startsAt`/`endsAt` son instantes UTC absolutos
+/// (ya calculados por el motor de disponibilidad, Fase 4). Mientras no
+/// existan pagos reales (Fase 6), una reserva pasa de PENDING_PAYMENT a
+/// EXPIRED si nadie la confirma manualmente antes de `paymentDeadline`.
+///
+/// Prevención de doble reserva: además de la validación en el servidor al
+/// crearla, hay un índice único parcial a nivel de base de datos sobre
+/// (serviceId, startsAt) para reservas activas (PENDING_PAYMENT/CONFIRMED),
+/// agregado a mano en la migración de esta tabla (Prisma no soporta índices
+/// únicos parciales de forma declarativa todavía).
+model Booking {
+  id              String        @id @default(cuid())
+  bookingNumber   String        @unique
+  userId          String?
+  user            User?         @relation(fields: [userId], references: [id])
+  guestName       String?
+  guestEmail      String?
+  guestPhone      String?
+  serviceId       String
+  service         Service       @relation(fields: [serviceId], references: [id])
+  startsAt        DateTime
+  endsAt          DateTime
+  timezone        String        @default("America/Bogota")
+  status          BookingStatus @default(PENDING_PAYMENT)
+  paymentStatus   PaymentStatus @default(UNPAID)
+  paymentDeadline DateTime
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([serviceId, startsAt])
+  @@index([status, paymentDeadline])
 }

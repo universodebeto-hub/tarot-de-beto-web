@@ -54,7 +54,8 @@ Este proyecto se desarrolló así (Postgres 16.4 portátil, puerto 5433) por no 
 /components/layout      Navbar, Footer, WhatsAppButton
 /components/sections    bloques de página (Hero, ServiceGrid, Testimonials, FAQ...)
 /components/auth        formularios de login/registro/recuperación (Fase 3)
-/components/agenda      explorador de disponibilidad (Fase 4)
+/components/agenda      explorador de disponibilidad (Fase 4) + selector/tira/grilla compartidos
+/components/booking     wizard de reserva de 6 pasos, contador y panel de pago pendiente (Fase 5)
 /config                 siteConfig — configuración central de marca desde env
 /lib                     utilidades compartidas
 /server                  lógica de servidor (a partir de Fase 2: acceso a datos)
@@ -91,10 +92,26 @@ Creados por `prisma/seed.ts`, contraseña `Tarot2026!` para ambos:
 
 Motor de disponibilidad en `server/availability.ts` (`getAvailableSlots`): horario semanal (`Availability`, recurrente, minutos locales del negocio) menos bloqueos puntuales (`BlockedTime`, instantes UTC absolutos) menos la duración del servicio y el buffer entre consultas (`Setting.booking_buffer_minutes`, editable por admin en Fase 7). Todo el manejo de zona horaria vive en `lib/timezone.ts` (`date-fns-tz`), con la zona del negocio en `NEXT_PUBLIC_BUSINESS_TIMEZONE` (por defecto `America/Bogota`, sin horario de verano).
 
-**Limitación conocida por diseño**: el motor todavía NO descuenta reservas ya hechas, porque el modelo `Booking` se crea recién en la Fase 5. Cuando exista, `getAvailableSlots` debe excluir también esos horarios — está señalado con un comentario `TODO` en el código.
+Vista pública en `/agenda` (selector de servicio + próximos 14 días + horarios); elegir un horario ahí lleva al wizard de reserva (`/reservar`) con ese servicio/fecha/hora ya preseleccionados.
 
-Vista pública en `/agenda` (selector de servicio + próximos 14 días + horarios). Como la creación real de una reserva llega en la Fase 5, elegir un horario hoy lleva a confirmarlo por WhatsApp con el servicio/fecha/hora ya redactados en el mensaje — no una reserva falsa que parezca completada.
+## Reservas
+
+Modelo `Booking` (`prisma/schema.prisma`): estado (`PENDING_PAYMENT/CONFIRMED/COMPLETED/CANCELLED/EXPIRED/RESCHEDULE_REQUESTED`), estado de pago (`UNPAID/PENDING/PAID/FAILED/REFUNDED`), `bookingNumber` correlativo (`BETO-<año>-00001`, generado atómicamente vía `Counter`), y `paymentDeadline` para la ventana de reserva temporal (`Setting.booking_payment_window_minutes`, 15 min por defecto).
+
+**Wizard** (`/reservar`, `components/booking/BookingWizard.tsx`): 6 pasos — Servicio, Fecha, Hora (reutiliza el motor de agenda), Datos (formulario solo si no hay sesión iniciada; si el usuario ya inició sesión, se salta directo a confirmar), Pago y Confirmación (estas dos últimas se resuelven en la página de detalle de la reserva, `/reservas/[id]`, para que el enlace sea reutilizable/compartible).
+
+**Prevención de doble reserva — dos capas**:
+1. Antes de insertar, el servidor vuelve a calcular la disponibilidad real (`getAvailableSlots`) y rechaza si el horario ya no aparece ahí.
+2. Índice único **parcial** en Postgres sobre `(serviceId, startsAt)` para reservas activas (`PENDING_PAYMENT`/`CONFIRMED`) — agregado a mano en la migración porque Prisma no soporta índices únicos parciales de forma declarativa. Si dos solicitudes concurrentes pasan la verificación 1 al mismo tiempo, la base de datos rechaza la segunda inserción (error Postgres 23505 → Prisma `P2002`), que el servidor traduce en un mensaje de "ese horario ya no está disponible".
+
+**Expiración**: sin cron todavía — verificación perezosa (`expireStaleBookings`, en `server/availability.ts`) que pasa a `EXPIRED` cualquier `PENDING_PAYMENT` vencida, ejecutada antes de calcular disponibilidad, crear una reserva o leer el estado de una reserva existente. El contador visual (`CountdownTimer`) es solo informativo — la autoridad real es esta verificación en el servidor.
+
+**Pago**: todavía no hay PayPal (Fase 6). Una reserva creada queda `PENDING_PAYMENT`/`UNPAID` con un botón para confirmar el pago manualmente por WhatsApp (mencionando el número de reserva) mientras se integra el pago automático — evita simular una confirmación de pago falsa.
+
+**Calendario**: `/api/bookings/[id]/ics` genera un archivo `.ics` descargable para reservas que no estén `CANCELLED`/`EXPIRED`.
+
+**Bug real encontrado y corregido en esta fase**: `businessLocalToUtc` (en `lib/timezone.ts`) no manejaba `minutesFromMidnight >= 1440` (medianoche del día siguiente) — construía una hora inválida (`"24:00:00"`), lo que hacía que la ventana de consulta `[inicio del día, fin del día)` usada para traer bloqueos/reservas del día colapsara a un solo instante. El síntoma: el motor de disponibilidad no excluía correctamente los horarios ya reservados. Corregido con aritmética de fecha explícita (ver la función). Afecta a cualquier código que dependa de "medianoche del día siguiente" — si aparecen fechas raras en el futuro, revisar ahí primero.
 
 ## Estado del proyecto
 
-En construcción por fases. Fase actual: **Fase 4 — Sistema de agenda**.
+En construcción por fases. Fase actual: **Fase 5 — Sistema de reservas**.

@@ -1,0 +1,117 @@
+import "server-only";
+import { Prisma } from "@prisma/client";
+import type { Booking } from "@prisma/client";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getServiceById } from "@/server/services";
+import { getAvailableSlots, expireStaleBookings } from "@/server/availability";
+import { getSetting } from "@/server/settings";
+import { businessDateString } from "@/lib/timezone";
+
+async function nextBookingNumber(): Promise<string> {
+  const year = new Date().getFullYear();
+  const key = `booking_number_${year}`;
+  await prisma.counter.upsert({ where: { key }, update: {}, create: { key, value: 0 } });
+  const updated = await prisma.counter.update({ where: { key }, data: { value: { increment: 1 } } });
+  return `BETO-${year}-${String(updated.value).padStart(5, "0")}`;
+}
+
+const createBookingSchema = z.object({
+  serviceId: z.string().min(1),
+  startUtc: z.string().min(1),
+  guestName: z.string().trim().min(1, "Tu nombre es obligatorio").max(120).optional(),
+  guestEmail: z.string().trim().toLowerCase().email("Correo inválido").optional(),
+  guestPhone: z.string().trim().max(30).optional(),
+});
+
+export type CreateBookingInput = z.infer<typeof createBookingSchema>;
+
+export interface CreateBookingResult {
+  booking?: Booking;
+  error?: string;
+}
+
+/**
+ * Crea una reserva temporal (PENDING_PAYMENT). Verifica disponibilidad real
+ * justo antes de insertar (no solo confía en lo que el cliente mandó) y
+ * además depende del índice único parcial de la base de datos como última
+ * defensa contra doble reserva en carreras concurrentes.
+ */
+export async function createPendingBooking(input: CreateBookingInput): Promise<CreateBookingResult> {
+  const parsed = createBookingSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  }
+  const { serviceId, startUtc, guestName, guestEmail, guestPhone } = parsed.data;
+
+  const service = await getServiceById(serviceId);
+  if (!service || !service.available) {
+    return { error: "Ese servicio ya no está disponible." };
+  }
+
+  const startsAt = new Date(startUtc);
+  if (Number.isNaN(startsAt.getTime()) || startsAt <= new Date()) {
+    return { error: "Ese horario ya no está disponible. Elige otro." };
+  }
+  const endsAt = new Date(startsAt.getTime() + service.durationMinutes * 60_000);
+
+  const currentUser = await getCurrentUser();
+  let userId: string | null = null;
+  if (currentUser) {
+    userId = currentUser.id;
+  } else if (!guestName || !guestEmail) {
+    return { error: "Nombre y correo son obligatorios para reservar como invitado." };
+  }
+
+  await expireStaleBookings();
+
+  const daySlots = await getAvailableSlots({ serviceId, date: businessDateString(startsAt) });
+  const stillAvailable = daySlots.some((slot) => slot.startUtc === startsAt.toISOString());
+  if (!stillAvailable) {
+    return { error: "Ese horario ya no está disponible. Elige otro, por favor." };
+  }
+
+  const paymentWindowMinutes = await getSetting("booking_payment_window_minutes", 15);
+  const paymentDeadline = new Date(Date.now() + paymentWindowMinutes * 60_000);
+  const bookingNumber = await nextBookingNumber();
+
+  try {
+    const booking = await prisma.booking.create({
+      data: {
+        bookingNumber,
+        userId,
+        guestName: userId ? null : guestName,
+        guestEmail: userId ? null : guestEmail,
+        guestPhone: userId ? null : guestPhone,
+        serviceId,
+        startsAt,
+        endsAt,
+        paymentDeadline,
+      },
+    });
+    return { booking };
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      return { error: "Justo se acaba de reservar ese horario. Elige otro, por favor." };
+    }
+    throw err;
+  }
+}
+
+export async function getBookingById(id: string) {
+  await expireStaleBookings();
+  return prisma.booking.findUnique({
+    where: { id },
+    include: { service: true },
+  });
+}
+
+export async function getUserBookings(userId: string) {
+  await expireStaleBookings();
+  return prisma.booking.findMany({
+    where: { userId },
+    include: { service: true },
+    orderBy: { startsAt: "desc" },
+  });
+}

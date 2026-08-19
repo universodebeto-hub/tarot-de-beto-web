@@ -101,6 +101,11 @@ async function main() {
     update: {},
     create: { key: "booking_buffer_minutes", value: JSON.stringify(10) },
   });
+  await prisma.setting.upsert({
+    where: { key: "booking_payment_window_minutes" },
+    update: {},
+    create: { key: "booking_payment_window_minutes", value: JSON.stringify(15) },
+  });
 
   // Horario de atención: todos los días 11:00–23:00 (hora de Colombia), tal
   // como pide el prompt original. Editable por el admin en la Fase 7; por
