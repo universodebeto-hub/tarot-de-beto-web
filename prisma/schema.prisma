@@ -2,7 +2,7 @@
 // Fase 3: usuarios y autenticación.
 // Fase 4: agenda (disponibilidad y bloqueos).
 // Fase 5: reservas.
-// Tabla de pagos PayPal se agrega en la Fase 6.
+// Fase 6: pagos PayPal.
 
 generator client {
   provider = "prisma-client-js"
@@ -186,11 +186,46 @@ model Booking {
   status          BookingStatus @default(PENDING_PAYMENT)
   paymentStatus   PaymentStatus @default(UNPAID)
   paymentDeadline DateTime
+  paypalOrderId   String?       @unique
+  paypalCaptureId String?
   notes           String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
+  transactions PaypalTransaction[]
+
   @@index([userId])
   @@index([serviceId, startsAt])
   @@index([status, paymentDeadline])
+}
+
+/// Registro de auditoría de cada orden PayPal asociada a una reserva.
+/// `status` refleja el ciclo de vida de la orden en PayPal (CREATED,
+/// APPROVED, COMPLETED, FAILED, REFUNDED), separado del `paymentStatus`
+/// de la reserva para no perder el historial si hay varios intentos.
+model PaypalTransaction {
+  id              String   @id @default(cuid())
+  bookingId       String
+  booking         Booking  @relation(fields: [bookingId], references: [id])
+  paypalOrderId   String   @unique
+  paypalCaptureId String?
+  status          String
+  amount          Decimal  @db.Decimal(10, 2)
+  currency        String
+  rawPayload      Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([bookingId])
+}
+
+/// Deduplicación de eventos de webhook de PayPal: PayPal puede reenviar el
+/// mismo evento más de una vez, así que antes de procesar cualquier evento
+/// se intenta crear esta fila con su `eventId`; si ya existe (violación de
+/// unicidad), el evento ya se procesó y se responde 200 sin repetir nada.
+model PaypalWebhookEvent {
+  id         String   @id @default(cuid())
+  eventId    String   @unique
+  eventType  String
+  receivedAt DateTime @default(now())
 }

@@ -2,7 +2,7 @@
 
 Plataforma web de la marca **Universo de Beto** (Alberto Arango, "Beto"): sitio de presentación, catálogo de servicios, agenda, reservas, pagos con PayPal y panel administrativo.
 
-Construido con Next.js (App Router) + TypeScript + Tailwind CSS + Prisma/PostgreSQL. Autenticación propia (Server Actions + bcrypt + JWT en cookie httpOnly — ver sección "Autenticación" más abajo). El resto del stack (PayPal) se incorpora progresivamente por fases.
+Construido con Next.js (App Router) + TypeScript + Tailwind CSS + Prisma/PostgreSQL. Autenticación propia (Server Actions + bcrypt + JWT en cookie httpOnly — ver sección "Autenticación" más abajo). Pagos con PayPal Checkout (ver sección "Pagos"). El resto del stack se incorpora progresivamente por fases.
 
 ## Requisitos
 
@@ -55,7 +55,7 @@ Este proyecto se desarrolló así (Postgres 16.4 portátil, puerto 5433) por no 
 /components/sections    bloques de página (Hero, ServiceGrid, Testimonials, FAQ...)
 /components/auth        formularios de login/registro/recuperación (Fase 3)
 /components/agenda      explorador de disponibilidad (Fase 4) + selector/tira/grilla compartidos
-/components/booking     wizard de reserva de 6 pasos, contador y panel de pago pendiente (Fase 5)
+/components/booking     wizard de reserva, contador, panel de pago pendiente y botón PayPal (Fase 5-6)
 /config                 siteConfig — configuración central de marca desde env
 /lib                     utilidades compartidas
 /server                  lógica de servidor (a partir de Fase 2: acceso a datos)
@@ -106,12 +106,22 @@ Modelo `Booking` (`prisma/schema.prisma`): estado (`PENDING_PAYMENT/CONFIRMED/CO
 
 **Expiración**: sin cron todavía — verificación perezosa (`expireStaleBookings`, en `server/availability.ts`) que pasa a `EXPIRED` cualquier `PENDING_PAYMENT` vencida, ejecutada antes de calcular disponibilidad, crear una reserva o leer el estado de una reserva existente. El contador visual (`CountdownTimer`) es solo informativo — la autoridad real es esta verificación en el servidor.
 
-**Pago**: todavía no hay PayPal (Fase 6). Una reserva creada queda `PENDING_PAYMENT`/`UNPAID` con un botón para confirmar el pago manualmente por WhatsApp (mencionando el número de reserva) mientras se integra el pago automático — evita simular una confirmación de pago falsa.
+**Pago**: ver sección "Pagos" — mientras no haya credenciales de PayPal configuradas, o mientras el pago no se complete, la reserva queda `PENDING_PAYMENT`/`UNPAID` con un botón para confirmar el pago manualmente por WhatsApp (mencionando el número de reserva), sin simular una confirmación falsa.
 
 **Calendario**: `/api/bookings/[id]/ics` genera un archivo `.ics` descargable para reservas que no estén `CANCELLED`/`EXPIRED`.
 
-**Bug real encontrado y corregido en esta fase**: `businessLocalToUtc` (en `lib/timezone.ts`) no manejaba `minutesFromMidnight >= 1440` (medianoche del día siguiente) — construía una hora inválida (`"24:00:00"`), lo que hacía que la ventana de consulta `[inicio del día, fin del día)` usada para traer bloqueos/reservas del día colapsara a un solo instante. El síntoma: el motor de disponibilidad no excluía correctamente los horarios ya reservados. Corregido con aritmética de fecha explícita (ver la función). Afecta a cualquier código que dependa de "medianoche del día siguiente" — si aparecen fechas raras en el futuro, revisar ahí primero.
+**Bug real encontrado y corregido en la Fase 5**: `businessLocalToUtc` (en `lib/timezone.ts`) no manejaba `minutesFromMidnight >= 1440` (medianoche del día siguiente) — construía una hora inválida (`"24:00:00"`), lo que hacía que la ventana de consulta `[inicio del día, fin del día)` usada para traer bloqueos/reservas del día colapsara a un solo instante. El síntoma: el motor de disponibilidad no excluía correctamente los horarios ya reservados. Corregido con aritmética de fecha explícita (ver la función). Afecta a cualquier código que dependa de "medianoche del día siguiente" — si aparecen fechas raras en el futuro, revisar ahí primero.
+
+## Pagos (PayPal Checkout)
+
+Guía completa de configuración: [`docs/paypal-sandbox.md`](docs/paypal-sandbox.md).
+
+- `lib/paypal.ts`: cliente mínimo de la API REST de PayPal (OAuth2 client credentials, Orders v2, verificación de firma de webhook). Solo se importa desde código de servidor (`import "server-only"`).
+- `server/paypal-orders.ts`: `createOrderForBooking` (crea la orden con el monto/moneda del servicio guardado en la reserva — nunca lo que mande el navegador) y `captureOrderForBooking` (captura y solo entonces marca la reserva `CONFIRMED`/`PAID`; idempotente si la orden ya estaba capturada).
+- Endpoints: `POST /api/paypal/create-order`, `POST /api/paypal/capture-order` (llamados por el botón de PayPal, nunca hablan con PayPal directamente desde el navegador), `POST /api/paypal/webhook` (respaldo: verifica la firma contra la API de PayPal y es idempotente vía la tabla `PaypalWebhookEvent`, para el caso de que el usuario cierre la pestaña justo después de aprobar el pago).
+- `components/booking/PayPalButton.tsx`: botón oficial, se muestra en `/reservas/[id]` **solo si** `NEXT_PUBLIC_PAYPAL_CLIENT_ID` está configurado; si no, la página se degrada limpiamente al panel de WhatsApp (sin romperse, sin credenciales de ejemplo inventadas). Verificado en este entorno de desarrollo (sin credenciales reales): los endpoints devuelven errores claros en vez de fallar, y la página de reserva no intenta cargar el SDK de PayPal cuando no hay Client ID.
+- **Sin probar con credenciales reales todavía** — no hay cuenta de PayPal Developer en este entorno. Antes de usar en producción, seguir `docs/paypal-sandbox.md` completo (crear app, probar una reserva pagada de principio a fin, probar que un webhook reenviado no duplique la transacción).
 
 ## Estado del proyecto
 
-En construcción por fases. Fase actual: **Fase 5 — Sistema de reservas**.
+En construcción por fases. Fase actual: **Fase 6 — Pagos con PayPal (Sandbox)**.

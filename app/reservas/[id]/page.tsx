@@ -9,6 +9,7 @@ import { siteConfig } from "@/config/site";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { PendingPaymentPanel } from "@/components/booking/PendingPaymentPanel";
+import { PayPalButton } from "@/components/booking/PayPalButton";
 
 export const metadata: Metadata = {
   title: "Tu reserva",
@@ -89,12 +90,24 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
             <div className="divider" />
 
             {isPending ? (
-              <PendingPaymentPanel
-                paymentDeadline={booking.paymentDeadline.toISOString()}
-                bookingNumber={booking.bookingNumber}
-                whatsappNumber={siteConfig.contact.whatsappNumber}
-                message={`Hola Beto, quiero confirmar el pago de mi reserva ${booking.bookingNumber} (${booking.service.name}, ${dateLabel} a las ${timeLabel}).`}
-              />
+              <div className="flex flex-col gap-5">
+                {process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ? (
+                  <div>
+                    <span className="eyebrow mb-3">Pagar con PayPal</span>
+                    <PayPalButton
+                      clientId={process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}
+                      currency={booking.service.currency}
+                      bookingId={booking.id}
+                    />
+                  </div>
+                ) : null}
+                <PendingPaymentPanel
+                  paymentDeadline={booking.paymentDeadline.toISOString()}
+                  bookingNumber={booking.bookingNumber}
+                  whatsappNumber={siteConfig.contact.whatsappNumber}
+                  message={`Hola Beto, quiero confirmar el pago de mi reserva ${booking.bookingNumber} (${booking.service.name}, ${dateLabel} a las ${timeLabel}).`}
+                />
+              </div>
             ) : isExpired ? (
               <div className="flex flex-col gap-3">
                 <p className="mb-0 text-sm">
