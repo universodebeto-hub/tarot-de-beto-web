@@ -138,6 +138,25 @@ Guía completa de configuración: [`docs/paypal-sandbox.md`](docs/paypal-sandbox
 
 Verificado en navegador con el flujo completo: crear una reserva → confirmarla manualmente desde el panel (pasa a `CONFIRMED`/`PAID`) → agregar nota interna → editar el precio de un servicio y ver el cambio en la página pública → crear un bloqueo de día completo y confirmar que desaparece de `/agenda` → moderar un testimonio → confirmar que un usuario `CLIENT` logueado es redirigido fuera de `/admin`.
 
+## Notificaciones
+
+Email transaccional (SMTP vía `nodemailer`, `lib/email.ts`): sin `SMTP_HOST`/`SMTP_USER`/`SMTP_PASSWORD` configurados, `sendEmail()` no falla — registra el correo en consola (`[email] SMTP no configurado — no se envía. ...`) para poder desarrollar/probar sin credenciales reales. Plantillas (`server/notifications/templates.ts`) y despachadores (`server/notifications/send.ts`) para los 5 eventos: reserva recibida, pago confirmado, recordatorio, cancelación y expiración.
+
+**Decisión de arquitectura — por qué la expiración perezosa NO manda email directamente**: `next build` ejecuta el cuerpo de las páginas de servidor durante la fase de "collect page data" para detectar qué rutas son dinámicas. Si una función que manda emails viviera ahí (por ejemplo, dentro de `expireStaleBookings`, que se llama desde casi cualquier lectura de reservas/disponibilidad), cada `build`/deploy podría disparar avisos reales a clientes — incluyendo el más delicado, "tu reserva expiró" — sin que hubiera ninguna solicitud real de por medio. Por eso:
+- `server/availability.ts` → `expireStaleBookings()` solo cambia el estado a `EXPIRED`, sin notificar — sigue siendo seguro llamarla desde cualquier lectura, incluso durante el build.
+- `server/notifications/expiry.ts` → `expireAndNotify()` hace lo mismo **y además notifica** — pero solo se invoca desde una Server Action real (botón del panel) o un Route Handler (`/api/cron/maintenance`), nunca desde el cuerpo de una página, porque esos dos sí solo se ejecutan ante una solicitud real y jamás durante el build.
+- Regla general para el resto del proyecto: cualquier código con I/O externo (email, WhatsApp, pagos) debe vivir en una Server Action o un Route Handler, nunca directo en el cuerpo de un Server Component de página.
+
+**Recordatorios**: `server/notifications/reminders.ts` → `sendDueReminders()` lee `Setting.reminder_hours_before` (por defecto `[24, 2]`), busca reservas `CONFIRMED` dentro de esa ventana y evita reenviar gracias a `Booking.remindersSentHours` (array de horas ya notificadas por reserva).
+
+**Disparo**: sin cron configurado, tanto la expiración-con-aviso como los recordatorios no ocurren solos — el panel `/admin` tiene un botón manual ("Ejecutar mantenimiento ahora") para dispararlos bajo demanda. Para producción, `GET /api/cron/maintenance` (protegido con el header `Authorization: Bearer <CRON_SECRET>`, responde 503 si `CRON_SECRET` no está configurado y 401 si el token no coincide) está pensado para un cron externo (ej. Vercel Cron cada 15–30 min).
+
+**WhatsApp**: hoy todo el contacto es manual vía enlaces `wa.me` con mensaje prellenado, generados contextualmente según página/servicio/reserva (`config/site.ts` → `buildWhatsAppLink`, número desde `NEXT_PUBLIC_WHATSAPP_NUMBER`, nunca hardcodeado). Arquitectura preparada pero **no implementada** para WhatsApp Business Cloud API (`lib/whatsapp-business.ts`) — el archivo documenta los pasos y variables (`WHATSAPP_BUSINESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`) necesarios para activarla en el futuro.
+
+**Bug real encontrado y corregido en la Fase 8**: `createPendingBooking` (`server/bookings.ts`) devolvía el `Booking` completo —incluyendo `service` (con `price` como `Decimal` de Prisma, que React no puede serializar hacia un Client Component) y `user` (¡con `passwordHash`!)— como resultado de una Server Action (`submitBooking`) llamada desde el wizard cliente. Eso filtraba el hash de contraseña del usuario hacia la respuesta de red del navegador. Corregido: la función ahora devuelve solo `{ id: booking.id }`, que es lo único que el wizard necesita para redirigir a `/reservas/[id]`; el registro completo (con `service`/`user`) se sigue usando internamente, solo para la notificación por email, sin cruzar nunca al cliente.
+
+Verificado en navegador con el flujo completo: crear una reserva (log `[email] ... Reserva recibida`) → confirmar el pago manualmente desde `/admin/reservas/[id]` (log `[email] ... Pago confirmado`) → cancelar otra reserva (log `[email] ... Reserva cancelada`) → botón "Ejecutar mantenimiento ahora" en `/admin` → `GET /api/cron/maintenance` sin `CRON_SECRET` configurado devuelve `503`. También se confirmó, re-revisando el log completo de `npm run build`, que ningún email se dispara durante el build (ni antes de la Fase 8, gracias a la separación descrita arriba, ni después del arreglo del leak de `passwordHash`).
+
 ## Estado del proyecto
 
-En construcción por fases. Fase actual: **Fase 7 — Panel administrativo**.
+En construcción por fases. Fase actual: **Fase 8 — Notificaciones y WhatsApp contextual**.

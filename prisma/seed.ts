@@ -112,6 +112,11 @@ async function main() {
     update: {},
     create: { key: "faq_items", value: JSON.stringify(faqItems) },
   });
+  await prisma.setting.upsert({
+    where: { key: "reminder_hours_before" },
+    update: {},
+    create: { key: "reminder_hours_before", value: JSON.stringify([24, 2]) },
+  });
 
   // Horario de atención: todos los días 11:00–23:00 (hora de Colombia), tal
   // como pide el prompt original. Editable por el admin en la Fase 7; por

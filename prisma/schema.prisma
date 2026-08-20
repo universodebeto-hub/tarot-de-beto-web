@@ -191,6 +191,9 @@ model Booking {
   paypalOrderId   String?       @unique
   paypalCaptureId String?
   notes           String?
+  /// Horas-antes (24, 2, ...) para las que ya se envió recordatorio — evita
+  /// reenviar el mismo recordatorio si `sendDueReminders` corre varias veces.
+  remindersSentHours Int[]      @default([])
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 

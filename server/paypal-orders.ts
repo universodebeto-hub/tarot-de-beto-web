@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { createPaypalOrder, capturePaypalOrder, getPaypalOrder, isPaypalConfigured } from "@/lib/paypal";
 import { expireStaleBookings } from "@/server/availability";
+import { notifyPaymentConfirmed } from "@/server/notifications/send";
 
 export interface OrderResult {
   orderId?: string;
@@ -76,7 +77,7 @@ export async function captureOrderForBooking(orderId: string): Promise<CaptureRe
 
   const transaction = await prisma.paypalTransaction.findUnique({
     where: { paypalOrderId: orderId },
-    include: { booking: { include: { service: true } } },
+    include: { booking: { include: { service: true, user: true } } },
   });
   if (!transaction) return { error: "Orden no encontrada." };
 
@@ -130,6 +131,8 @@ export async function captureOrderForBooking(orderId: string): Promise<CaptureRe
       },
     }),
   ]);
+
+  await notifyPaymentConfirmed(booking).catch((err) => console.error("[notify] payment_confirmed:", err));
 
   return { success: true, bookingId: booking.id };
 }

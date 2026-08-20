@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAdminAction } from "@/server/audit";
 import { expireStaleBookings } from "@/server/availability";
+import { notifyPaymentConfirmed, notifyCancelled } from "@/server/notifications/send";
 import type { BookingStatus } from "@prisma/client";
 
 export interface BookingFilters {
@@ -58,7 +59,10 @@ const ALLOWED_TRANSITIONS: Record<string, BookingStatus[]> = {
 export async function setBookingStatus(bookingId: string, next: BookingStatus): Promise<{ error?: string }> {
   const admin = await requireAdmin();
 
-  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { service: true, user: true },
+  });
   if (!booking) return { error: "Reserva no encontrada." };
 
   const allowed = ALLOWED_TRANSITIONS[booking.status] ?? [];
@@ -66,11 +70,13 @@ export async function setBookingStatus(bookingId: string, next: BookingStatus): 
     return { error: `No se puede pasar de ${booking.status} a ${next}.` };
   }
 
+  const willMarkPaid = next === "CONFIRMED" && booking.paymentStatus === "UNPAID";
+
   await prisma.booking.update({
     where: { id: bookingId },
     data: {
       status: next,
-      paymentStatus: next === "CONFIRMED" && booking.paymentStatus === "UNPAID" ? "PAID" : undefined,
+      paymentStatus: willMarkPaid ? "PAID" : undefined,
     },
   });
 
@@ -81,6 +87,12 @@ export async function setBookingStatus(bookingId: string, next: BookingStatus): 
     targetId: bookingId,
     details: `${booking.status} → ${next}`,
   });
+
+  if (willMarkPaid) {
+    await notifyPaymentConfirmed(booking).catch((err) => console.error("[notify] payment_confirmed:", err));
+  } else if (next === "CANCELLED") {
+    await notifyCancelled(booking).catch((err) => console.error("[notify] cancelled:", err));
+  }
 
   return {};
 }

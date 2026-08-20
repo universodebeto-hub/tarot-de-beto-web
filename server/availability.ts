@@ -18,6 +18,15 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
  * Verificación perezosa (no hay cron todavía): se llama antes de calcular
  * disponibilidad o crear una reserva, para no bloquear horarios con holds
  * que ya deberían haberse liberado.
+ *
+ * A propósito NO envía notificaciones acá: esta función se invoca desde
+ * cualquier lectura (getAvailableSlots, getBookingById, ...) y Next.js
+ * ejecuta esos mismos componentes de servidor durante `next build` para
+ * detectar si una ruta es dinámica — si esta función mandara emails,
+ * cada build/deploy podría disparar avisos de "tu reserva expiró" a
+ * clientes reales. El envío real vive en
+ * `server/notifications/expiry.ts` (`expireAndNotify`), que solo se llama
+ * desde rutas explícitas (botón del panel admin, endpoint de cron).
  */
 export async function expireStaleBookings(): Promise<void> {
   await prisma.booking.updateMany({

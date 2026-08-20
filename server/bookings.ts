@@ -8,6 +8,7 @@ import { getServiceById } from "@/server/services";
 import { getAvailableSlots, expireStaleBookings } from "@/server/availability";
 import { getSetting } from "@/server/settings";
 import { businessDateString } from "@/lib/timezone";
+import { notifyBookingReceived } from "@/server/notifications/send";
 
 async function nextBookingNumber(): Promise<string> {
   const year = new Date().getFullYear();
@@ -28,7 +29,10 @@ const createBookingSchema = z.object({
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 
 export interface CreateBookingResult {
-  booking?: Booking;
+  /** Solo el id: el registro completo (con service/user incluidos para la
+   * notificación) nunca debe cruzar al cliente — incluye el passwordHash
+   * del usuario y un Decimal de Prisma que React no puede serializar. */
+  booking?: Pick<Booking, "id">;
   error?: string;
 }
 
@@ -89,8 +93,10 @@ export async function createPendingBooking(input: CreateBookingInput): Promise<C
         endsAt,
         paymentDeadline,
       },
+      include: { service: true, user: true },
     });
-    return { booking };
+    await notifyBookingReceived(booking).catch((err) => console.error("[notify] booking_received:", err));
+    return { booking: { id: booking.id } };
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
       return { error: "Justo se acaba de reservar ese horario. Elige otro, por favor." };
