@@ -179,6 +179,40 @@ Verificado en navegador con el flujo completo: crear una reserva (log `[email] .
 
 Verificado en navegador: `/sitemap.xml` y `/robots.txt` sirven contenido correcto; cada página pública muestra su propio `<link rel="canonical">` y ninguna trae `<meta name="robots">`; `/dashboard` (privada) sí trae `<meta name="robots" content="noindex">`; las cabeceras de seguridad llegan en toda respuesta (confirmado con `curl -I`); intento de login fallido sigue mostrando el mensaje genérico y uno exitoso sigue llevando a `/dashboard` (el rate limiting no interfiere con el uso normal); solicitar recuperación de contraseña ahora sí dispara el log `[email] ... Restablecer tu contraseña` con el link real. Re-verificado con `npm run build` que sigue sin dispararse ningún email/notificación durante el build.
 
+## Pruebas (Fase 10)
+
+Vitest, contra una base de datos Postgres **dedicada a pruebas** (nunca la de desarrollo — los tests limpian tablas entre casos).
+
+```bash
+# Una sola vez: crea la base de datos de pruebas y aplícale el esquema.
+createdb tarot_de_beto_test   # o el equivalente de tu instalación de Postgres
+DATABASE_URL="postgresql://usuario:password@localhost:5432/tarot_de_beto_test" npx prisma migrate deploy
+
+npm run test
+```
+
+`.env.test` (versionado — no tiene secretos reales, solo apunta a esa base de datos local) trae el resto de variables que hacen falta para correr los tests. Ajusta su `DATABASE_URL` si tu Postgres usa otro puerto/usuario/contraseña.
+
+**Qué cubren los tests automatizados** (`tests/`):
+- `lib/timezone.ts` — incluye una prueba de regresión específica para el bug de medianoche de la Fase 5 (`minutesFromMidnight >= 1440`).
+- `lib/rate-limit.ts`, `lib/auth/password.ts`, `lib/auth/jwt.ts` — lógica pura.
+- `lib/auth/session.ts` (`requireAdmin`/`getCurrentUser`) — acceso admin: rechaza sin sesión, rechaza a un `CLIENT`, acepta a un `ADMIN`, rechaza si el usuario del token ya no existe en la base de datos.
+- `server/availability.ts`/`server/bookings.ts` contra Postgres real: servicio desactivado → sin horarios, horario bloqueado (`BlockedTime`) → sin horarios, reserva activa excluye ese horario, **doble reserva** (dos solicitudes concurrentes por el mismo horario — solo una gana, gracias al índice único parcial de la Fase 5), **expiración perezosa** (una reserva vencida se libera sola en la siguiente lectura, sin cron).
+- `app/api/paypal/webhook/route.ts` — configuración ausente (503), cabeceras faltantes (400), firma inválida (400), **evento de webhook duplicado** (se detecta y no se reprocesa, gracias al índice único de `PaypalWebhookEvent.eventId`).
+
+**Qué NO cubren los tests automatizados, y por qué**: los flujos completos de registro/login/reserva/pago vistos como el usuario los experimenta (formularios reales, redirecciones, Server Actions invocadas por un submit real) — Next.js no expone una forma sencilla de invocar Server Actions/`redirect()`/cookies de escritura fuera de un servidor real corriendo. Esos flujos se verificaron manualmente en navegador, fase por fase, durante el desarrollo (login/registro/reserva de invitado y logueado en la Fase 5, PayPal en la Fase 6 sin credenciales reales — ver `docs/paypal-sandbox.md`, panel admin completo en la Fase 7, los tres emails transaccionales + botón de mantenimiento en la Fase 8, cabeceras/sitemap/robots/canonical/rate-limiting en la Fase 9). Antes de un cambio grande en esas áreas, repetir la verificación manual en navegador sigue siendo necesario — los tests automatizados protegen la lógica de negocio pura y las condiciones de carrera, no la experiencia de usuario de punta a punta.
+
+## Despliegue
+
+Guía completa paso a paso: [`docs/deploy-vercel.md`](docs/deploy-vercel.md) — base de datos gestionada (Neon/Supabase), variables de entorno de producción, dominio/SSL, paso de PayPal Sandbox → Live, cron de mantenimiento en Vercel, backups/logs, y qué hacer con el usuario admin de prueba del seed. **Sin desplegar todavía** — no hay cuenta de Vercel ni base de datos gestionada conectadas desde este entorno de desarrollo; la guía queda lista para cuando decidas publicar.
+
 ## Estado del proyecto
 
-En construcción por fases. Fase actual: **Fase 9 — SEO, performance, seguridad y legales**.
+Las 11 fases planeadas (Fase 0 a Fase 10) están completas: fundación técnica, diseño visual, datos dinámicos, autenticación, agenda, reservas, pagos con PayPal, panel administrativo, notificaciones, SEO/seguridad/legales, y pruebas/documentación de despliegue.
+
+**Lo que sigue siendo trabajo pendiente antes de operar con clientes reales** (documentado explícitamente en vez de darlo por hecho):
+- Probar PayPal con credenciales Sandbox reales de punta a punta (`docs/paypal-sandbox.md`) — nunca se hizo en este entorno por no haber cuenta de PayPal Developer disponible.
+- Reemplazar el contenido de ejemplo de `public/assets/*` (logo, imágenes, favicon) — hoy son carpetas placeholder, así que no hay `openGraph.images` ni `next/image` en uso todavía.
+- Revisión legal real de `/privacidad`, `/terminos` y `/politica-de-reservas` — llevan un aviso explícito de "texto de ejemplo" a propósito.
+- Desplegar de verdad siguiendo `docs/deploy-vercel.md`, incluyendo el cron de mantenimiento (Fase 8) y credenciales SMTP reales (hoy los emails solo se loguean en consola en desarrollo).
+- Si el rate limiting en memoria (Fase 9) resulta insuficiente en producción multi-instancia, migrar `lib/rate-limit.ts` a un store compartido (ej. Upstash Redis).

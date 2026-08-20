@@ -30,9 +30,12 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (.env.example es la plantilla y sí se versiona)
+# env files (.env.example es la plantilla y sí se versiona; .env.test no
+# tiene secretos reales — apunta a una base de datos local dedicada a
+# pruebas, hace falta para que `npm run test` funcione out-of-the-box)
 .env*
 !.env.example
+!.env.test
 
 # vercel
 .vercel
