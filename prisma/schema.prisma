@@ -3,6 +3,7 @@
 // Fase 4: agenda (disponibilidad y bloqueos).
 // Fase 5: reservas.
 // Fase 6: pagos PayPal.
+// Fase 7: panel administrativo (auditoría).
 
 generator client {
   provider = "prisma-client-js"
@@ -85,6 +86,7 @@ model User {
 
   passwordResets PasswordReset[]
   bookings       Booking[]
+  auditLogs      AuditLog[]
 
   @@index([role])
 }
@@ -228,4 +230,21 @@ model PaypalWebhookEvent {
   eventId    String   @unique
   eventType  String
   receivedAt DateTime @default(now())
+}
+
+/// Auditoría de acciones administrativas (Fase 7): quién cambió qué y
+/// cuándo. `targetType`/`targetId` identifican el registro afectado
+/// (ej. "Booking"/id) para poder filtrar el historial de una entidad.
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  admin      User     @relation(fields: [adminId], references: [id])
+  action     String
+  targetType String
+  targetId   String
+  details    String?
+  createdAt  DateTime @default(now())
+
+  @@index([targetType, targetId])
+  @@index([adminId, createdAt])
 }

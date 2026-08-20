@@ -5,18 +5,19 @@ import { Testimonials } from "@/components/sections/Testimonials";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { CTASection } from "@/components/sections/CTASection";
 import { Reveal } from "@/components/ui/Reveal";
-import { faqItems } from "@/lib/sample-data";
 import { getFeaturedServices } from "@/server/services";
 import { getPublishedTestimonials } from "@/server/testimonials";
+import { getFaqItems } from "@/server/settings";
 
 // Nota: esta ruta ya es dinámica (el layout raíz lee la cookie de sesión
 // para el Navbar), así que no necesita `revalidate` — cada request consulta
 // servicios/testimonios en vivo.
 
 export default async function HomePage() {
-  const [services, testimonials] = await Promise.all([
+  const [services, testimonials, faqItems] = await Promise.all([
     getFeaturedServices(3),
     getPublishedTestimonials(),
+    getFaqItems(),
   ]);
 
   return (

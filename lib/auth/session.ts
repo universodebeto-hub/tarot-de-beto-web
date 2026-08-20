@@ -55,3 +55,17 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     role: user.role,
   };
 }
+
+/**
+ * Exige un usuario ADMIN autenticado. Usar al inicio de cada Server Action
+ * administrativa — la protección de `proxy.ts` cubre la navegación normal,
+ * pero una Server Action es un endpoint de red por su cuenta y necesita su
+ * propia verificación (defensa en profundidad).
+ */
+export async function requireAdmin(): Promise<CurrentUser> {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "ADMIN") {
+    throw new Error("No autorizado.");
+  }
+  return user;
+}

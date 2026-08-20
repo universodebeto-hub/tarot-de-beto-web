@@ -56,6 +56,7 @@ Este proyecto se desarrolló así (Postgres 16.4 portátil, puerto 5433) por no 
 /components/auth        formularios de login/registro/recuperación (Fase 3)
 /components/agenda      explorador de disponibilidad (Fase 4) + selector/tira/grilla compartidos
 /components/booking     wizard de reserva, contador, panel de pago pendiente y botón PayPal (Fase 5-6)
+/components/admin       sidebar, formularios y tablas del panel administrativo (Fase 7)
 /config                 siteConfig — configuración central de marca desde env
 /lib                     utilidades compartidas
 /server                  lógica de servidor (a partir de Fase 2: acceso a datos)
@@ -85,7 +86,7 @@ Implementación propia (no NextAuth) por estabilidad frente a lo reciente de Nex
 
 Creados por `prisma/seed.ts`, contraseña `Tarot2026!` para ambos:
 
-- `admin@tarotdebeto.local` — rol `ADMIN` (el panel admin llega en la Fase 7).
+- `admin@tarotdebeto.local` — rol `ADMIN`, entra a `/admin`.
 - `cliente@tarotdebeto.local` — rol `CLIENT`.
 
 ## Agenda
@@ -122,6 +123,21 @@ Guía completa de configuración: [`docs/paypal-sandbox.md`](docs/paypal-sandbox
 - `components/booking/PayPalButton.tsx`: botón oficial, se muestra en `/reservas/[id]` **solo si** `NEXT_PUBLIC_PAYPAL_CLIENT_ID` está configurado; si no, la página se degrada limpiamente al panel de WhatsApp (sin romperse, sin credenciales de ejemplo inventadas). Verificado en este entorno de desarrollo (sin credenciales reales): los endpoints devuelven errores claros en vez de fallar, y la página de reserva no intenta cargar el SDK de PayPal cuando no hay Client ID.
 - **Sin probar con credenciales reales todavía** — no hay cuenta de PayPal Developer en este entorno. Antes de usar en producción, seguir `docs/paypal-sandbox.md` completo (crear app, probar una reserva pagada de principio a fin, probar que un webhook reenviado no duplique la transacción).
 
+## Panel administrativo
+
+`/admin` (protegido por rol `ADMIN`, tanto en `proxy.ts` como con `requireAdmin()` dentro de cada Server Action mutadora — defensa en profundidad, ya que una Server Action es un endpoint de red por su cuenta).
+
+- **Resumen** (`/admin`): reservas de hoy, pendientes de pago, pagos recibidos, próximas confirmadas, clientes registrados, ingresos totales.
+- **Reservas** (`/admin/reservas`): filtros por estado/servicio/fecha/texto; detalle (`/admin/reservas/[id]`) con transiciones de estado válidas según el estado actual (`PENDING_PAYMENT → CONFIRMED/CANCELLED`, `CONFIRMED → COMPLETED/CANCELLED/RESCHEDULE_REQUESTED`, etc.), notas internas con autor y fecha, e historial de transacciones PayPal si las hay.
+- **Calendario** (`/admin/calendario`): horario semanal (`Availability`, agregar/activar/desactivar/eliminar franjas) y bloqueos puntuales (`BlockedTime`, con o sin rango horario — vacío bloquea el día completo).
+- **Clientes** (`/admin/clientes`): listado con buscador, reservas totales, última consulta, total gastado; detalle con historial completo.
+- **Servicios** (`/admin/servicios`): CRUD completo (crear/editar/activar/desactivar) — los cambios se reflejan de inmediato en `/servicios`, `/agenda` y home vía `revalidatePath`, sin redeploy.
+- **Testimonios** (`/admin/testimonios`): moderación (pendiente/aprobado/rechazado/publicado).
+- **Configuración** (`/admin/configuracion`): editor genérico clave/valor (JSON) sobre la tabla `Setting`. Incluye `faq_items` (las preguntas frecuentes de Inicio y `/faq` ya se leen de ahí — `server/settings.ts` → `getFaqItems()` — con fallback al listado por defecto si la clave no existe). El resto del contenido editorial (Quiénes somos, políticas, textos de Inicio) sigue siendo copy fija en los componentes; seguir el mismo patrón (`Setting` + `getSetting()`) para ir migrándolo cuando se necesite, en vez de hardcodearlo de nuevo.
+- **Auditoría**: cada mutación administrativa (cambio de estado de reserva, nota, servicio creado/editado, franja de horario, bloqueo, testimonio, setting) queda registrada en `AuditLog` (`server/audit.ts`) con quién, qué y cuándo.
+
+Verificado en navegador con el flujo completo: crear una reserva → confirmarla manualmente desde el panel (pasa a `CONFIRMED`/`PAID`) → agregar nota interna → editar el precio de un servicio y ver el cambio en la página pública → crear un bloqueo de día completo y confirmar que desaparece de `/agenda` → moderar un testimonio → confirmar que un usuario `CLIENT` logueado es redirigido fuera de `/admin`.
+
 ## Estado del proyecto
 
-En construcción por fases. Fase actual: **Fase 6 — Pagos con PayPal (Sandbox)**.
+En construcción por fases. Fase actual: **Fase 7 — Panel administrativo**.

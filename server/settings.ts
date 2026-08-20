@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { faqItems as defaultFaqItems } from "@/lib/sample-data";
+import type { FaqItem } from "@/types/content";
 
 /** Lee un valor de configuración (tabla `Setting`, editable por el admin en la Fase 7). */
 export async function getSetting<T>(key: string, fallback: T): Promise<T> {
@@ -9,4 +11,9 @@ export async function getSetting<T>(key: string, fallback: T): Promise<T> {
   } catch {
     return fallback;
   }
+}
+
+/** FAQ editable por el admin (setting `faq_items`, JSON); cae al listado por defecto si no está configurado. */
+export async function getFaqItems(): Promise<FaqItem[]> {
+  return getSetting<FaqItem[]>("faq_items", defaultFaqItems);
 }

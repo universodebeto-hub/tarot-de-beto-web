@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { faqItems } from "../lib/sample-data";
 
 const prisma = new PrismaClient();
 
@@ -105,6 +106,11 @@ async function main() {
     where: { key: "booking_payment_window_minutes" },
     update: {},
     create: { key: "booking_payment_window_minutes", value: JSON.stringify(15) },
+  });
+  await prisma.setting.upsert({
+    where: { key: "faq_items" },
+    update: {},
+    create: { key: "faq_items", value: JSON.stringify(faqItems) },
   });
 
   // Horario de atención: todos los días 11:00–23:00 (hora de Colombia), tal
