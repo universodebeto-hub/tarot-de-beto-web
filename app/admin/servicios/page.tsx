@@ -6,7 +6,7 @@ import { toggleServiceAvailability } from "@/server/admin/services";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 
-export const metadata: Metadata = { title: "Panel — Servicios" };
+export const metadata: Metadata = { title: "Panel — Servicios", robots: { index: false } };
 
 async function toggleAction(id: string) {
   "use server";

@@ -9,7 +9,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import type { BookingStatus } from "@prisma/client";
 
-export const metadata: Metadata = { title: "Panel — Reservas" };
+export const metadata: Metadata = { title: "Panel — Reservas", robots: { index: false } };
 
 interface PageProps {
   searchParams: Promise<{ status?: string; serviceId?: string; from?: string; to?: string; q?: string }>;

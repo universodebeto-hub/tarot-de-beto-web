@@ -6,7 +6,7 @@ import { businessDateString } from "@/lib/timezone";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 
-export const metadata: Metadata = { title: "Panel — Clientes" };
+export const metadata: Metadata = { title: "Panel — Clientes", robots: { index: false } };
 
 interface PageProps {
   searchParams: Promise<{ q?: string }>;

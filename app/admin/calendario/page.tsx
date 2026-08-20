@@ -6,7 +6,7 @@ import { AvailabilityForm } from "@/components/admin/AvailabilityForm";
 import { BlockedTimeForm } from "@/components/admin/BlockedTimeForm";
 import { GlassCard } from "@/components/ui/GlassCard";
 
-export const metadata: Metadata = { title: "Panel — Calendario" };
+export const metadata: Metadata = { title: "Panel — Calendario", robots: { index: false } };
 
 const DAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 

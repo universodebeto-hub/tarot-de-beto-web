@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
   title: "Mi cuenta",
+  robots: { index: false },
 };
 
 export default async function DashboardPage() {

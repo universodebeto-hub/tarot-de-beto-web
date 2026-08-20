@@ -6,7 +6,7 @@ import { fullDateLabel } from "@/lib/date-labels";
 import { BOOKING_STATUS_LABEL } from "@/lib/booking-labels";
 import { GlassCard } from "@/components/ui/GlassCard";
 
-export const metadata: Metadata = { title: "Panel — Cliente" };
+export const metadata: Metadata = { title: "Panel — Cliente", robots: { index: false } };
 
 export default async function AdminClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

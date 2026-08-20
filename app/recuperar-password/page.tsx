@@ -4,6 +4,7 @@ import { Reveal } from "@/components/ui/Reveal";
 
 export const metadata: Metadata = {
   title: "Recuperar contraseña",
+  robots: { index: false },
 };
 
 export default function RecuperarPasswordPage() {

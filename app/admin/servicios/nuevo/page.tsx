@@ -4,7 +4,7 @@ import { createServiceAdmin } from "@/server/admin/services";
 import type { AdminFormState } from "@/server/admin/services";
 import { ServiceForm } from "@/components/admin/ServiceForm";
 
-export const metadata: Metadata = { title: "Panel — Nuevo servicio" };
+export const metadata: Metadata = { title: "Panel — Nuevo servicio", robots: { index: false } };
 
 async function action(prev: AdminFormState, formData: FormData): Promise<AdminFormState> {
   "use server";

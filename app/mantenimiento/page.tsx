@@ -3,6 +3,7 @@ import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   title: "En mantenimiento",
+  robots: { index: false },
 };
 
 /**

@@ -3,6 +3,7 @@ import { FAQSection } from "@/components/sections/FAQSection";
 import { getFaqItems } from "@/server/settings";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/faq" },
   title: "Preguntas frecuentes",
   description: "Resolvemos las dudas más comunes sobre las consultas de tarot de Alberto Arango.",
 };

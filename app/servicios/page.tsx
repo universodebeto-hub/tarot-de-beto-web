@@ -4,6 +4,7 @@ import { CTASection } from "@/components/sections/CTASection";
 import { getServices } from "@/server/services";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/servicios" },
   title: "Servicios",
   description: "Tipos de consulta de tarot disponibles con Alberto Arango: duración, modalidad y precio.",
 };

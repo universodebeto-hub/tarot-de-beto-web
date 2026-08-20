@@ -6,6 +6,7 @@ import {
   reminderEmail,
   cancelledEmail,
   expiredEmail,
+  passwordResetEmail,
 } from "@/server/notifications/templates";
 import type { BookingEmailContext } from "@/server/notifications/templates";
 
@@ -68,4 +69,9 @@ export async function notifyExpired(booking: NotifiableBooking): Promise<void> {
   if (!resolved) return;
   const { subject, html, text } = expiredEmail(resolved.ctx);
   await sendEmail({ to: resolved.email, subject, html, text });
+}
+
+export async function notifyPasswordReset(to: string, firstName: string, resetLink: string): Promise<void> {
+  const { subject, html, text } = passwordResetEmail(firstName, resetLink);
+  await sendEmail({ to, subject, html, text });
 }

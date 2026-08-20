@@ -9,7 +9,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { AdminNoteForm } from "@/components/admin/AdminNoteForm";
 import type { BookingStatus } from "@prisma/client";
 
-export const metadata: Metadata = { title: "Panel — Detalle de reserva" };
+export const metadata: Metadata = { title: "Panel — Detalle de reserva", robots: { index: false } };
 
 const TRANSITIONS: Record<string, { label: string; status: BookingStatus }[]> = {
   PENDING_PAYMENT: [

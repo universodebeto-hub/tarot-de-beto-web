@@ -43,6 +43,12 @@ export const siteConfig = {
 
   currency: required("NEXT_PUBLIC_CURRENCY", "USD"),
   timezone: required("NEXT_PUBLIC_BUSINESS_TIMEZONE", "America/Bogota"),
+
+  analytics: {
+    gaId: required("NEXT_PUBLIC_GA_ID", ""),
+    metaPixelId: required("NEXT_PUBLIC_META_PIXEL_ID", ""),
+    tiktokPixelId: required("NEXT_PUBLIC_TIKTOK_PIXEL_ID", ""),
+  },
 } as const;
 
 export type SiteConfig = typeof siteConfig;

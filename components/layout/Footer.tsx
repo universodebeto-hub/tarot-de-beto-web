@@ -106,6 +106,17 @@ export function Footer() {
           <p className="mb-0">
             © {new Date().getFullYear()} {siteConfig.siteName} — {siteConfig.brandName}
           </p>
+          <div className="flex flex-wrap gap-4">
+            <Link href="/privacidad" className="hover:text-gold-soft transition-colors">
+              Privacidad
+            </Link>
+            <Link href="/terminos" className="hover:text-gold-soft transition-colors">
+              Términos
+            </Link>
+            <Link href="/politica-de-reservas" className="hover:text-gold-soft transition-colors">
+              Reservas y cancelación
+            </Link>
+          </div>
           <p className="mb-0">Lecturas con respeto, sin promesas vacías.</p>
         </div>
       </div>

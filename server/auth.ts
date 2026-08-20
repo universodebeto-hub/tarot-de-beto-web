@@ -6,6 +6,9 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { createSessionCookie, clearSessionCookie } from "@/lib/auth/session";
+import { notifyPasswordReset } from "@/server/notifications/send";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { clientIp } from "@/lib/client-ip";
 
 export interface AuthFormState {
   error?: string;
@@ -22,6 +25,11 @@ const registerSchema = z.object({
 });
 
 export async function registerUser(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
+  const rate = checkRateLimit(`register:${await clientIp()}`, 5, 60 * 60_000);
+  if (!rate.allowed) {
+    return { error: "Demasiados intentos de registro. Espera unos minutos y vuelve a intentarlo." };
+  }
+
   const parsed = registerSchema.safeParse({
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName") || undefined,
@@ -57,6 +65,11 @@ const loginSchema = z.object({
 });
 
 export async function loginUser(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
+  const rate = checkRateLimit(`login:${await clientIp()}`, 10, 15 * 60_000);
+  if (!rate.allowed) {
+    return { error: "Demasiados intentos. Espera unos minutos antes de volver a intentarlo." };
+  }
+
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -101,6 +114,15 @@ export async function requestPasswordReset(
   _prev: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
+  // Límite generoso pero real: evita que alguien bombardee de emails a una
+  // dirección ajena reenviando el formulario. La respuesta sigue siendo
+  // "éxito" genérico para no revelar si el límite se alcanzó por existir o
+  // no la cuenta.
+  const rate = checkRateLimit(`reset-request:${await clientIp()}`, 5, 60 * 60_000);
+  if (!rate.allowed) {
+    return { success: true };
+  }
+
   const parsed = requestResetSchema.safeParse({ email: formData.get("email") });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Correo inválido" };
@@ -116,8 +138,9 @@ export async function requestPasswordReset(
     await prisma.passwordReset.create({ data: { userId: user.id, token, expiresAt } });
 
     const resetLink = `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/restablecer-password?token=${token}`;
-    // TODO Fase 8: enviar `resetLink` por email (SMTP) en vez de solo loguearlo.
-    console.log(`[auth] Link de restablecimiento para ${user.email}: ${resetLink}`);
+    await notifyPasswordReset(user.email, user.firstName, resetLink).catch((err) =>
+      console.error("[notify] password_reset:", err),
+    );
   }
 
   return { success: true };
@@ -129,6 +152,13 @@ const resetPasswordSchema = z.object({
 });
 
 export async function resetPassword(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
+  // Defensa en profundidad: el token de 32 bytes aleatorios ya hace
+  // impracticable adivinarlo, pero igual se limita el ritmo de intentos.
+  const rate = checkRateLimit(`reset-confirm:${await clientIp()}`, 20, 15 * 60_000);
+  if (!rate.allowed) {
+    return { error: "Demasiados intentos. Espera unos minutos y vuelve a intentarlo." };
+  }
+
   const parsed = resetPasswordSchema.safeParse({
     token: formData.get("token"),
     password: formData.get("password"),

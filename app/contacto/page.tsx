@@ -5,6 +5,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/contacto" },
   title: "Contacto",
   description: "Contacta a Alberto Arango por WhatsApp, redes sociales o el formulario de contacto.",
 };

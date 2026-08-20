@@ -5,6 +5,7 @@ import { Reveal } from "@/components/ui/Reveal";
 
 export const metadata: Metadata = {
   title: "Restablecer contraseña",
+  robots: { index: false },
 };
 
 interface ResetPasswordPageProps {

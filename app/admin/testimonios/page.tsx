@@ -5,7 +5,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import type { TestimonialStatus } from "@prisma/client";
 
-export const metadata: Metadata = { title: "Panel — Testimonios" };
+export const metadata: Metadata = { title: "Panel — Testimonios", robots: { index: false } };
 
 const STATUS_LABEL: Record<TestimonialStatus, string> = {
   PENDING: "Pendiente",

@@ -74,3 +74,21 @@ export function expiredEmail(ctx: BookingEmailContext): EmailContent {
   ]);
   return { subject: `Reserva expirada — #${ctx.bookingNumber}`, html, text };
 }
+
+export function passwordResetEmail(firstName: string, resetLink: string): EmailContent {
+  const title = `Hola ${firstName}, restablece tu contraseña`;
+  const intro = "Recibimos una solicitud para restablecer tu contraseña. Si fuiste tú, entra al siguiente enlace (válido por 30 minutos):";
+  const outro = "Si no fuiste tú, ignora este correo — tu contraseña actual sigue siendo válida.";
+
+  const text = [title, "", intro, resetLink, "", outro, "", `— ${siteConfig.siteName}`].join("\n");
+  const html = `
+    <div style="font-family: Georgia, serif; background:#0b0a0c; color:#f3efe8; padding:32px;">
+      <h1 style="color:#e8a33d; font-size:22px; margin:0 0 16px;">${title}</h1>
+      <p style="margin:0 0 12px; color:#cfc9c2;">${intro}</p>
+      <p style="margin:0 0 12px;"><a href="${resetLink}" style="color:#e8a33d;">${resetLink}</a></p>
+      <p style="margin:0 0 12px; color:#cfc9c2;">${outro}</p>
+      <p style="margin-top:24px; color:#8a8590; font-size:12px;">— ${siteConfig.siteName}</p>
+    </div>
+  `;
+  return { subject: "Restablecer tu contraseña", html, text };
+}

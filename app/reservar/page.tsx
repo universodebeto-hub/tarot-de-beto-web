@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 export const metadata: Metadata = {
   title: "Reservar consulta",
   description: "Elige tu servicio, fecha y horario para reservar tu consulta con Alberto Arango.",
+  robots: { index: false },
 };
 
 const DAYS_AHEAD = 14;

@@ -13,6 +13,7 @@ import { PayPalButton } from "@/components/booking/PayPalButton";
 
 export const metadata: Metadata = {
   title: "Tu reserva",
+  robots: { index: false },
 };
 
 interface BookingPageProps {

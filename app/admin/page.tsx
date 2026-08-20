@@ -6,7 +6,7 @@ import { expireAndNotify } from "@/server/notifications/expiry";
 import { requireAdmin } from "@/lib/auth/session";
 import { GlassCard } from "@/components/ui/GlassCard";
 
-export const metadata: Metadata = { title: "Panel — Resumen" };
+export const metadata: Metadata = { title: "Panel — Resumen", robots: { index: false } };
 
 async function runMaintenanceAction(): Promise<void> {
   "use server";

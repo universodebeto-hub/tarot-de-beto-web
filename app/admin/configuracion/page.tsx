@@ -4,7 +4,7 @@ import { listSettingsAdmin, upsertSettingAdmin } from "@/server/admin/settings";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { SettingRow } from "@/components/admin/SettingRow";
 
-export const metadata: Metadata = { title: "Panel — Configuración" };
+export const metadata: Metadata = { title: "Panel — Configuración", robots: { index: false } };
 
 async function saveAction(key: string, prev: { error?: string; success?: boolean }, formData: FormData) {
   "use server";

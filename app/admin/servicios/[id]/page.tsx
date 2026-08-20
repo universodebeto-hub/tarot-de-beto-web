@@ -6,7 +6,7 @@ import { updateServiceAdmin } from "@/server/admin/services";
 import type { AdminFormState } from "@/server/admin/services";
 import { ServiceForm } from "@/components/admin/ServiceForm";
 
-export const metadata: Metadata = { title: "Panel — Editar servicio" };
+export const metadata: Metadata = { title: "Panel — Editar servicio", robots: { index: false } };
 
 export default async function EditServicePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

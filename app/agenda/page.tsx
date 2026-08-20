@@ -5,6 +5,7 @@ import { nextBusinessDates } from "@/lib/timezone";
 import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/agenda" },
   title: "Agenda",
   description: "Consulta la disponibilidad de Alberto Arango y elige el horario que mejor te quede.",
 };

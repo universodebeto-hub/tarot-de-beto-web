@@ -9,6 +9,8 @@ import { StarsField } from "@/components/layout/StarsField";
 import { ToastProvider } from "@/components/ui/Toast";
 import { siteConfig } from "@/config/site";
 import { getCurrentUser } from "@/lib/auth/session";
+import { Analytics } from "@/components/analytics/Analytics";
+import { LocalBusinessJsonLd } from "@/components/seo/LocalBusinessJsonLd";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -29,14 +31,33 @@ const spaceMono = Space_Mono({
   weight: ["400", "700"],
 });
 
+const DEFAULT_TITLE = `${siteConfig.siteName} — Lecturas de tarot con Alberto Arango`;
+const DEFAULT_DESCRIPTION =
+  "Tarot, guía espiritual y consultas personalizadas con Alberto Arango. Más de 12 años de experiencia acompañando decisiones de amor, trabajo y camino de vida.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
   title: {
-    default: `${siteConfig.siteName} — Lecturas de tarot con Alberto Arango`,
+    default: DEFAULT_TITLE,
     template: `%s — ${siteConfig.siteName}`,
   },
-  description:
-    "Tarot, guía espiritual y consultas personalizadas con Alberto Arango. Más de 12 años de experiencia acompañando decisiones de amor, trabajo y camino de vida.",
+  description: DEFAULT_DESCRIPTION,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "es_CO",
+    siteName: siteConfig.siteName,
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    url: siteConfig.siteUrl,
+  },
+  twitter: {
+    card: "summary",
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+  },
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
@@ -53,6 +74,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       className={`${fraunces.variable} ${workSans.variable} ${spaceMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <LocalBusinessJsonLd />
         <StarsField />
         <ToastProvider>
           <Navbar whatsappNumber={siteConfig.contact.whatsappNumber} userFirstName={user?.firstName} />
@@ -60,6 +82,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <Footer />
           <WhatsAppButton whatsappNumber={siteConfig.contact.whatsappNumber} />
         </ToastProvider>
+        <Analytics
+          gaId={siteConfig.analytics.gaId}
+          metaPixelId={siteConfig.analytics.metaPixelId}
+          tiktokPixelId={siteConfig.analytics.tiktokPixelId}
+        />
       </body>
     </html>
   );

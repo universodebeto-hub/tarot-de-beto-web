@@ -3,6 +3,7 @@ import { AboutSection } from "@/components/sections/AboutSection";
 import { CTASection } from "@/components/sections/CTASection";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/quienes-somos" },
   title: "Quiénes somos",
   description:
     "Conoce a Alberto Arango, tarotista y guía espiritual con más de 12 años de experiencia.",
