@@ -1,9 +1,8 @@
 /**
  * Imágenes personalizadas por servicio del catálogo, provistas por el
  * usuario (no generadas por IA en este proyecto — ver conversación).
- * Clave por `Service.slug` (ver prisma/seed.ts). Si un slug no aparece
- * acá, `ServiceCard` cae al ícono genérico de siempre — no todos los
- * servicios tienen imagen todavía, se van agregando de a una.
+ * Clave por `Service.slug` (ver prisma/seed.ts). Catálogo completo: los 14
+ * servicios ya tienen imagen propia.
  *
  * Archivos en `public/assets/services/<slug>.jpg`.
  */
@@ -19,4 +18,7 @@ export const SERVICE_IMAGES: Record<string, string> = {
   "ritual-corte-de-lazos": "/assets/services/ritual-corte-de-lazos.jpg",
   "ritual-del-dinero": "/assets/services/ritual-del-dinero.jpg",
   "ritual-de-amarre": "/assets/services/ritual-de-amarre.jpg",
+  "informe-numerologico": "/assets/services/informe-numerologico.jpg",
+  "carta-astral": "/assets/services/carta-astral.jpg",
+  "tabacos": "/assets/services/tabacos.jpg",
 };
