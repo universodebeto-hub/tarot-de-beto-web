@@ -11,16 +11,18 @@ const TEST_PASSWORD = "Tarot2026!";
  * Estructura oficial del catálogo (comando "CONFIGURAR ESTRUCTURA DEL
  * CATÁLOGO"): tres categorías — "Lecturas de Tarot", "Rituales Energéticos",
  * "Otros" — no agregar categorías nuevas ni mover servicios entre ellas.
- * Los servicios de Rituales Energéticos y Otros quedan registrados
- * (`available: false`, con precio/duración/descripción placeholder) a la
- * espera de que se definan sus datos reales en una fase posterior — no
- * inventar precios ni descripciones para ellos.
+ *
+ * Contenido (comando "completar información de los productos"): las
+ * descripciones de todo el catálogo y los precios de Rituales Energéticos
+ * quedaron definidos por ese comando. "Informe Numerológico", "Tabacos" y
+ * "Carta Astral" siguen sin precio definitivo a propósito — no inventarlo.
+ * `available` de Rituales/Otros se deja como estaba (no es parte de ese
+ * comando, que fue solo sobre contenido informativo, no sobre activar
+ * reservas online para ellos).
  */
 const CATEGORY_LECTURAS = "Lecturas de Tarot";
 const CATEGORY_RITUALES = "Rituales Energéticos";
 const CATEGORY_OTROS = "Otros";
-
-const PENDING_DESCRIPTION = "Detalles de este servicio próximamente.";
 
 async function main() {
   // --- 1. Lecturas de Tarot ---
@@ -28,6 +30,8 @@ async function main() {
     where: { slug: "consulta-pregunta-tarot" },
     update: {
       name: "Consulta / Pregunta de Tarot",
+      description:
+        "Consulta puntual enfocada en una única pregunta. La lectura se realiza exclusivamente sobre el tema planteado y la respuesta se entrega mediante un audio personalizado con la interpretación de las cartas.",
       category: CATEGORY_LECTURAS,
       price: 3,
       currency: "USD",
@@ -36,7 +40,8 @@ async function main() {
     create: {
       slug: "consulta-pregunta-tarot",
       name: "Consulta / Pregunta de Tarot",
-      description: "Una pregunta puntual respondida directo con las cartas, sin vueltas.",
+      description:
+        "Consulta puntual enfocada en una única pregunta. La lectura se realiza exclusivamente sobre el tema planteado y la respuesta se entrega mediante un audio personalizado con la interpretación de las cartas.",
       // Duración no especificada en el comando de catálogo — se usa el
       // mínimo razonable para el ítem más corto/económico del catálogo;
       // ajustar si Beto quiere un valor distinto.
@@ -54,6 +59,8 @@ async function main() {
     where: { slug: "consulta-15-minutos" },
     update: {
       name: "Lectura de Tarot — 15 minutos",
+      description:
+        "Lectura de tarot personalizada realizada mediante llamada. Permite abordar una situación concreta y profundizar en temas específicos como amor, relaciones, decisiones, trabajo, proyectos o situaciones personales.",
       category: CATEGORY_LECTURAS,
       sortOrder: 1,
     },
@@ -61,7 +68,7 @@ async function main() {
       slug: "consulta-15-minutos",
       name: "Lectura de Tarot — 15 minutos",
       description:
-        "Una pregunta puntual, una tirada corta, una respuesta directa. Ideal cuando necesitas claridad rápida sobre algo concreto.",
+        "Lectura de tarot personalizada realizada mediante llamada. Permite abordar una situación concreta y profundizar en temas específicos como amor, relaciones, decisiones, trabajo, proyectos o situaciones personales.",
       durationMinutes: 15,
       price: 10,
       currency: "USD",
@@ -76,6 +83,8 @@ async function main() {
     where: { slug: "consulta-30-minutos" },
     update: {
       name: "Lectura de Tarot — 30 minutos",
+      description:
+        "Lectura de tarot personalizada mediante llamada, con mayor profundidad que la sesión de 15 minutos. El tiempo disponible permite explorar con más detalle una situación, abordar distintos aspectos relacionados con ella y realizar varias preguntas según el desarrollo de la consulta.",
       category: CATEGORY_LECTURAS,
       sortOrder: 2,
     },
@@ -83,7 +92,7 @@ async function main() {
       slug: "consulta-30-minutos",
       name: "Lectura de Tarot — 30 minutos",
       description:
-        "Una mirada completa a tu presente: amor, trabajo y camino de vida. Qué energías están en juego y hacia dónde se inclina el camino.",
+        "Lectura de tarot personalizada mediante llamada, con mayor profundidad que la sesión de 15 minutos. El tiempo disponible permite explorar con más detalle una situación, abordar distintos aspectos relacionados con ella y realizar varias preguntas según el desarrollo de la consulta.",
       durationMinutes: 30,
       price: 20,
       currency: "USD",
@@ -98,6 +107,8 @@ async function main() {
     where: { slug: "consulta-60-minutos" },
     update: {
       name: "Lectura de Tarot — 1 hora",
+      description:
+        "Lectura de tarot personalizada mediante llamada, en la modalidad de mayor duración y profundidad. Permite desarrollar ampliamente diferentes situaciones, realizar varias preguntas y profundizar en distintos aspectos de la consulta, con un alcance mayor que las sesiones de 15 y 30 minutos.",
       category: CATEGORY_LECTURAS,
       sortOrder: 3,
     },
@@ -105,7 +116,7 @@ async function main() {
       slug: "consulta-60-minutos",
       name: "Lectura de Tarot — 1 hora",
       description:
-        "Sesión pausada para acompañar procesos más grandes: decisiones importantes, ciclos que cierran o varias preguntas en una sola consulta.",
+        "Lectura de tarot personalizada mediante llamada, en la modalidad de mayor duración y profundidad. Permite desarrollar ampliamente diferentes situaciones, realizar varias preguntas y profundizar en distintos aspectos de la consulta, con un alcance mayor que las sesiones de 15 y 30 minutos.",
       durationMinutes: 60,
       price: 35,
       currency: "USD",
@@ -116,27 +127,76 @@ async function main() {
     },
   });
 
-  // --- 2. Rituales Energéticos (sin descripción/precio definitivos todavía) ---
+  // --- 2. Rituales Energéticos ---
   const rituales = [
-    { slug: "ritual-endulzamiento", name: "Ritual de Endulzamiento" },
-    { slug: "ritual-abre-caminos", name: "Ritual Abre Caminos" },
-    { slug: "ritual-destrancadera", name: "Ritual Destrancadera" },
-    { slug: "ritual-proteccion", name: "Ritual de Protección" },
-    { slug: "ritual-corte-de-lazos", name: "Ritual de Corte de Lazos" },
-    { slug: "ritual-del-dinero", name: "Ritual del Dinero" },
-    { slug: "ritual-de-amarre", name: "Ritual de Amarre" },
+    {
+      slug: "ritual-endulzamiento",
+      name: "Ritual de Endulzamiento",
+      price: 120,
+      description:
+        "Trabajo energético orientado a la armonización de relaciones de pareja y vínculos afectivos. Busca favorecer la armonía, el acercamiento, la comunicación y una energía afectiva más favorable dentro de la relación.",
+    },
+    {
+      slug: "ritual-abre-caminos",
+      name: "Ritual Abre Caminos",
+      price: 120,
+      description:
+        "Trabajo energético enfocado en la apertura de caminos y oportunidades, especialmente en áreas como negocios, trabajo, proyectos y nuevas oportunidades. Está orientado a situaciones percibidas como bloqueadas o estancadas.",
+    },
+    {
+      slug: "ritual-destrancadera",
+      name: "Ritual Destrancadera",
+      price: 120,
+      description:
+        "Trabajo energético de limpieza, enfocado en el alejamiento de influencias negativas, la renovación energética y las situaciones de estancamiento. A diferencia del Ritual Abre Caminos, está orientado principalmente a limpiar y destrabar, antes que a trabajar sobre oportunidades específicas.",
+    },
+    {
+      slug: "ritual-proteccion",
+      name: "Ritual de Protección",
+      price: 100,
+      description:
+        "Trabajo energético enfocado en la protección y el resguardo frente a influencias externas, ambientes cargados o situaciones que puedan generar desgaste energético. Su enfoque es preventivo y de acompañamiento, sin prometer resultados absolutos.",
+    },
+    {
+      slug: "ritual-corte-de-lazos",
+      name: "Ritual de Corte de Lazos",
+      price: 140,
+      description:
+        "Ritual de distanciamiento y cierre de vínculos, orientado al alejamiento de una persona o relación que genera daño, desgaste o influencia negativa. Trabaja simbólicamente para separar y liberar a la persona de una conexión que desea dejar atrás.",
+    },
+    {
+      slug: "ritual-del-dinero",
+      name: "Ritual del Dinero",
+      price: 100,
+      description:
+        "Trabajo energético enfocado específicamente en objetivos relacionados con dinero, abundancia y prosperidad. Puede aplicarse a requerimientos concretos vinculados a negocios, proyectos, metas económicas, oportunidades financieras u objetivos específicos de abundancia — a diferencia del Ritual Abre Caminos, su enfoque es exclusivamente económico.",
+    },
+    {
+      slug: "ritual-de-amarre",
+      name: "Ritual de Amarre",
+      price: 150,
+      description:
+        "Ritual de enfoque afectivo relacionado con una persona o vínculo sentimental específico. Comparte una orientación similar al Ritual de Endulzamiento, pero representa un trabajo energético de mayor intensidad y profundidad. No presenta resultados como garantizados.",
+    },
   ];
 
   for (const [i, ritual] of rituales.entries()) {
     await prisma.service.upsert({
       where: { slug: ritual.slug },
-      update: { name: ritual.name, category: CATEGORY_RITUALES, sortOrder: i },
+      update: {
+        name: ritual.name,
+        description: ritual.description,
+        price: ritual.price,
+        currency: "USD",
+        category: CATEGORY_RITUALES,
+        sortOrder: i,
+      },
       create: {
         slug: ritual.slug,
         name: ritual.name,
-        description: PENDING_DESCRIPTION,
+        description: ritual.description,
         durationMinutes: 30,
-        price: 0,
+        price: ritual.price,
         currency: "USD",
         available: false,
         modality: "VIDEOLLAMADA",
@@ -146,21 +206,36 @@ async function main() {
     });
   }
 
-  // --- 3. Otros (sin descripción/precio definitivos todavía) ---
+  // --- 3. Otros (sin precio definitivo todavía) ---
   const otros = [
-    { slug: "informe-numerologico", name: "Informe Numerológico" },
-    { slug: "tabacos", name: "Tabacos" },
-    { slug: "carta-astral", name: "Carta Astral" },
+    {
+      slug: "informe-numerologico",
+      name: "Informe Numerológico",
+      description:
+        "Análisis personalizado basado en los datos de nacimiento, mediante el cual se estudian distintos aspectos numerológicos: características personales, ciclos y tendencias.",
+    },
+    {
+      slug: "tabacos",
+      name: "Tabacos",
+      description:
+        "Lectura espiritual realizada mediante tabacos, utilizada como herramienta de interpretación y orientación sobre distintas situaciones y aspectos de la vida de la persona.",
+    },
+    {
+      slug: "carta-astral",
+      name: "Carta Astral",
+      description:
+        "Interpretación personalizada de la carta astral a partir de los datos de nacimiento. Permite analizar distintos aspectos de la personalidad, tendencias, ciclos y áreas de la vida según la posición de los astros en el momento del nacimiento.",
+    },
   ];
 
   for (const [i, item] of otros.entries()) {
     await prisma.service.upsert({
       where: { slug: item.slug },
-      update: { name: item.name, category: CATEGORY_OTROS, sortOrder: i },
+      update: { name: item.name, description: item.description, category: CATEGORY_OTROS, sortOrder: i },
       create: {
         slug: item.slug,
         name: item.name,
-        description: PENDING_DESCRIPTION,
+        description: item.description,
         durationMinutes: 30,
         price: 0,
         currency: "USD",
