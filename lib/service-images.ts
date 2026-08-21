@@ -14,4 +14,5 @@ export const SERVICE_IMAGES: Record<string, string> = {
   "ritual-proteccion": "/assets/services/ritual-proteccion.jpg",
   "ritual-corte-de-lazos": "/assets/services/ritual-corte-de-lazos.jpg",
   "ritual-del-dinero": "/assets/services/ritual-del-dinero.jpg",
+  "ritual-de-amarre": "/assets/services/ritual-de-amarre.jpg",
 };
