@@ -8,7 +8,10 @@
  * Archivos en `public/assets/services/<slug>.jpg`.
  */
 export const SERVICE_IMAGES: Record<string, string> = {
+  "ritual-endulzamiento": "/assets/services/ritual-endulzamiento.jpg",
   "ritual-abre-caminos": "/assets/services/ritual-abre-caminos.jpg",
-  "ritual-corte-de-lazos": "/assets/services/ritual-corte-de-lazos.jpg",
   "ritual-destrancadera": "/assets/services/ritual-destrancadera.jpg",
+  "ritual-proteccion": "/assets/services/ritual-proteccion.jpg",
+  "ritual-corte-de-lazos": "/assets/services/ritual-corte-de-lazos.jpg",
+  "ritual-del-dinero": "/assets/services/ritual-del-dinero.jpg",
 };
