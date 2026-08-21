@@ -7,13 +7,59 @@ const prisma = new PrismaClient();
 /** Contraseña de ambos usuarios de prueba (solo desarrollo). */
 const TEST_PASSWORD = "Tarot2026!";
 
+/**
+ * Estructura oficial del catálogo (comando "CONFIGURAR ESTRUCTURA DEL
+ * CATÁLOGO"): tres categorías — "Lecturas de Tarot", "Rituales Energéticos",
+ * "Otros" — no agregar categorías nuevas ni mover servicios entre ellas.
+ * Los servicios de Rituales Energéticos y Otros quedan registrados
+ * (`available: false`, con precio/duración/descripción placeholder) a la
+ * espera de que se definan sus datos reales en una fase posterior — no
+ * inventar precios ni descripciones para ellos.
+ */
+const CATEGORY_LECTURAS = "Lecturas de Tarot";
+const CATEGORY_RITUALES = "Rituales Energéticos";
+const CATEGORY_OTROS = "Otros";
+
+const PENDING_DESCRIPTION = "Detalles de este servicio próximamente.";
+
 async function main() {
+  // --- 1. Lecturas de Tarot ---
+  await prisma.service.upsert({
+    where: { slug: "consulta-pregunta-tarot" },
+    update: {
+      name: "Consulta / Pregunta de Tarot",
+      category: CATEGORY_LECTURAS,
+      price: 3,
+      currency: "USD",
+      sortOrder: 0,
+    },
+    create: {
+      slug: "consulta-pregunta-tarot",
+      name: "Consulta / Pregunta de Tarot",
+      description: "Una pregunta puntual respondida directo con las cartas, sin vueltas.",
+      // Duración no especificada en el comando de catálogo — se usa el
+      // mínimo razonable para el ítem más corto/económico del catálogo;
+      // ajustar si Beto quiere un valor distinto.
+      durationMinutes: 10,
+      price: 3,
+      currency: "USD",
+      available: true,
+      modality: "VIDEOLLAMADA",
+      category: CATEGORY_LECTURAS,
+      sortOrder: 0,
+    },
+  });
+
   await prisma.service.upsert({
     where: { slug: "consulta-15-minutos" },
-    update: {},
+    update: {
+      name: "Lectura de Tarot — 15 minutos",
+      category: CATEGORY_LECTURAS,
+      sortOrder: 1,
+    },
     create: {
       slug: "consulta-15-minutos",
-      name: "Consulta express",
+      name: "Lectura de Tarot — 15 minutos",
       description:
         "Una pregunta puntual, una tirada corta, una respuesta directa. Ideal cuando necesitas claridad rápida sobre algo concreto.",
       durationMinutes: 15,
@@ -21,17 +67,21 @@ async function main() {
       currency: "USD",
       available: true,
       modality: "VIDEOLLAMADA",
-      category: "Express",
-      sortOrder: 0,
+      category: CATEGORY_LECTURAS,
+      sortOrder: 1,
     },
   });
 
   await prisma.service.upsert({
     where: { slug: "consulta-30-minutos" },
-    update: {},
+    update: {
+      name: "Lectura de Tarot — 30 minutos",
+      category: CATEGORY_LECTURAS,
+      sortOrder: 2,
+    },
     create: {
       slug: "consulta-30-minutos",
-      name: "Lectura general",
+      name: "Lectura de Tarot — 30 minutos",
       description:
         "Una mirada completa a tu presente: amor, trabajo y camino de vida. Qué energías están en juego y hacia dónde se inclina el camino.",
       durationMinutes: 30,
@@ -39,17 +89,21 @@ async function main() {
       currency: "USD",
       available: true,
       modality: "VIDEOLLAMADA",
-      category: "General",
-      sortOrder: 1,
+      category: CATEGORY_LECTURAS,
+      sortOrder: 2,
     },
   });
 
   await prisma.service.upsert({
     where: { slug: "consulta-60-minutos" },
-    update: {},
+    update: {
+      name: "Lectura de Tarot — 1 hora",
+      category: CATEGORY_LECTURAS,
+      sortOrder: 3,
+    },
     create: {
       slug: "consulta-60-minutos",
-      name: "Consulta extendida",
+      name: "Lectura de Tarot — 1 hora",
       description:
         "Sesión pausada para acompañar procesos más grandes: decisiones importantes, ciclos que cierran o varias preguntas en una sola consulta.",
       durationMinutes: 60,
@@ -57,10 +111,66 @@ async function main() {
       currency: "USD",
       available: true,
       modality: "VIDEOLLAMADA",
-      category: "Extendida",
-      sortOrder: 2,
+      category: CATEGORY_LECTURAS,
+      sortOrder: 3,
     },
   });
+
+  // --- 2. Rituales Energéticos (sin descripción/precio definitivos todavía) ---
+  const rituales = [
+    { slug: "ritual-endulzamiento", name: "Ritual de Endulzamiento" },
+    { slug: "ritual-abre-caminos", name: "Ritual Abre Caminos" },
+    { slug: "ritual-destrancadera", name: "Ritual Destrancadera" },
+    { slug: "ritual-proteccion", name: "Ritual de Protección" },
+    { slug: "ritual-corte-de-lazos", name: "Ritual de Corte de Lazos" },
+    { slug: "ritual-del-dinero", name: "Ritual del Dinero" },
+    { slug: "ritual-de-amarre", name: "Ritual de Amarre" },
+  ];
+
+  for (const [i, ritual] of rituales.entries()) {
+    await prisma.service.upsert({
+      where: { slug: ritual.slug },
+      update: { name: ritual.name, category: CATEGORY_RITUALES, sortOrder: i },
+      create: {
+        slug: ritual.slug,
+        name: ritual.name,
+        description: PENDING_DESCRIPTION,
+        durationMinutes: 30,
+        price: 0,
+        currency: "USD",
+        available: false,
+        modality: "VIDEOLLAMADA",
+        category: CATEGORY_RITUALES,
+        sortOrder: i,
+      },
+    });
+  }
+
+  // --- 3. Otros (sin descripción/precio definitivos todavía) ---
+  const otros = [
+    { slug: "informe-numerologico", name: "Informe Numerológico" },
+    { slug: "tabacos", name: "Tabacos" },
+    { slug: "carta-astral", name: "Carta Astral" },
+  ];
+
+  for (const [i, item] of otros.entries()) {
+    await prisma.service.upsert({
+      where: { slug: item.slug },
+      update: { name: item.name, category: CATEGORY_OTROS, sortOrder: i },
+      create: {
+        slug: item.slug,
+        name: item.name,
+        description: PENDING_DESCRIPTION,
+        durationMinutes: 30,
+        price: 0,
+        currency: "USD",
+        available: false,
+        modality: "VIDEOLLAMADA",
+        category: CATEGORY_OTROS,
+        sortOrder: i,
+      },
+    });
+  }
 
   const testimonials = [
     {
@@ -160,8 +270,9 @@ async function main() {
     },
   });
 
+  const serviceCount = await prisma.service.count();
   console.log(
-    "Seed completo: 3 servicios, 3 testimonios publicados, 3 settings, horario semanal (7 días), 2 usuarios de prueba.",
+    `Seed completo: ${serviceCount} servicios (catálogo: Lecturas de Tarot, Rituales Energéticos, Otros), 3 testimonios publicados, 3 settings, horario semanal (7 días), 2 usuarios de prueba.`,
   );
 }
 
