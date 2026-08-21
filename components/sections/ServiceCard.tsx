@@ -1,6 +1,8 @@
+import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Reveal } from "@/components/ui/Reveal";
+import { SERVICE_IMAGES } from "@/lib/service-images";
 import type { Service } from "@/types/content";
 
 const ROMAN = ["0", "I", "II", "III", "IV", "V", "VI", "VII"];
@@ -11,15 +13,29 @@ interface ServiceCardProps {
 }
 
 export function ServiceCard({ service, index }: ServiceCardProps) {
+  const image = SERVICE_IMAGES[service.slug];
+
   return (
     <Reveal>
       <GlassCard numeral={ROMAN[index % ROMAN.length]} className="flex h-full flex-col gap-3">
-        <div className="flex h-[46px] w-[46px] items-center justify-center text-gold">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.4} className="h-[30px] w-[30px]">
-            <circle cx="12" cy="12" r="9" />
-            <path d="M12 7v5l3.5 2" />
-          </svg>
-        </div>
+        {image ? (
+          <div className="relative -mt-1 aspect-square w-full overflow-hidden rounded-lg border border-white/10">
+            <Image
+              src={image}
+              alt={service.name}
+              fill
+              sizes="(min-width: 1024px) 360px, (min-width: 640px) 50vw, 100vw"
+              className="object-cover"
+            />
+          </div>
+        ) : (
+          <div className="flex h-[46px] w-[46px] items-center justify-center text-gold">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.4} className="h-[30px] w-[30px]">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3.5 2" />
+            </svg>
+          </div>
+        )}
         <h3 className="mb-0">{service.name}</h3>
         <p className="text-sm">{service.description}</p>
 
