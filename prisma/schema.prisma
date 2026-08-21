@@ -191,6 +191,10 @@ model Booking {
   paypalOrderId   String?       @unique
   paypalCaptureId String?
   notes           String?
+  /// Datos adicionales que algunos servicios exigen para poder realizarse
+  /// (ej. fecha/hora/lugar de nacimiento para Carta Astral) — ver
+  /// `lib/service-intake.ts`. Null si el servicio no pide nada extra.
+  intakeData      Json?
   /// Horas-antes (24, 2, ...) para las que ya se envió recordatorio — evita
   /// reenviar el mismo recordatorio si `sendDueReminders` corre varias veces.
   remindersSentHours Int[]      @default([])

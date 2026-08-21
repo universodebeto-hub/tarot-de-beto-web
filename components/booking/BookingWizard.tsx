@@ -11,6 +11,7 @@ import { DateStrip } from "@/components/agenda/DateStrip";
 import { SlotGrid } from "@/components/agenda/SlotGrid";
 import { StepIndicator } from "@/components/booking/StepIndicator";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { intakeFieldsFor, hasRequiredIntakeData } from "@/lib/service-intake";
 import type { Service } from "@/types/content";
 
 interface CurrentUserInfo {
@@ -66,10 +67,12 @@ export function BookingWizard({
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
+  const [intakeData, setIntakeData] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, startSubmitTransition] = useTransition();
 
   const selectedService = availableServices.find((s) => s.id === serviceId) ?? null;
+  const intakeFields = selectedService ? intakeFieldsFor(selectedService.slug) : [];
 
   useEffect(() => {
     if (!serviceId || !date || step !== 3) return;
@@ -111,6 +114,7 @@ export function BookingWizard({
         guestName: currentUser ? undefined : guestName,
         guestEmail: currentUser ? undefined : guestEmail,
         guestPhone: currentUser ? undefined : guestPhone || undefined,
+        intakeData: intakeFields.length > 0 ? intakeData : undefined,
       });
 
       if (result.error || !result.booking) {
@@ -132,7 +136,10 @@ export function BookingWizard({
   const canGoStep1Next = Boolean(serviceId);
   const canGoStep2Next = Boolean(date);
   const canGoStep3Next = Boolean(selectedSlot);
-  const canSubmit = currentUser ? true : guestName.trim() && guestEmail.trim();
+  const hasContactData = currentUser ? true : Boolean(guestName.trim() && guestEmail.trim());
+  const hasIntakeData =
+    intakeFields.length === 0 || hasRequiredIntakeData(selectedService?.slug ?? "", intakeData);
+  const canSubmit = hasContactData && hasIntakeData;
 
   return (
     <div>
@@ -266,6 +273,30 @@ export function BookingWizard({
               </>
             )}
           </GlassCard>
+
+          {intakeFields.length > 0 ? (
+            <GlassCard className="flex flex-col gap-4">
+              <span className="eyebrow">Información necesaria para tu servicio</span>
+              <p className="mb-0 text-sm text-bone-dim">
+                {selectedService.name} requiere estos datos para poder realizarse correctamente.
+              </p>
+              {intakeFields.map((field) => (
+                <div key={field.key}>
+                  <label htmlFor={`intake-${field.key}`} className={labelClass}>
+                    {field.label}
+                  </label>
+                  <input
+                    id={`intake-${field.key}`}
+                    type={field.type}
+                    value={intakeData[field.key] ?? ""}
+                    onChange={(e) => setIntakeData((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                    required
+                    className={inputClass}
+                  />
+                </div>
+              ))}
+            </GlassCard>
+          ) : null}
 
           {submitError ? (
             <div className="flex flex-col gap-2">

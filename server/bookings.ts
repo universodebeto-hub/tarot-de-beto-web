@@ -9,6 +9,7 @@ import { getAvailableSlots, expireStaleBookings } from "@/server/availability";
 import { getSetting } from "@/server/settings";
 import { businessDateString } from "@/lib/timezone";
 import { notifyBookingReceived } from "@/server/notifications/send";
+import { hasRequiredIntakeData } from "@/lib/service-intake";
 
 async function nextBookingNumber(): Promise<string> {
   const year = new Date().getFullYear();
@@ -24,6 +25,8 @@ const createBookingSchema = z.object({
   guestName: z.string().trim().min(1, "Tu nombre es obligatorio").max(120).optional(),
   guestEmail: z.string().trim().toLowerCase().email("Correo inválido").optional(),
   guestPhone: z.string().trim().max(30).optional(),
+  /** Datos adicionales exigidos por algunos servicios — ver lib/service-intake.ts. */
+  intakeData: z.record(z.string(), z.string().trim().max(200)).optional(),
 });
 
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
@@ -47,11 +50,15 @@ export async function createPendingBooking(input: CreateBookingInput): Promise<C
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
   }
-  const { serviceId, startUtc, guestName, guestEmail, guestPhone } = parsed.data;
+  const { serviceId, startUtc, guestName, guestEmail, guestPhone, intakeData } = parsed.data;
 
   const service = await getServiceById(serviceId);
   if (!service || !service.available) {
     return { error: "Ese servicio ya no está disponible." };
+  }
+
+  if (!hasRequiredIntakeData(service.slug, intakeData)) {
+    return { error: "Faltan datos obligatorios para este servicio." };
   }
 
   const startsAt = new Date(startUtc);
@@ -92,6 +99,7 @@ export async function createPendingBooking(input: CreateBookingInput): Promise<C
         startsAt,
         endsAt,
         paymentDeadline,
+        intakeData: intakeData ?? undefined,
       },
       include: { service: true, user: true },
     });

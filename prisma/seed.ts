@@ -206,40 +206,55 @@ async function main() {
     });
   }
 
-  // --- 3. Otros (sin precio definitivo todavía) ---
+  // --- 3. Otros ---
+  // Numerología y Carta Astral piden datos adicionales de nacimiento antes de
+  // poder completar la solicitud (ver lib/service-intake.ts, validado también
+  // en server/bookings.ts) — las descripciones lo explican para que quede
+  // claro desde el catálogo, no solo en el formulario.
   const otros = [
     {
       slug: "informe-numerologico",
       name: "Informe Numerológico",
       description:
-        "Análisis personalizado basado en los datos de nacimiento, mediante el cual se estudian distintos aspectos numerológicos: características personales, ciclos y tendencias.",
-    },
-    {
-      slug: "tabacos",
-      name: "Tabacos",
-      description:
-        "Lectura espiritual realizada mediante tabacos, utilizada como herramienta de interpretación y orientación sobre distintas situaciones y aspectos de la vida de la persona.",
+        "Informe numerológico personalizado. Para elaborarlo se requiere el nombre completo de nacimiento y la fecha completa de nacimiento (día, mes y año); con esos datos se calculan los principales números, ciclos, tendencias y aspectos relevantes del análisis.",
+      price: 30,
     },
     {
       slug: "carta-astral",
       name: "Carta Astral",
       description:
-        "Interpretación personalizada de la carta astral a partir de los datos de nacimiento. Permite analizar distintos aspectos de la personalidad, tendencias, ciclos y áreas de la vida según la posición de los astros en el momento del nacimiento.",
+        "Interpretación personalizada de la carta astral. Se requiere la fecha completa de nacimiento, la hora exacta de nacimiento, y la ciudad y país de nacimiento — la hora exacta es especialmente importante porque permite determinar con mayor precisión elementos como el Ascendente y las casas astrológicas.",
+      price: 50,
+    },
+    {
+      slug: "tabacos",
+      name: "Tabacos",
+      description:
+        "Lectura espiritual mediante tabacos, utilizada como herramienta de interpretación y orientación sobre situaciones personales y diferentes aspectos de la vida.",
+      price: 25,
     },
   ];
 
   for (const [i, item] of otros.entries()) {
     await prisma.service.upsert({
       where: { slug: item.slug },
-      update: { name: item.name, description: item.description, category: CATEGORY_OTROS, sortOrder: i },
+      update: {
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        currency: "USD",
+        available: true,
+        category: CATEGORY_OTROS,
+        sortOrder: i,
+      },
       create: {
         slug: item.slug,
         name: item.name,
         description: item.description,
         durationMinutes: 30,
-        price: 0,
+        price: item.price,
         currency: "USD",
-        available: false,
+        available: true,
         modality: "VIDEOLLAMADA",
         category: CATEGORY_OTROS,
         sortOrder: i,

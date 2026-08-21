@@ -7,6 +7,7 @@ import { fullDateLabel } from "@/lib/date-labels";
 import { BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL } from "@/lib/booking-labels";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { AdminNoteForm } from "@/components/admin/AdminNoteForm";
+import { intakeFieldsFor } from "@/lib/service-intake";
 import type { BookingStatus } from "@prisma/client";
 
 export const metadata: Metadata = { title: "Panel — Detalle de reserva", robots: { index: false } };
@@ -35,6 +36,12 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
   const dateLabel = fullDateLabel(businessDateString(booking.startsAt));
   const timeLabel = formatMinutes(minutesInBusinessDay(booking.startsAt));
   const transitions = TRANSITIONS[booking.status] ?? [];
+
+  const intakeData =
+    booking.intakeData && typeof booking.intakeData === "object" && !Array.isArray(booking.intakeData)
+      ? (booking.intakeData as Record<string, string>)
+      : null;
+  const intakeLabels = intakeFieldsFor(booking.service.slug);
 
   return (
     <div className="flex flex-col gap-6">
@@ -79,6 +86,24 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
           </div>
         ) : null}
       </GlassCard>
+
+      {intakeData ? (
+        <GlassCard>
+          <span className="eyebrow mb-3">Datos adicionales del servicio</span>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            {(intakeLabels.length > 0 ? intakeLabels : Object.keys(intakeData).map((key) => ({ key, label: key })))
+              .filter((field) => intakeData[field.key])
+              .map((field) => (
+                <div key={field.key}>
+                  <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">
+                    {field.label}
+                  </span>
+                  <span className="text-bone">{intakeData[field.key]}</span>
+                </div>
+              ))}
+          </div>
+        </GlassCard>
+      ) : null}
 
       {booking.transactions.length > 0 ? (
         <GlassCard>
