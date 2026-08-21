@@ -8,6 +8,10 @@
  * Archivos en `public/assets/services/<slug>.jpg`.
  */
 export const SERVICE_IMAGES: Record<string, string> = {
+  "consulta-pregunta-tarot": "/assets/services/consulta-pregunta-tarot.jpg",
+  "consulta-15-minutos": "/assets/services/consulta-15-minutos.jpg",
+  "consulta-30-minutos": "/assets/services/consulta-30-minutos.jpg",
+  "consulta-60-minutos": "/assets/services/consulta-60-minutos.jpg",
   "ritual-endulzamiento": "/assets/services/ritual-endulzamiento.jpg",
   "ritual-abre-caminos": "/assets/services/ritual-abre-caminos.jpg",
   "ritual-destrancadera": "/assets/services/ritual-destrancadera.jpg",
