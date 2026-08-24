@@ -38,9 +38,10 @@ export interface CurrentUser {
   role: "ADMIN" | "CLIENT";
 }
 
-/** Usuario actual (con datos de perfil) o null si no hay sesión válida. */
-export async function getCurrentUser(): Promise<CurrentUser | null> {
-  const payload = await getSessionPayload();
+/** Carga el usuario a partir de un payload de sesión ya verificado — usado
+ * tanto por la cookie web (getCurrentUser) como por el Bearer token de la
+ * futura API móvil (lib/auth/api-auth.ts), sin duplicar la consulta. */
+export async function loadCurrentUser(payload: SessionPayload | null): Promise<CurrentUser | null> {
   if (!payload) return null;
 
   const user = await prisma.user.findUnique({ where: { id: payload.userId } });
@@ -54,6 +55,12 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     phone: user.phone,
     role: user.role,
   };
+}
+
+/** Usuario actual (con datos de perfil) o null si no hay sesión válida. */
+export async function getCurrentUser(): Promise<CurrentUser | null> {
+  const payload = await getSessionPayload();
+  return loadCurrentUser(payload);
 }
 
 /**
