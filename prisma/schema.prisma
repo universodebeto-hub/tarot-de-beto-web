@@ -84,6 +84,12 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  /// Estado "en línea" (Fase 3): interruptor manual del proveedor (rol
+  /// ADMIN) para mostrar un botón de "Contactar ahora" en el sitio público.
+  /// Sin WebSockets — se lee por polling/al cargar la página.
+  isOnline   Boolean   @default(false)
+  lastSeenAt DateTime?
+
   passwordResets PasswordReset[]
   bookings       Booking[]
   auditLogs      AuditLog[]

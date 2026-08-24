@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { getDashboardStats } from "@/server/admin/dashboard";
 import { sendDueReminders } from "@/server/notifications/reminders";
 import { expireAndNotify } from "@/server/notifications/expiry";
+import { getProviderPresence, toggleProviderOnline } from "@/server/presence";
 import { requireAdmin } from "@/lib/auth/session";
 import { GlassCard } from "@/components/ui/GlassCard";
 
@@ -23,8 +24,16 @@ async function runMaintenanceAction(): Promise<void> {
   revalidatePath("/admin");
 }
 
+async function toggleOnlineAction(): Promise<void> {
+  "use server";
+  await toggleProviderOnline();
+  revalidatePath("/admin");
+  revalidatePath("/", "layout");
+}
+
 export default async function AdminDashboardPage() {
   const stats = await getDashboardStats();
+  const presence = await getProviderPresence();
 
   const cards = [
     { label: "Reservas de hoy", value: stats.todayCount },
@@ -45,6 +54,24 @@ export default async function AdminDashboardPage() {
           </GlassCard>
         ))}
       </div>
+
+      <GlassCard className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span
+            className={`h-2.5 w-2.5 rounded-full ${presence.isOnline ? "bg-emerald-400 shadow-[0_0_8px_2px_rgba(52,211,153,0.6)]" : "bg-ash-dim"}`}
+          />
+          <p className="mb-0 text-sm text-bone-dim">
+            Estado público: <span className="text-bone">{presence.isOnline ? "En línea" : "Desconectado"}</span>
+            {" — "}
+            los visitantes {presence.isOnline ? "ven" : "no ven"} el botón &quot;Contactar ahora&quot;.
+          </p>
+        </div>
+        <form action={toggleOnlineAction}>
+          <button type="submit" className="btn btn-ghost">
+            {presence.isOnline ? "Marcarme desconectado" : "Marcarme en línea"}
+          </button>
+        </form>
+      </GlassCard>
 
       <GlassCard className="flex flex-wrap items-center justify-between gap-3">
         <p className="mb-0 text-sm text-bone-dim">

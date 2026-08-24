@@ -9,6 +9,7 @@ import { StarsField } from "@/components/layout/StarsField";
 import { ToastProvider } from "@/components/ui/Toast";
 import { siteConfig } from "@/config/site";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getProviderPresence } from "@/server/presence";
 import { Analytics } from "@/components/analytics/Analytics";
 import { LocalBusinessJsonLd } from "@/components/seo/LocalBusinessJsonLd";
 
@@ -67,6 +68,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   // conviene aislarlo en un componente cliente aparte para las páginas 100%
   // públicas.
   const user = await getCurrentUser();
+  const presence = await getProviderPresence();
 
   return (
     <html
@@ -80,7 +82,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <Navbar whatsappNumber={siteConfig.contact.whatsappNumber} userFirstName={user?.firstName} />
           <main className="relative z-10 flex-1">{children}</main>
           <Footer />
-          <WhatsAppButton whatsappNumber={siteConfig.contact.whatsappNumber} />
+          <WhatsAppButton
+            whatsappNumber={siteConfig.contact.whatsappNumber}
+            isOnline={presence.isOnline}
+          />
         </ToastProvider>
         <Analytics
           gaId={siteConfig.analytics.gaId}
