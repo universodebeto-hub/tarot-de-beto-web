@@ -49,26 +49,27 @@ export function AboutSection({ full = false }: AboutSectionProps) {
             <em>guía espiritual</em>
           </h2>
           <p className="text-[1.08rem] text-bone">
-            Soy tarotista, guía espiritual, terapeuta holístico y espiritista, con más de 12 años de
-            experiencia acompañando procesos de amor, trabajo y camino de vida a través del tarot y otros
-            trabajos espirituales.
+            Tarotista, numerólogo y guía espiritual con más de 12 años de experiencia.
           </p>
 
           <p>
-            No trabajo con predicciones cerradas ni con miedo. Cada consulta es un espacio de conversación
-            honesta: las cartas y los trabajos espirituales abren preguntas, y en esas preguntas aparece la
-            claridad que la persona ya traía consigo.
+            A lo largo de su trayectoria ha desarrollado una práctica enfocada en la orientación y el
+            acompañamiento personalizado, integrando diferentes herramientas de interpretación y trabajo
+            espiritual como el tarot, la numerología, la tabacomancia, la velomancia, la carta astral y las
+            ritualizaciones.
           </p>
 
           <p>
-            Leo con cercanía, en un lenguaje sencillo, sin tecnicismos ni promesas vacías. Mi trabajo no es
-            decirte qué hacer — es ayudarte a ver con más nitidez para que la decisión sea tuya.
+            Cada consulta es abordada de manera individual, teniendo en cuenta la situación y las inquietudes
+            de cada persona. Su propósito es ofrecer un espacio de escucha, interpretación y orientación, con
+            un enfoque cercano, respetuoso y profesional.
           </p>
 
           {full ? (
             <p>
-              Las consultas se realizan por videollamada o llamada, según la modalidad disponible para cada
-              servicio. La atención es siempre personalizada: un espacio dedicado a tu pregunta, sin prisa.
+              Más de una década de experiencia le ha permitido construir una forma de trabajo basada en la
+              discreción, la sensibilidad y el compromiso con cada consulta, entendiendo que detrás de cada
+              pregunta existe una historia y una situación particular que merece ser escuchada.
             </p>
           ) : null}
 
