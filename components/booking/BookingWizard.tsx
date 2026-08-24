@@ -2,14 +2,15 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { submitBooking } from "@/server/booking-actions";
+import { submitBooking, submitReportRequest } from "@/server/booking-actions";
 import type { TimeSlot } from "@/server/availability";
 import { fullDateLabel, formatBusinessTime } from "@/lib/date-labels";
 import { ServicePicker } from "@/components/agenda/ServicePicker";
 import { CalendarGrid } from "@/components/agenda/CalendarGrid";
-import { StepIndicator } from "@/components/booking/StepIndicator";
+import { StepIndicator, REPORT_STEPS } from "@/components/booking/StepIndicator";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { intakeFieldsFor, hasRequiredIntakeData } from "@/lib/service-intake";
+import { isReportOnlyService, REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
 import type { Service } from "@/types/content";
 
 interface CurrentUserInfo {
@@ -70,22 +71,41 @@ export function BookingWizard({
   const intakeFields = selectedService ? intakeFieldsFor(selectedService.slug) : [];
   const date = selectedSlot ? selectedSlot.startUtc.slice(0, 10) : (initialDate ?? dates[0] ?? "");
 
+  // Informe Numerológico y Carta Astral se solicitan como informe con
+  // entrega en días — no usan la agenda de llamadas, así que el paso de
+  // "Fecha y horario" no existe para ellos y el paso de datos queda en la
+  // posición 2 en vez de 3.
+  const isReportFlow = Boolean(selectedService && isReportOnlyService(selectedService.slug));
+  const dataStep = isReportFlow ? 2 : 3;
+  const steps = isReportFlow ? REPORT_STEPS : undefined;
+
   async function handleConfirm() {
-    if (!selectedSlot || !serviceId) return;
+    if (!serviceId || !selectedService) return;
+    if (!isReportFlow && !selectedSlot) return;
     setSubmitError(null);
 
     startSubmitTransition(async () => {
-      const result = await submitBooking({
-        serviceId,
-        startUtc: selectedSlot.startUtc,
-        guestName: currentUser ? undefined : guestName,
-        guestEmail: currentUser ? undefined : guestEmail,
-        guestPhone: currentUser ? undefined : guestPhone || undefined,
-        intakeData: intakeFields.length > 0 ? intakeData : undefined,
-      });
+      const result = isReportFlow
+        ? await submitReportRequest({
+            serviceId,
+            guestName: currentUser ? undefined : guestName,
+            guestEmail: currentUser ? undefined : guestEmail,
+            guestPhone: currentUser ? undefined : guestPhone || undefined,
+            intakeData: intakeFields.length > 0 ? intakeData : undefined,
+          })
+        : await submitBooking({
+            serviceId,
+            startUtc: selectedSlot!.startUtc,
+            guestName: currentUser ? undefined : guestName,
+            guestEmail: currentUser ? undefined : guestEmail,
+            guestPhone: currentUser ? undefined : guestPhone || undefined,
+            intakeData: intakeFields.length > 0 ? intakeData : undefined,
+          });
 
       if (result.error || !result.booking) {
-        setSubmitError(result.error ?? "No se pudo crear la reserva. Intenta de nuevo.");
+        setSubmitError(
+          result.error ?? (isReportFlow ? "No se pudo enviar la solicitud. Intenta de nuevo." : "No se pudo crear la reserva. Intenta de nuevo."),
+        );
         return;
       }
 
@@ -99,6 +119,12 @@ export function BookingWizard({
     setSubmitError(null);
   }
 
+  function backFromDataStep() {
+    setStep(isReportFlow ? 1 : 2);
+    setSelectedSlot(null);
+    setSubmitError(null);
+  }
+
   const canGoStep1Next = Boolean(serviceId);
   const canGoStep2Next = Boolean(selectedSlot);
   const hasContactData = currentUser ? true : Boolean(guestName.trim() && guestEmail.trim());
@@ -108,7 +134,7 @@ export function BookingWizard({
 
   return (
     <div>
-      <StepIndicator current={step} />
+      <StepIndicator current={step} steps={steps} />
 
       {step === 1 ? (
         <div className="flex flex-col gap-6">
@@ -124,7 +150,7 @@ export function BookingWizard({
         </div>
       ) : null}
 
-      {step === 2 && selectedService ? (
+      {step === 2 && !isReportFlow && selectedService ? (
         <div className="flex flex-col gap-6">
           <span className="font-mono text-[11px] uppercase tracking-wide text-ash">
             {selectedService.name} · {selectedService.durationMinutes} min
@@ -152,15 +178,23 @@ export function BookingWizard({
         </div>
       ) : null}
 
-      {step === 3 && selectedSlot && selectedService ? (
+      {step === dataStep && selectedService && (isReportFlow || selectedSlot) ? (
         <div className="flex flex-col gap-6">
           <GlassCard className="flex flex-col gap-3">
             <span className="eyebrow">Resumen</span>
-            <p className="mb-0 text-bone">
-              <strong className="font-medium">{selectedService.name}</strong> ({selectedService.durationMinutes}{" "}
-              min) — {fullDateLabel(date)}
-              {selectedSlot.label ? ` a las ${selectedSlot.label}` : ""} (hora Colombia).
-            </p>
+            {isReportFlow ? (
+              <p className="mb-0 text-bone">
+                <strong className="font-medium">{selectedService.name}</strong> — informe personalizado, sin
+                horario ni llamada. Se elaborará y enviará dentro de un plazo de{" "}
+                <strong className="font-medium">{REPORT_DELIVERY_TEXT}</strong> tras confirmar el pago.
+              </p>
+            ) : (
+              <p className="mb-0 text-bone">
+                <strong className="font-medium">{selectedService.name}</strong> ({selectedService.durationMinutes}{" "}
+                min) — {fullDateLabel(date)}
+                {selectedSlot!.label ? ` a las ${selectedSlot!.label}` : ""} (hora Colombia).
+              </p>
+            )}
             <p className="mb-0 font-mono text-[1.05rem] text-gold-soft">
               {selectedService.price} {selectedService.currency}
             </p>
@@ -247,14 +281,16 @@ export function BookingWizard({
           {submitError ? (
             <div className="flex flex-col gap-2">
               <p className="mb-0 text-sm text-ember">{submitError}</p>
-              <button type="button" onClick={backToCalendarStep} className="btn btn-ghost self-start">
-                Elegir otro horario
-              </button>
+              {!isReportFlow ? (
+                <button type="button" onClick={backToCalendarStep} className="btn btn-ghost self-start">
+                  Elegir otro horario
+                </button>
+              ) : null}
             </div>
           ) : null}
 
           <div className="flex gap-3">
-            <button type="button" onClick={() => setStep(2)} className="btn btn-ghost">
+            <button type="button" onClick={backFromDataStep} className="btn btn-ghost">
               Atrás
             </button>
             <button
@@ -263,7 +299,13 @@ export function BookingWizard({
               onClick={handleConfirm}
               className="btn btn-gold disabled:opacity-40"
             >
-              {submitting ? "Reservando…" : "Confirmar reserva"}
+              {isReportFlow
+                ? submitting
+                  ? "Enviando…"
+                  : "Enviar solicitud"
+                : submitting
+                  ? "Reservando…"
+                  : "Confirmar reserva"}
             </button>
           </div>
         </div>

@@ -7,6 +7,7 @@ import { getUserBookings } from "@/server/bookings";
 import { minutesInBusinessDay, formatMinutes, businessDateString } from "@/lib/timezone";
 import { fullDateLabel } from "@/lib/date-labels";
 import { BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL } from "@/lib/booking-labels";
+import { isReportOnlyService, REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
@@ -74,14 +75,18 @@ export default async function DashboardPage() {
               />
             ) : (
               <div className="flex flex-col gap-3">
-                {bookings.map((booking) => (
+                {bookings.map((booking) => {
+                  const isReport = isReportOnlyService(booking.service.slug);
+                  return (
                   <Link key={booking.id} href={`/reservas/${booking.id}`}>
                     <GlassCard className="flex flex-wrap items-center justify-between gap-3 transition-colors hover:border-gold/40">
                       <div>
                         <p className="mb-1 text-bone">{booking.service.name}</p>
                         <p className="mb-0 font-mono text-[11.5px] uppercase tracking-wide text-ash">
-                          {fullDateLabel(businessDateString(booking.startsAt))} ·{" "}
-                          {formatMinutes(minutesInBusinessDay(booking.startsAt))} · #{booking.bookingNumber}
+                          {isReport
+                            ? `Informe · entrega en ${REPORT_DELIVERY_TEXT}`
+                            : `${fullDateLabel(businessDateString(booking.startsAt))} · ${formatMinutes(minutesInBusinessDay(booking.startsAt))}`}{" "}
+                          · #{booking.bookingNumber}
                         </p>
                       </div>
                       <div className="text-right">
@@ -92,7 +97,8 @@ export default async function DashboardPage() {
                       </div>
                     </GlassCard>
                   </Link>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

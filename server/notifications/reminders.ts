@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { getSetting } from "@/server/settings";
 import { notifyReminder } from "@/server/notifications/send";
+import { REPORT_ONLY_SERVICE_SLUGS } from "@/lib/service-fulfillment";
 
 const DEFAULT_REMINDER_HOURS = [24, 2];
 
@@ -23,7 +24,15 @@ export async function sendDueReminders(): Promise<{ sent: number }> {
   const horizon = new Date(now.getTime() + maxHours * 60 * 60_000);
 
   const candidates = await prisma.booking.findMany({
-    where: { status: "CONFIRMED", startsAt: { gt: now, lte: horizon } },
+    where: {
+      status: "CONFIRMED",
+      startsAt: { gt: now, lte: horizon },
+      // Informe Numerológico/Carta Astral no tienen hora de consulta —
+      // recordar "faltan X horas" no aplica. En la práctica su `startsAt`
+      // nunca cae en el futuro (queda fijado al momento de la solicitud),
+      // pero se filtra explícito por claridad y por si eso cambia.
+      service: { slug: { notIn: [...REPORT_ONLY_SERVICE_SLUGS] } },
+    },
     include: { service: true, user: true },
   });
 

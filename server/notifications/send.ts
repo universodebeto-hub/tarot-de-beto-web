@@ -9,6 +9,7 @@ import {
   passwordResetEmail,
 } from "@/server/notifications/templates";
 import type { BookingEmailContext } from "@/server/notifications/templates";
+import { isReportOnlyService } from "@/lib/service-fulfillment";
 
 /** Reserva mínima con lo que hace falta para armar una notificación (incluye `service` y opcionalmente `user`). */
 export interface NotifiableBooking {
@@ -16,7 +17,7 @@ export interface NotifiableBooking {
   startsAt: Date;
   guestName: string | null;
   guestEmail: string | null;
-  service: { name: string; durationMinutes: number };
+  service: { slug: string; name: string; durationMinutes: number };
   user: { firstName: string; email: string } | null;
 }
 
@@ -32,6 +33,7 @@ function toContext(booking: NotifiableBooking): { ctx: BookingEmailContext; emai
       serviceName: booking.service.name,
       durationMinutes: booking.service.durationMinutes,
       startsAt: booking.startsAt,
+      isReportOnly: isReportOnlyService(booking.service.slug),
     },
   };
 }

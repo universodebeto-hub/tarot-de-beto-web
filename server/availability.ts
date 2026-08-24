@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getServiceById } from "@/server/services";
 import { getSetting } from "@/server/settings";
 import { businessDayOfWeek, businessLocalToUtc, formatMinutes } from "@/lib/timezone";
+import { REPORT_ONLY_SERVICE_SLUGS } from "@/lib/service-fulfillment";
 
 export interface TimeSlot {
   /** Instante UTC de inicio, en formato ISO — lo que se guarda en la reserva. */
@@ -89,6 +90,10 @@ async function loadDayContext(date: string): Promise<DayContext> {
         status: { in: ["PENDING_PAYMENT", "CONFIRMED"] },
         startsAt: { lt: dayEndUtc },
         endsAt: { gt: dayStartUtc },
+        // Informe Numerológico y Carta Astral no usan agenda (se solicitan
+        // como informe con entrega en días, no como llamada con horario) —
+        // sus reservas nunca deben ocupar ni contar bloques/tope diario.
+        service: { slug: { notIn: [...REPORT_ONLY_SERVICE_SLUGS] } },
       },
       select: { id: true, startsAt: true, endsAt: true },
     }),

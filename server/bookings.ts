@@ -10,6 +10,7 @@ import { getSetting } from "@/server/settings";
 import { businessDateString } from "@/lib/timezone";
 import { notifyBookingReceived } from "@/server/notifications/send";
 import { hasRequiredIntakeData } from "@/lib/service-intake";
+import { isReportOnlyService } from "@/lib/service-fulfillment";
 
 async function nextBookingNumber(): Promise<string> {
   const year = new Date().getFullYear();
@@ -66,6 +67,10 @@ export async function createPendingBooking(input: CreateBookingInput): Promise<C
   const service = await getServiceById(serviceId);
   if (!service || !service.available) {
     return { error: "Ese servicio ya no está disponible." };
+  }
+
+  if (isReportOnlyService(service.slug)) {
+    return { error: "Este servicio se solicita como informe, sin elegir horario." };
   }
 
   if (!hasRequiredIntakeData(service.slug, intakeData)) {
@@ -134,6 +139,76 @@ export async function createPendingBooking(input: CreateBookingInput): Promise<C
     }
     throw err;
   }
+}
+
+const createReportRequestSchema = z.object({
+  serviceId: z.string().min(1),
+  guestName: z.string().trim().min(1, "Tu nombre es obligatorio").max(120).optional(),
+  guestEmail: z.string().trim().toLowerCase().email("Correo inválido").optional(),
+  guestPhone: z.string().trim().max(30).optional(),
+  intakeData: z.record(z.string(), z.string().trim().max(200)).optional(),
+});
+
+export type CreateReportRequestInput = z.infer<typeof createReportRequestSchema>;
+
+/**
+ * Crea una solicitud de informe (Numerología, Carta Astral): NO usa la
+ * agenda, no valida disponibilidad ni tope diario, y puede recibirse a
+ * cualquier hora. `startsAt`/`endsAt` se guardan como el mismo instante
+ * exacto (rango vacío para Postgres) únicamente para satisfacer el NOT NULL
+ * del modelo — nunca ocupan un bloque de la agenda (excluidos en
+ * `server/availability.ts`) y, al ser un rango vacío, tampoco pueden chocar
+ * contra el EXCLUDE constraint de solapamiento (verificado empíricamente:
+ * `tsrange(t, t, '[)') && cualquier_rango` siempre es `false`).
+ */
+export async function createReportRequest(input: CreateReportRequestInput): Promise<CreateBookingResult> {
+  const parsed = createReportRequestSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  }
+  const { serviceId, guestName, guestEmail, guestPhone, intakeData } = parsed.data;
+
+  const service = await getServiceById(serviceId);
+  if (!service || !service.available) {
+    return { error: "Ese servicio ya no está disponible." };
+  }
+  if (!isReportOnlyService(service.slug)) {
+    return { error: "Este servicio requiere elegir fecha y horario." };
+  }
+  if (!hasRequiredIntakeData(service.slug, intakeData)) {
+    return { error: "Faltan datos obligatorios para este servicio." };
+  }
+
+  const currentUser = await getCurrentUser();
+  let userId: string | null = null;
+  if (currentUser) {
+    userId = currentUser.id;
+  } else if (!guestName || !guestEmail) {
+    return { error: "Nombre y correo son obligatorios para solicitar como invitado." };
+  }
+
+  const now = new Date();
+  const paymentWindowMinutes = await getSetting("booking_payment_window_minutes", 15);
+  const paymentDeadline = new Date(Date.now() + paymentWindowMinutes * 60_000);
+  const bookingNumber = await nextBookingNumber();
+
+  const booking = await prisma.booking.create({
+    data: {
+      bookingNumber,
+      userId,
+      guestName: userId ? null : guestName,
+      guestEmail: userId ? null : guestEmail,
+      guestPhone: userId ? null : guestPhone,
+      serviceId,
+      startsAt: now,
+      endsAt: now,
+      paymentDeadline,
+      intakeData: intakeData ?? undefined,
+    },
+    include: { service: true, user: true },
+  });
+  await notifyBookingReceived(booking).catch((err) => console.error("[notify] booking_received:", err));
+  return { booking: { id: booking.id } };
 }
 
 export async function getBookingById(id: string) {

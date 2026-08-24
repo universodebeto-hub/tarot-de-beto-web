@@ -9,6 +9,7 @@ import { CalendarGrid } from "@/components/agenda/CalendarGrid";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
+import { isReportOnlyService } from "@/lib/service-fulfillment";
 import type { Service } from "@/types/content";
 
 interface AgendaExplorerProps {
@@ -19,7 +20,12 @@ interface AgendaExplorerProps {
 }
 
 export function AgendaExplorer({ services, dates, whatsappNumber, initialServiceId }: AgendaExplorerProps) {
-  const availableServices = useMemo(() => services.filter((s) => s.available), [services]);
+  // Informe Numerológico y Carta Astral no usan agenda — se solicitan desde
+  // /reservar directamente (ver ServiceCard), nunca eligiendo un horario acá.
+  const availableServices = useMemo(
+    () => services.filter((s) => s.available && !isReportOnlyService(s.slug)),
+    [services],
+  );
   const defaultServiceId = availableServices.some((s) => s.id === initialServiceId)
     ? initialServiceId
     : availableServices[0]?.id;

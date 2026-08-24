@@ -8,6 +8,7 @@ import { BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL } from "@/lib/booking-labels
 import { GlassCard } from "@/components/ui/GlassCard";
 import { AdminNoteForm } from "@/components/admin/AdminNoteForm";
 import { intakeFieldsFor } from "@/lib/service-intake";
+import { isReportOnlyService, REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
 import type { BookingStatus } from "@prisma/client";
 
 export const metadata: Metadata = { title: "Panel — Detalle de reserva", robots: { index: false } };
@@ -33,6 +34,7 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
   const booking = await getBookingAdminById(id);
   if (!booking) notFound();
 
+  const isReport = isReportOnlyService(booking.service.slug);
   const dateLabel = fullDateLabel(businessDateString(booking.startsAt));
   const timeLabel = formatMinutes(minutesInBusinessDay(booking.startsAt));
   const transitions = TRANSITIONS[booking.status] ?? [];
@@ -59,13 +61,21 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
           <div>
             <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">Servicio</span>
             <span className="text-bone">{booking.service.name}</span>
-            <p className="mb-0 text-xs text-ash">{booking.service.durationMinutes} min · ${Number(booking.service.price).toFixed(2)}</p>
+            <p className="mb-0 text-xs text-ash">
+              {isReport ? "Informe" : `${booking.service.durationMinutes} min`} · $
+              {Number(booking.service.price).toFixed(2)}
+            </p>
           </div>
           <div>
-            <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">Fecha</span>
-            <span className="text-bone">
-              {dateLabel} · {timeLabel}
+            <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">
+              {isReport ? "Solicitado" : "Fecha"}
             </span>
+            <span className="text-bone">
+              {isReport ? dateLabel : `${dateLabel} · ${timeLabel}`}
+            </span>
+            {isReport ? (
+              <p className="mb-0 text-xs text-gold-soft">Informe · entrega en {REPORT_DELIVERY_TEXT}</p>
+            ) : null}
           </div>
           <div>
             <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">Estado</span>

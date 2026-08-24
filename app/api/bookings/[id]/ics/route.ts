@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getBookingById } from "@/server/bookings";
 import { siteConfig } from "@/config/site";
+import { isReportOnlyService } from "@/lib/service-fulfillment";
 
 function toIcsDate(date: Date): string {
   return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
@@ -16,6 +17,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   if (!booking || booking.status === "CANCELLED" || booking.status === "EXPIRED") {
     return NextResponse.json({ error: "Reserva no encontrada." }, { status: 404 });
+  }
+
+  if (isReportOnlyService(booking.service.slug)) {
+    return NextResponse.json({ error: "Este servicio no tiene un horario de calendario." }, { status: 400 });
   }
 
   const now = toIcsDate(new Date());

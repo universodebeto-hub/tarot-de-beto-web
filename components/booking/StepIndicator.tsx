@@ -1,9 +1,11 @@
-const STEPS = ["Servicio", "Fecha y horario", "Datos", "Pago", "Confirmación"];
+const AGENDA_STEPS = ["Servicio", "Fecha y horario", "Datos", "Pago", "Confirmación"];
+export const REPORT_STEPS = ["Servicio", "Datos", "Pago", "Confirmación"];
 
-export function StepIndicator({ current }: { current: number }) {
+export function StepIndicator({ current, steps }: { current: number; steps?: string[] }) {
+  const labels = steps ?? AGENDA_STEPS;
   return (
     <ol className="mb-10 flex flex-wrap gap-x-6 gap-y-3">
-      {STEPS.map((label, i) => {
+      {labels.map((label, i) => {
         const step = i + 1;
         const state = step === current ? "current" : step < current ? "done" : "upcoming";
         return (

@@ -10,6 +10,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { PendingPaymentPanel } from "@/components/booking/PendingPaymentPanel";
 import { PayPalButton } from "@/components/booking/PayPalButton";
+import { isReportOnlyService, REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
 
 export const metadata: Metadata = {
   title: "Tu reserva",
@@ -25,6 +26,7 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
   const booking = await getBookingById(id);
   if (!booking) notFound();
 
+  const isReport = isReportOnlyService(booking.service.slug);
   const dateLabel = fullDateLabel(businessDateString(booking.startsAt));
   const timeLabel = formatMinutes(minutesInBusinessDay(booking.startsAt));
   const isPending = booking.status === "PENDING_PAYMENT";
@@ -39,11 +41,15 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
             <h1 className="mt-3">
               {isPending ? (
                 <>
-                  Tu consulta está <em>casi lista</em>
+                  Tu {isReport ? "solicitud" : "consulta"} está <em>casi lista</em>
                 </>
               ) : isExpired ? (
                 <>
-                  Esta reserva <em>expiró</em>
+                  Esta {isReport ? "solicitud" : "reserva"} <em>expiró</em>
+                </>
+              ) : isReport ? (
+                <>
+                  ¡Tu solicitud ha sido <em>confirmada!</em>
                 </>
               ) : (
                 <>
@@ -62,20 +68,40 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
                 </span>
                 <span className="text-bone">{booking.service.name}</span>
               </div>
-              <div>
-                <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">
-                  Duración
-                </span>
-                <span className="text-bone">{booking.service.durationMinutes} min</span>
-              </div>
-              <div>
-                <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">Fecha</span>
-                <span className="text-bone">{dateLabel}</span>
-              </div>
-              <div>
-                <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">Hora</span>
-                <span className="text-bone">{timeLabel} (Colombia)</span>
-              </div>
+              {isReport ? (
+                <div>
+                  <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">
+                    Modalidad
+                  </span>
+                  <span className="text-bone">Informe personalizado</span>
+                </div>
+              ) : (
+                <div>
+                  <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">
+                    Duración
+                  </span>
+                  <span className="text-bone">{booking.service.durationMinutes} min</span>
+                </div>
+              )}
+              {isReport ? (
+                <div>
+                  <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">
+                    Entrega
+                  </span>
+                  <span className="text-bone">{REPORT_DELIVERY_TEXT} tras confirmar el pago</span>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">Fecha</span>
+                    <span className="text-bone">{dateLabel}</span>
+                  </div>
+                  <div>
+                    <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">Hora</span>
+                    <span className="text-bone">{timeLabel} (Colombia)</span>
+                  </div>
+                </>
+              )}
               <div>
                 <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">
                   Estado
@@ -106,25 +132,38 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
                   paymentDeadline={booking.paymentDeadline.toISOString()}
                   bookingNumber={booking.bookingNumber}
                   whatsappNumber={siteConfig.contact.whatsappNumber}
-                  message={`Hola Beto, quiero confirmar el pago de mi reserva ${booking.bookingNumber} (${booking.service.name}, ${dateLabel} a las ${timeLabel}).`}
+                  message={
+                    isReport
+                      ? `Hola Beto, quiero confirmar el pago de mi solicitud ${booking.bookingNumber} (${booking.service.name}).`
+                      : `Hola Beto, quiero confirmar el pago de mi reserva ${booking.bookingNumber} (${booking.service.name}, ${dateLabel} a las ${timeLabel}).`
+                  }
                 />
               </div>
             ) : isExpired ? (
               <div className="flex flex-col gap-3">
                 <p className="mb-0 text-sm">
-                  El horario no se confirmó a tiempo y ya volvió a quedar disponible para otras personas.
+                  {isReport
+                    ? "El pago no se completó a tiempo. Puedes solicitarlo de nuevo cuando quieras."
+                    : "El horario no se confirmó a tiempo y ya volvió a quedar disponible para otras personas."}
                 </p>
-                <Button href="/agenda" className="self-start">
-                  Elegir otro horario
+                <Button href={isReport ? `/reservar?service=${booking.service.id}` : "/agenda"} className="self-start">
+                  {isReport ? "Solicitar de nuevo" : "Elegir otro horario"}
                 </Button>
               </div>
             ) : (
               <div className="flex flex-wrap gap-3">
-                <a href={`/api/bookings/${booking.id}/ics`} download className="btn btn-ghost">
-                  Agregar al calendario
-                </a>
+                {isReport ? (
+                  <p className="mb-0 text-sm text-bone-dim">
+                    Lo elaboraremos y te lo enviaremos dentro de un plazo de{" "}
+                    <strong className="font-medium text-bone">{REPORT_DELIVERY_TEXT}</strong>.
+                  </p>
+                ) : (
+                  <a href={`/api/bookings/${booking.id}/ics`} download className="btn btn-ghost">
+                    Agregar al calendario
+                  </a>
+                )}
                 <Link href="/contacto" className="btn btn-ghost">
-                  ¿Necesitas ayuda con tu reserva?
+                  ¿Necesitas ayuda con tu {isReport ? "solicitud" : "reserva"}?
                 </Link>
               </div>
             )}

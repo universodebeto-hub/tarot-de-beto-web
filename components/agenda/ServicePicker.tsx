@@ -1,5 +1,6 @@
 "use client";
 
+import { isReportOnlyService } from "@/lib/service-fulfillment";
 import type { Service } from "@/types/content";
 
 interface ServicePickerProps {
@@ -22,7 +23,7 @@ export function ServicePicker({ services, selectedId, onSelect }: ServicePickerP
               : "border-white/15 text-bone-dim hover:border-gold/40 hover:text-gold-soft"
           }`}
         >
-          {s.name} · {s.durationMinutes} min
+          {s.name} · {isReportOnlyService(s.slug) ? "Informe" : `${s.durationMinutes} min`}
         </button>
       ))}
     </div>

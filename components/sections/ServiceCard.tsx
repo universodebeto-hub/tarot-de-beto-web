@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Reveal } from "@/components/ui/Reveal";
 import { SERVICE_IMAGES } from "@/lib/service-images";
+import { isReportOnlyService, REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
 import type { Service } from "@/types/content";
 
 const ROMAN = ["0", "I", "II", "III", "IV", "V", "VI", "VII"];
@@ -14,6 +15,7 @@ interface ServiceCardProps {
 
 export function ServiceCard({ service, index }: ServiceCardProps) {
   const image = SERVICE_IMAGES[service.slug];
+  const isReport = isReportOnlyService(service.slug);
 
   return (
     <Reveal>
@@ -43,16 +45,25 @@ export function ServiceCard({ service, index }: ServiceCardProps) {
           <span className="font-mono text-[11px] uppercase tracking-wide text-ash">No disponible por ahora</span>
         ) : null}
 
+        {isReport ? (
+          <p className="mb-0 font-mono text-[11px] uppercase tracking-wide text-gold-soft">
+            Informe personalizado · entrega en {REPORT_DELIVERY_TEXT}
+          </p>
+        ) : null}
+
         <div className="mt-auto flex items-baseline justify-between border-t border-white/10 pt-3.5 font-mono">
           <span className="text-[1.05rem] text-gold-soft">
             {service.price} {service.currency}
           </span>
-          <span className="text-[11.5px] text-ash">{service.durationMinutes} min</span>
+          {!isReport ? <span className="text-[11.5px] text-ash">{service.durationMinutes} min</span> : null}
         </div>
 
         {service.available ? (
-          <Button href={`/agenda?service=${service.slug}`} className="w-full justify-center">
-            Reservar ahora
+          <Button
+            href={isReport ? `/reservar?service=${service.id}` : `/agenda?service=${service.slug}`}
+            className="w-full justify-center"
+          >
+            {isReport ? "Solicitar informe" : "Reservar ahora"}
           </Button>
         ) : (
           <Button href="/contacto" variant="ghost" className="w-full justify-center">

@@ -26,6 +26,7 @@ export async function resetDb(): Promise<void> {
 let serviceCounter = 0;
 
 export async function createTestService(overrides: Partial<{
+  slug: string;
   name: string;
   durationMinutes: number;
   price: number;
@@ -34,7 +35,7 @@ export async function createTestService(overrides: Partial<{
   serviceCounter += 1;
   return prisma.service.create({
     data: {
-      slug: `test-service-${serviceCounter}-${Date.now()}`,
+      slug: overrides.slug ?? `test-service-${serviceCounter}-${Date.now()}`,
       name: overrides.name ?? "Servicio de prueba",
       description: "Servicio creado por los tests.",
       durationMinutes: overrides.durationMinutes ?? 30,
