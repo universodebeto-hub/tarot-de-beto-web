@@ -54,3 +54,9 @@ export async function getServiceById(id: string): Promise<Service | null> {
   const row = await prisma.service.findUnique({ where: { id } });
   return row ? toService(row) : null;
 }
+
+/** Un servicio por slug, o null si no existe — para la ficha pública (/servicios/[slug]). */
+export async function getServiceBySlug(slug: string): Promise<Service | null> {
+  const row = await prisma.service.findUnique({ where: { slug } });
+  return row ? toService(row) : null;
+}

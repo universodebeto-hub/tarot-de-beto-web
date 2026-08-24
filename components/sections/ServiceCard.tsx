@@ -1,9 +1,11 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Reveal } from "@/components/ui/Reveal";
 import { SERVICE_IMAGES } from "@/lib/service-images";
 import { isReportOnlyService, REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
+import { ritualGalleryFor } from "@/lib/ritual-gallery";
 import type { Service } from "@/types/content";
 
 const ROMAN = ["0", "I", "II", "III", "IV", "V", "VI", "VII"];
@@ -16,6 +18,7 @@ interface ServiceCardProps {
 export function ServiceCard({ service, index }: ServiceCardProps) {
   const image = SERVICE_IMAGES[service.slug];
   const isReport = isReportOnlyService(service.slug);
+  const hasRitualGallery = ritualGalleryFor(service.slug) !== null;
 
   return (
     <Reveal>
@@ -45,6 +48,15 @@ export function ServiceCard({ service, index }: ServiceCardProps) {
           <span className="font-mono text-[11px] uppercase tracking-wide text-ash">No disponible por ahora</span>
         ) : null}
 
+        {hasRitualGallery ? (
+          <Link
+            href={`/servicios/${service.slug}`}
+            className="font-mono text-[11px] uppercase tracking-wide text-gold-soft hover:text-gold"
+          >
+            Ver evidencias y detalle →
+          </Link>
+        ) : null}
+
         {isReport ? (
           <p className="mb-0 font-mono text-[11px] uppercase tracking-wide text-gold-soft">
             Informe personalizado · entrega en {REPORT_DELIVERY_TEXT}
@@ -66,7 +78,11 @@ export function ServiceCard({ service, index }: ServiceCardProps) {
             {isReport ? "Solicitar informe" : "Reservar ahora"}
           </Button>
         ) : (
-          <Button href="/contacto" variant="ghost" className="w-full justify-center">
+          <Button
+            href={hasRitualGallery ? `/servicios/${service.slug}` : "/contacto"}
+            variant="ghost"
+            className="w-full justify-center"
+          >
             Consultar disponibilidad
           </Button>
         )}
