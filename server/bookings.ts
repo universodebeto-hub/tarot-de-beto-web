@@ -14,9 +14,17 @@ import { hasRequiredIntakeData } from "@/lib/service-intake";
 async function nextBookingNumber(): Promise<string> {
   const year = new Date().getFullYear();
   const key = `booking_number_${year}`;
-  await prisma.counter.upsert({ where: { key }, update: {}, create: { key, value: 0 } });
-  const updated = await prisma.counter.update({ where: { key }, data: { value: { increment: 1 } } });
-  return `BETO-${year}-${String(updated.value).padStart(5, "0")}`;
+  // Un solo upsert atómico (INSERT ... ON CONFLICT DO UPDATE) — separarlo en
+  // upsert+update, como antes, deja una ventana de carrera real: dos
+  // solicitudes concurrentes que crean el contador del año por primera vez
+  // al mismo tiempo pueden violar la restricción única de `key` entre el
+  // upsert y el update.
+  const counter = await prisma.counter.upsert({
+    where: { key },
+    update: { value: { increment: 1 } },
+    create: { key, value: 1 },
+  });
+  return `BETO-${year}-${String(counter.value).padStart(5, "0")}`;
 }
 
 const createBookingSchema = z.object({
@@ -42,8 +50,11 @@ export interface CreateBookingResult {
 /**
  * Crea una reserva temporal (PENDING_PAYMENT). Verifica disponibilidad real
  * justo antes de insertar (no solo confía en lo que el cliente mandó) y
- * además depende del índice único parcial de la base de datos como última
- * defensa contra doble reserva en carreras concurrentes.
+ * además depende del EXCLUDE constraint de la base de datos (ver migración
+ * `add_booking_overlap_exclude`) como última defensa contra reservas
+ * superpuestas en carreras concurrentes — cubre tanto el mismo horario
+ * exacto como cualquier solapamiento parcial entre servicios distintos,
+ * porque Alberto es un solo proveedor.
  */
 export async function createPendingBooking(input: CreateBookingInput): Promise<CreateBookingResult> {
   const parsed = createBookingSchema.safeParse(input);
@@ -107,6 +118,18 @@ export async function createPendingBooking(input: CreateBookingInput): Promise<C
     return { booking: { id: booking.id } };
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      return { error: "Justo se acaba de reservar ese horario. Elige otro, por favor." };
+    }
+    // El EXCLUDE constraint (ver migración add_booking_overlap_exclude) no
+    // es un tipo de restricción que Prisma reconozca con un código P propio
+    // (a diferencia de un índice único, que sí mapea a P2002) — el error de
+    // Postgres (SQLSTATE 23P01, "exclusion_violation") llega envuelto en un
+    // PrismaClientUnknownRequestError con el mensaje crudo de la base de
+    // datos. Se detecta por contenido en vez de por código.
+    if (
+      err instanceof Prisma.PrismaClientUnknownRequestError &&
+      /23P01|exclusion_violation|Booking_no_overlap_active/i.test(err.message)
+    ) {
       return { error: "Justo se acaba de reservar ese horario. Elige otro, por favor." };
     }
     throw err;

@@ -7,6 +7,7 @@ import {
   toggleAvailabilityActive,
   createBlockedTimeAdmin,
   deleteBlockedTimeAdmin,
+  toggleQuickBlock,
 } from "@/server/admin/schedule";
 import type { AdminFormState } from "@/server/admin/services";
 
@@ -35,6 +36,12 @@ export async function createBlockAction(_prev: AdminFormState, formData: FormDat
 
 export async function deleteBlockAction(id: string): Promise<void> {
   await deleteBlockedTimeAdmin(id);
+  revalidatePath("/admin/calendario");
+  revalidatePath("/agenda");
+}
+
+export async function toggleQuickBlockAction(date: string, startMinute: number): Promise<void> {
+  await toggleQuickBlock(date, startMinute);
   revalidatePath("/admin/calendario");
   revalidatePath("/agenda");
 }

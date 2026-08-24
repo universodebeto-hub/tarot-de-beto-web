@@ -308,6 +308,11 @@ async function main() {
     create: { key: "booking_payment_window_minutes", value: JSON.stringify(15) },
   });
   await prisma.setting.upsert({
+    where: { key: "max_bookings_per_day" },
+    update: {},
+    create: { key: "max_bookings_per_day", value: JSON.stringify(4) },
+  });
+  await prisma.setting.upsert({
     where: { key: "faq_items" },
     update: {},
     create: { key: "faq_items", value: JSON.stringify(faqItems) },
@@ -360,9 +365,9 @@ async function main() {
     },
   });
 
-  const serviceCount = await prisma.service.count();
+  const [serviceCount, settingCount] = await Promise.all([prisma.service.count(), prisma.setting.count()]);
   console.log(
-    `Seed completo: ${serviceCount} servicios (catálogo: Lecturas de Tarot, Rituales Energéticos, Otros), 3 testimonios publicados, 3 settings, horario semanal (7 días), 2 usuarios de prueba.`,
+    `Seed completo: ${serviceCount} servicios (catálogo: Lecturas de Tarot, Rituales Energéticos, Otros), 3 testimonios publicados, ${settingCount} settings, horario semanal (7 días), 2 usuarios de prueba.`,
   );
 }
 

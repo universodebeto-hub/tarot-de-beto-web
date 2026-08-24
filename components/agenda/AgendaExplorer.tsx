@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
-import { fetchAvailableSlots } from "@/server/agenda-actions";
+import { useMemo, useState } from "react";
 import type { TimeSlot } from "@/server/availability";
 import { buildWhatsAppLink } from "@/config/site";
 import { fullDateLabel } from "@/lib/date-labels";
 import { ServicePicker } from "@/components/agenda/ServicePicker";
-import { DateStrip } from "@/components/agenda/DateStrip";
-import { SlotGrid } from "@/components/agenda/SlotGrid";
+import { CalendarGrid } from "@/components/agenda/CalendarGrid";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
@@ -26,38 +24,15 @@ export function AgendaExplorer({ services, dates, whatsappNumber, initialService
     ? initialServiceId
     : availableServices[0]?.id;
   const [serviceId, setServiceId] = useState(defaultServiceId ?? "");
-  const [date, setDate] = useState(dates[0] ?? "");
-  const [slots, setSlots] = useState<TimeSlot[] | null>(null);
-  const [error, setError] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
-  const [loading, startTransition] = useTransition();
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const selectedService = availableServices.find((s) => s.id === serviceId) ?? null;
 
-  useEffect(() => {
-    if (!serviceId || !date) return;
-    let cancelled = false;
-
-    startTransition(async () => {
-      let result: TimeSlot[] | null = null;
-      let failed = false;
-      try {
-        result = await fetchAvailableSlots(serviceId, date);
-      } catch {
-        failed = true;
-      }
-      // Los setState de acá abajo ocurren después del await, nunca de forma
-      // síncrona dentro del efecto (regla react-hooks/set-state-in-effect).
-      if (cancelled) return;
-      setSlots(result);
-      setError(failed);
-      setSelectedSlot(null);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [serviceId, date]);
+  function handleSelectStart(slot: TimeSlot) {
+    setSelectedSlot(slot);
+    setSelectedDate(slot.startUtc.slice(0, 10));
+  }
 
   if (availableServices.length === 0) {
     return (
@@ -70,33 +45,43 @@ export function AgendaExplorer({ services, dates, whatsappNumber, initialService
 
   const reservarHref =
     selectedSlot && serviceId
-      ? `/reservar?service=${encodeURIComponent(serviceId)}&date=${encodeURIComponent(date)}&slot=${encodeURIComponent(selectedSlot.startUtc)}`
+      ? `/reservar?service=${encodeURIComponent(serviceId)}&date=${encodeURIComponent(selectedDate ?? "")}&slot=${encodeURIComponent(selectedSlot.startUtc)}`
       : null;
 
   return (
     <div className="flex flex-col gap-8">
       <div>
         <span className="mb-3 block font-mono text-[11px] uppercase tracking-wide text-ash">Servicio</span>
-        <ServicePicker services={availableServices} selectedId={serviceId} onSelect={setServiceId} />
+        <ServicePicker
+          services={availableServices}
+          selectedId={serviceId}
+          onSelect={(id) => {
+            setServiceId(id);
+            setSelectedSlot(null);
+          }}
+        />
       </div>
 
-      <div>
-        <span className="mb-3 block font-mono text-[11px] uppercase tracking-wide text-ash">Fecha</span>
-        <DateStrip dates={dates} selected={date} onSelect={setDate} />
-      </div>
+      {selectedService ? (
+        <div>
+          <span className="mb-3 block font-mono text-[11px] uppercase tracking-wide text-ash">
+            Elige fecha y horario — {selectedService.durationMinutes} min
+          </span>
+          <CalendarGrid
+            mode="booking"
+            dates={dates}
+            durationMinutes={selectedService.durationMinutes}
+            selectedStartUtc={selectedSlot?.startUtc ?? null}
+            onSelectStart={handleSelectStart}
+          />
+        </div>
+      ) : null}
 
-      <div>
-        <span className="mb-3 block font-mono text-[11px] uppercase tracking-wide text-ash">
-          Horarios disponibles — {fullDateLabel(date)}
-        </span>
-        <SlotGrid loading={loading} error={error} slots={slots} selected={selectedSlot} onSelect={setSelectedSlot} />
-      </div>
-
-      {selectedSlot && selectedService ? (
+      {selectedSlot && selectedService && selectedDate ? (
         <GlassCard className="flex flex-col gap-3">
           <span className="eyebrow">Horario elegido</span>
           <p className="mb-0 text-bone">
-            <strong className="font-medium">{selectedService.name}</strong> el {fullDateLabel(date)} a las{" "}
+            <strong className="font-medium">{selectedService.name}</strong> el {fullDateLabel(selectedDate)} a las{" "}
             {selectedSlot.label} (hora Colombia).
           </p>
           <div className="mt-1 flex flex-wrap gap-3">
@@ -105,7 +90,7 @@ export function AgendaExplorer({ services, dates, whatsappNumber, initialService
               <Button
                 href={buildWhatsAppLink(
                   whatsappNumber,
-                  `Hola Beto, tengo dudas sobre agendar ${selectedService.name} el ${fullDateLabel(date)} a las ${selectedSlot.label} (hora Colombia).`,
+                  `Hola Beto, tengo dudas sobre agendar ${selectedService.name} el ${fullDateLabel(selectedDate)} a las ${selectedSlot.label} (hora Colombia).`,
                 )}
                 external
                 variant="ghost"

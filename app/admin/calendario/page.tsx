@@ -1,20 +1,32 @@
 import type { Metadata } from "next";
 import { listAvailabilityAdmin, listBlockedTimesAdmin } from "@/server/admin/schedule";
 import { toggleAvailabilityAction, deleteAvailabilityAction, deleteBlockAction } from "@/app/admin/calendario/actions";
-import { formatMinutes } from "@/lib/timezone";
+import { formatMinutes, nextBusinessDates } from "@/lib/timezone";
 import { AvailabilityForm } from "@/components/admin/AvailabilityForm";
 import { BlockedTimeForm } from "@/components/admin/BlockedTimeForm";
+import { AdminAgendaCalendar } from "@/components/admin/AdminAgendaCalendar";
 import { GlassCard } from "@/components/ui/GlassCard";
 
 export const metadata: Metadata = { title: "Panel — Calendario", robots: { index: false } };
 
 const DAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const CALENDAR_DAYS_AHEAD = 14;
 
 export default async function AdminCalendarPage() {
   const [ranges, blocks] = await Promise.all([listAvailabilityAdmin(), listBlockedTimesAdmin()]);
+  const dates = nextBusinessDates(CALENDAR_DAYS_AHEAD);
 
   return (
     <div className="flex flex-col gap-8">
+      <GlassCard className="flex flex-col gap-4">
+        <span className="eyebrow">Agenda</span>
+        <p className="mb-0 text-sm text-bone-dim">
+          Clic en un bloque libre para bloquearlo (ej. un descanso puntual), o en uno bloqueado para
+          liberarlo. Clic en una reserva para ver su detalle.
+        </p>
+        <AdminAgendaCalendar dates={dates} />
+      </GlassCard>
+
       <GlassCard className="flex flex-col gap-4">
         <span className="eyebrow">Horario semanal</span>
         <AvailabilityForm />

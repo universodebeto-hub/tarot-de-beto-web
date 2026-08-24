@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAdminAction } from "@/server/audit";
-import { businessLocalToUtc } from "@/lib/timezone";
+import { businessLocalToUtc, formatMinutes } from "@/lib/timezone";
 
 export async function listAvailabilityAdmin() {
   return prisma.availability.findMany({ orderBy: [{ dayOfWeek: "asc" }, { startMinute: "asc" }] });
@@ -141,4 +141,37 @@ export async function deleteBlockedTimeAdmin(id: string): Promise<void> {
   const admin = await requireAdmin();
   await prisma.blockedTime.delete({ where: { id } });
   await logAdminAction({ adminId: admin.id, action: "blocked_time.deleted", targetType: "BlockedTime", targetId: id });
+}
+
+/**
+ * Bloquea o libera un único bloque de 15 min desde el calendario visual del
+ * admin (clic directo sobre una celda) — atajo rápido sobre el mismo modelo
+ * `BlockedTime` que usa `createBlockedTimeAdmin`/`deleteBlockedTimeAdmin`
+ * para bloqueos por rango; este solo cubre el caso de una celda exacta.
+ */
+export async function toggleQuickBlock(date: string, startMinute: number): Promise<void> {
+  const admin = await requireAdmin();
+  const startsAt = businessLocalToUtc(date, startMinute);
+  const endsAt = businessLocalToUtc(date, startMinute + 15);
+
+  const existing = await prisma.blockedTime.findFirst({ where: { startsAt, endsAt } });
+  if (existing) {
+    await prisma.blockedTime.delete({ where: { id: existing.id } });
+    await logAdminAction({
+      adminId: admin.id,
+      action: "blocked_time.deleted",
+      targetType: "BlockedTime",
+      targetId: existing.id,
+      details: `${date} ${formatMinutes(startMinute)} (calendario)`,
+    });
+  } else {
+    const row = await prisma.blockedTime.create({ data: { startsAt, endsAt } });
+    await logAdminAction({
+      adminId: admin.id,
+      action: "blocked_time.created",
+      targetType: "BlockedTime",
+      targetId: row.id,
+      details: `${date} ${formatMinutes(startMinute)} (calendario)`,
+    });
+  }
 }

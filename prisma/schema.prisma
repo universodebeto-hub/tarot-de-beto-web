@@ -167,11 +167,16 @@ enum PaymentStatus {
 /// existan pagos reales (Fase 6), una reserva pasa de PENDING_PAYMENT a
 /// EXPIRED si nadie la confirma manualmente antes de `paymentDeadline`.
 ///
-/// Prevención de doble reserva: además de la validación en el servidor al
-/// crearla, hay un índice único parcial a nivel de base de datos sobre
-/// (serviceId, startsAt) para reservas activas (PENDING_PAYMENT/CONFIRMED),
-/// agregado a mano en la migración de esta tabla (Prisma no soporta índices
-/// únicos parciales de forma declarativa todavía).
+/// Prevención de reservas superpuestas (Fase de agenda profesional): además
+/// de la validación en el servidor al crearla, hay un EXCLUDE constraint de
+/// Postgres a nivel de base de datos sobre el rango [startsAt, endsAt) para
+/// reservas activas (PENDING_PAYMENT/CONFIRMED) — como Alberto es el único
+/// proveedor, dos reservas activas nunca pueden solaparse en el tiempo sin
+/// importar el servicio (antes era un índice único parcial sobre
+/// (serviceId, startsAt), que no evitaba solapamientos entre servicios
+/// distintos — ver migración `add_booking_overlap_exclude` para el detalle).
+/// Agregado a mano en la migración (Prisma no soporta EXCLUDE constraints
+/// de forma declarativa).
 model Booking {
   id              String        @id @default(cuid())
   bookingNumber   String        @unique

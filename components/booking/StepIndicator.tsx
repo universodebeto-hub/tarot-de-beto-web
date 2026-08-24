@@ -1,4 +1,4 @@
-const STEPS = ["Servicio", "Fecha", "Hora", "Datos", "Pago", "Confirmación"];
+const STEPS = ["Servicio", "Fecha y horario", "Datos", "Pago", "Confirmación"];
 
 export function StepIndicator({ current }: { current: number }) {
   return (
