@@ -8,7 +8,6 @@ import { buildWhatsAppLink } from "@/config/site";
 import { Button } from "@/components/ui/Button";
 
 const NAV_LINKS = [
-  { href: "/", label: "Inicio" },
   { href: "/quienes-somos", label: "Quiénes somos" },
   { href: "/servicios", label: "Servicios" },
   { href: "/agenda", label: "Agenda" },
@@ -29,23 +28,28 @@ export function Navbar({ whatsappNumber, userFirstName }: NavbarProps) {
   return (
     <header className="site-header sticky top-0 z-[100] flex h-(--header-h) items-center border-b border-white/10 bg-carbon/78 backdrop-blur-2xl backdrop-saturate-150">
       <div className="container mx-auto flex w-full max-w-[1180px] items-center justify-between px-7">
-        <Link href="/" className="flex shrink-0 items-center gap-3" onClick={() => setOpen(false)}>
-          <span className="relative flex h-[68px] w-[68px] shrink-0 items-center justify-center">
+        <Link
+          href="/"
+          aria-label="Ir al inicio — Tarot de Beto"
+          className="flex shrink-0 items-center gap-2.5 rounded-full border border-gold/35 bg-gold/[0.14] py-2.5 pl-3 pr-6 shadow-[0_0_24px_rgba(232,163,61,0.18)] transition-colors hover:bg-gold/[0.18]"
+          onClick={() => setOpen(false)}
+        >
+          <span className="relative flex h-[52px] w-[52px] shrink-0 items-center justify-center">
             <span
-              className="absolute inset-0 rounded-full bg-gold/30 blur-lg"
+              className="absolute -inset-1 rounded-full bg-[radial-gradient(circle,rgba(232,163,61,0.4)_0%,rgba(232,163,61,0)_72%)]"
               aria-hidden="true"
             />
             <Image
               src="/assets/logo/icon-512.png"
               alt=""
-              width={68}
-              height={68}
-              className="relative drop-shadow-[0_0_10px_rgba(232,163,61,0.9)] drop-shadow-[0_0_22px_rgba(232,163,61,0.55)]"
+              width={46}
+              height={46}
+              className="relative drop-shadow-[0_0_8px_rgba(232,163,61,0.9)]"
               priority
             />
           </span>
-          <span className="whitespace-nowrap font-display italic text-xl text-gold-soft">
-            <strong className="font-medium not-italic text-bone">Tarot</strong> de Beto
+          <span className="whitespace-nowrap font-display italic text-[23px] text-gold-soft">
+            <strong className="font-medium not-italic">Tarot</strong> de Beto
           </span>
         </Link>
 
@@ -71,7 +75,8 @@ export function Navbar({ whatsappNumber, userFirstName }: NavbarProps) {
             px-5 py-3.5 sm:p-0`}
         >
           {NAV_LINKS.map((link) => {
-            const active = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href.split("#")[0]) && link.href !== "/#referencias";
+            const active =
+              link.href !== "/#referencias" && pathname.startsWith(link.href.split("#")[0]);
             return (
               <Link
                 key={link.href}
