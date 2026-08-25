@@ -33,11 +33,11 @@ function ritualEntry(slug: string, galleryCount: number): RitualGallery {
 export const RITUAL_GALLERY: Record<string, RitualGallery> = {
   "ritual-endulzamiento": ritualEntry("ritual-endulzamiento", 3),
   "ritual-de-amarre": ritualEntry("ritual-de-amarre", 3),
-  "ritual-corte-de-lazos": ritualEntry("ritual-corte-de-lazos", 3),
+  "ritual-corte-de-lazos": ritualEntry("ritual-corte-de-lazos", 1),
   "ritual-proteccion": ritualEntry("ritual-proteccion", 3),
   "ritual-del-dinero": ritualEntry("ritual-del-dinero", 2),
-  "ritual-destrancadera": ritualEntry("ritual-destrancadera", 1),
-  "ritual-abre-caminos": ritualEntry("ritual-abre-caminos", 2),
+  "ritual-destrancadera": ritualEntry("ritual-destrancadera", 3),
+  "ritual-abre-caminos": ritualEntry("ritual-abre-caminos", 3),
 };
 
 export function ritualGalleryFor(slug: string): RitualGallery | null {
@@ -70,9 +70,9 @@ export const RITUAL_BANNER_SLIDES: RitualBannerSlide[] = [
     mobile: "/assets/banner-rituales/03-ritual-abre-caminos-mobile.webp",
   },
   {
-    slug: "ritual-corte-de-lazos",
-    desktop: "/assets/banner-rituales/04-ritual-corte-de-lazos-desktop.webp",
-    mobile: "/assets/banner-rituales/04-ritual-corte-de-lazos-mobile.webp",
+    slug: "ritual-destrancadera",
+    desktop: "/assets/banner-rituales/04-ritual-destrancadera-desktop.webp",
+    mobile: "/assets/banner-rituales/04-ritual-destrancadera-mobile.webp",
   },
   {
     slug: "ritual-proteccion",
@@ -90,4 +90,5 @@ export const RITUAL_BANNER_TAGLINE: Record<string, string> = {
   "ritual-abre-caminos": "Despeja el camino hacia nuevas oportunidades.",
   "ritual-corte-de-lazos": "Libera ataduras que ya no te corresponden.",
   "ritual-proteccion": "Un resguardo energético para tu día a día.",
+  "ritual-destrancadera": "Despeja bloqueos y renueva tu energía.",
 };
