@@ -30,7 +30,7 @@ export function Navbar({ whatsappNumber, userFirstName }: NavbarProps) {
     <header className="site-header sticky top-0 z-[100] flex h-(--header-h) items-center border-b border-white/10 bg-carbon/78 backdrop-blur-2xl backdrop-saturate-150">
       <div className="container mx-auto flex w-full max-w-[1180px] items-center justify-between px-7">
         <Link href="/" className="flex shrink-0 items-center gap-3" onClick={() => setOpen(false)}>
-          <span className="relative flex h-14 w-14 shrink-0 items-center justify-center">
+          <span className="relative flex h-[68px] w-[68px] shrink-0 items-center justify-center">
             <span
               className="absolute inset-0 rounded-full bg-gold/30 blur-lg"
               aria-hidden="true"
@@ -38,8 +38,8 @@ export function Navbar({ whatsappNumber, userFirstName }: NavbarProps) {
             <Image
               src="/assets/logo/icon-512.png"
               alt=""
-              width={56}
-              height={56}
+              width={68}
+              height={68}
               className="relative drop-shadow-[0_0_10px_rgba(232,163,61,0.9)] drop-shadow-[0_0_22px_rgba(232,163,61,0.55)]"
               priority
             />
