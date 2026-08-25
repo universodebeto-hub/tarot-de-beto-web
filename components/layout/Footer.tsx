@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { siteConfig, buildWhatsAppLink } from "@/config/site";
 import { Button } from "@/components/ui/Button";
 
@@ -45,9 +46,18 @@ export function Footer() {
 
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-3">
           <div>
-            <span className="font-display italic text-lg text-gold-soft">
-              <strong className="font-medium not-italic text-bone">Tarot</strong> de Beto
-            </span>
+            <div className="flex items-center gap-2.5">
+              <Image
+                src="/assets/logo/icon-512.png"
+                alt=""
+                width={30}
+                height={30}
+                className="shrink-0 drop-shadow-[0_0_10px_rgba(232,163,61,0.5)]"
+              />
+              <span className="font-display italic text-lg text-gold-soft">
+                <strong className="font-medium not-italic text-bone">Tarot</strong> de Beto
+              </span>
+            </div>
             <p className="mt-3 max-w-xs text-sm">
               Lecturas de tarot con Alberto Arango. Consultas honestas, cercanas y sin promesas vacías.
             </p>
