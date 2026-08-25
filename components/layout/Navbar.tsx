@@ -29,16 +29,16 @@ export function Navbar({ whatsappNumber, userFirstName }: NavbarProps) {
   return (
     <header className="site-header sticky top-0 z-[100] flex h-(--header-h) items-center border-b border-white/10 bg-carbon/78 backdrop-blur-2xl backdrop-saturate-150">
       <div className="container mx-auto flex w-full max-w-[1180px] items-center justify-between px-7">
-        <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
+        <Link href="/" className="flex shrink-0 items-center gap-2.5" onClick={() => setOpen(false)}>
           <Image
             src="/assets/logo/icon-512.png"
             alt=""
-            width={34}
-            height={34}
-            className="shrink-0 drop-shadow-[0_0_10px_rgba(232,163,61,0.55)]"
+            width={42}
+            height={42}
+            className="shrink-0 drop-shadow-[0_0_14px_rgba(232,163,61,0.85)]"
             priority
           />
-          <span className="font-display italic text-xl text-gold-soft">
+          <span className="whitespace-nowrap font-display italic text-xl text-gold-soft">
             <strong className="font-medium not-italic text-bone">Tarot</strong> de Beto
           </span>
         </Link>
