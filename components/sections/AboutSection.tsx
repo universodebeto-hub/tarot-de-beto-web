@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Reveal } from "@/components/ui/Reveal";
 
 const VALUES = [
@@ -27,17 +28,15 @@ export function AboutSection({ full = false }: AboutSectionProps) {
     <section id="sobre-mi" className="py-[88px]">
       <div className="container mx-auto grid max-w-[1180px] items-start gap-14 px-7 lg:grid-cols-[0.85fr_1.15fr]">
         <Reveal>
-          <div className="glass flex aspect-3/4 items-center justify-center overflow-hidden">
-            <svg
-              viewBox="0 0 100 100"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.2}
-              className="h-24 w-24 text-gold/70"
-            >
-              <circle cx="50" cy="50" r="34" />
-              <path d="M50 16 L50 84 M16 50 L84 50 M27 27 L73 73 M73 27 L27 73" />
-            </svg>
+          <div className="glass relative aspect-3/4 overflow-hidden">
+            <Image
+              src="/assets/quienes-somos/alberto.webp"
+              alt="Alberto Arango"
+              fill
+              className="object-cover"
+              sizes="(min-width: 1024px) 40vw, 90vw"
+              priority
+            />
           </div>
         </Reveal>
 
