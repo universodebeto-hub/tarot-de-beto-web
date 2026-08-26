@@ -322,6 +322,23 @@ async function main() {
     update: {},
     create: { key: "reminder_hours_before", value: JSON.stringify([24, 2]) },
   });
+  // Datos de contacto para pagos manuales (Pago Móvil/Zelle/Binance),
+  // mostrados al cliente al elegir uno de estos métodos en /reservas/[id]
+  // (ver server/manual-payments.ts). Placeholders a propósito — Alberto los
+  // completa desde /admin/configuracion (setting "manual_payment_instructions")
+  // sin necesitar redeploy.
+  await prisma.setting.upsert({
+    where: { key: "manual_payment_instructions" },
+    update: {},
+    create: {
+      key: "manual_payment_instructions",
+      value: JSON.stringify({
+        pagoMovil: { telefono: "0000-0000000", cedula: "V-00000000", banco: "Banco pendiente de configurar" },
+        zelle: { correo: "pendiente@configurar.com", nombre: "Nombre pendiente de configurar" },
+        binance: { id: "000000000", correo: "pendiente@configurar.com" },
+      }),
+    },
+  });
 
   // Horario de atención: todos los días 11:00–23:00 (hora de Colombia), tal
   // como pide el prompt original. Editable por el admin en la Fase 7; por

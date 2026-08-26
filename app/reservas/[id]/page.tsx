@@ -10,7 +10,9 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { PendingPaymentPanel } from "@/components/booking/PendingPaymentPanel";
 import { PayPalButton } from "@/components/booking/PayPalButton";
+import { ManualPaymentPanel } from "@/components/booking/ManualPaymentPanel";
 import { isReportOnlyService, REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
+import { getManualPaymentInstructions } from "@/server/settings";
 
 export const metadata: Metadata = {
   title: "Tu reserva",
@@ -31,6 +33,7 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
   const timeLabel = formatMinutes(minutesInBusinessDay(booking.startsAt));
   const isPending = booking.status === "PENDING_PAYMENT";
   const isExpired = booking.status === "EXPIRED";
+  const manualPaymentInstructions = isPending ? await getManualPaymentInstructions() : null;
 
   return (
     <section className="py-[88px]">
@@ -127,6 +130,9 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
                       bookingId={booking.id}
                     />
                   </div>
+                ) : null}
+                {manualPaymentInstructions ? (
+                  <ManualPaymentPanel bookingId={booking.id} instructions={manualPaymentInstructions} />
                 ) : null}
                 <PendingPaymentPanel
                   paymentDeadline={booking.paymentDeadline.toISOString()}

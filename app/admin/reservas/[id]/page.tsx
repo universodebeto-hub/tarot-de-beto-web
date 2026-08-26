@@ -115,6 +115,29 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
         </GlassCard>
       ) : null}
 
+      {booking.manualPaymentProofUrl ? (
+        <GlassCard className="flex flex-col gap-3">
+          <span className="eyebrow">
+            Comprobante — {booking.paymentMethod === "PAGO_MOVIL" ? "Pago Móvil" : booking.paymentMethod === "ZELLE" ? "Zelle" : "Binance"}
+          </span>
+          <p className="mb-0 text-sm text-bone-dim">
+            Referencia: <span className="text-bone">{booking.manualPaymentReference}</span>
+          </p>
+          <a
+            href={booking.manualPaymentProofUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="block w-fit overflow-hidden rounded-lg border border-white/10"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- URL dinámica de Vercel Blob, sin dominio fijo que declarar en next.config */}
+            <img src={booking.manualPaymentProofUrl} alt="Comprobante de pago" className="max-h-80 w-auto" />
+          </a>
+          <p className="mb-0 text-xs text-ash">
+            Verifica el comprobante contra tu estado de cuenta antes de confirmar el pago arriba.
+          </p>
+        </GlassCard>
+      ) : null}
+
       {booking.transactions.length > 0 ? (
         <GlassCard>
           <span className="eyebrow mb-3">Transacciones PayPal</span>

@@ -70,7 +70,11 @@ export async function setBookingStatus(bookingId: string, next: BookingStatus): 
     return { error: `No se puede pasar de ${booking.status} a ${next}.` };
   }
 
-  const willMarkPaid = next === "CONFIRMED" && booking.paymentStatus === "UNPAID";
+  // "UNPAID" cubre el caso de siempre (PayPal todavía no capturado); "PENDING"
+  // cubre un pago manual (Pago Móvil/Zelle/Binance) con comprobante ya
+  // subido y esperando esta misma revisión — ver server/manual-payments.ts.
+  const willMarkPaid =
+    next === "CONFIRMED" && (booking.paymentStatus === "UNPAID" || booking.paymentStatus === "PENDING");
 
   await prisma.booking.update({
     where: { id: bookingId },

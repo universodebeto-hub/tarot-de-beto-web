@@ -17,3 +17,23 @@ export async function getSetting<T>(key: string, fallback: T): Promise<T> {
 export async function getFaqItems(): Promise<FaqItem[]> {
   return getSetting<FaqItem[]>("faq_items", defaultFaqItems);
 }
+
+export interface ManualPaymentInstructions {
+  pagoMovil: { telefono: string; cedula: string; banco: string };
+  zelle: { correo: string; nombre: string };
+  binance: { id: string; correo: string };
+}
+
+const DEFAULT_MANUAL_PAYMENT_INSTRUCTIONS: ManualPaymentInstructions = {
+  pagoMovil: { telefono: "", cedula: "", banco: "" },
+  zelle: { correo: "", nombre: "" },
+  binance: { id: "", correo: "" },
+};
+
+/** Datos de contacto para Pago Móvil/Zelle/Binance (setting `manual_payment_instructions`, JSON), editable en /admin/configuracion. */
+export async function getManualPaymentInstructions(): Promise<ManualPaymentInstructions> {
+  return getSetting<ManualPaymentInstructions>(
+    "manual_payment_instructions",
+    DEFAULT_MANUAL_PAYMENT_INSTRUCTIONS,
+  );
+}

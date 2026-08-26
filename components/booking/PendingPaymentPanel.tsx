@@ -27,9 +27,9 @@ export function PendingPaymentPanel({
         <CountdownTimer deadlineIso={paymentDeadline} onExpire={() => router.refresh()} />
       </p>
       <p className="mb-0 text-sm">
-        El pago en línea con PayPal estará disponible pronto. Mientras tanto, confirma tu pago directamente
-        con Beto por WhatsApp mencionando tu número de reserva{" "}
-        <strong className="font-medium text-bone">{bookingNumber}</strong> y él la marcará como confirmada.
+        ¿Prefieres pagar de otra forma? Confirma tu pago directamente con Beto por WhatsApp mencionando tu
+        número de reserva <strong className="font-medium text-bone">{bookingNumber}</strong> y él la
+        marcará como confirmada.
       </p>
       {whatsappNumber ? (
         <Button href={buildWhatsAppLink(whatsappNumber, message)} external className="self-start">

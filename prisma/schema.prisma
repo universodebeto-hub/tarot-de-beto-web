@@ -168,6 +168,19 @@ enum PaymentStatus {
   REFUNDED
 }
 
+/// Método de pago elegido para una reserva. PayPal se captura y confirma
+/// solo (ver server/paypal-orders.ts); los otros tres son de confirmación
+/// MANUAL — el cliente transfiere por su cuenta, sube un comprobante
+/// (manualPaymentProofUrl) y el admin revisa y confirma desde el panel
+/// (mismo botón "Confirmar (pago recibido)" que ya existe, ver
+/// server/admin/bookings.ts::setBookingStatus()).
+enum PaymentMethod {
+  PAYPAL
+  PAGO_MOVIL
+  ZELLE
+  BINANCE
+}
+
 /// Reserva de una consulta. `startsAt`/`endsAt` son instantes UTC absolutos
 /// (ya calculados por el motor de disponibilidad, Fase 4). Mientras no
 /// existan pagos reales (Fase 6), una reserva pasa de PENDING_PAYMENT a
@@ -201,6 +214,20 @@ model Booking {
   paymentDeadline DateTime
   paypalOrderId   String?       @unique
   paypalCaptureId String?
+  /// Método de pago elegido — null mientras la reserva sigue pendiente y
+  /// el cliente todavía no eligió cómo pagar (o si eligió PayPal, cuyo
+  /// flujo no necesita marcarlo hasta capturar). Se marca al elegir
+  /// Pago Móvil/Zelle/Binance (ver server/manual-payments.ts) o al capturar
+  /// PayPal.
+  paymentMethod   PaymentMethod?
+  /// Número de referencia/operación que el cliente escribe al pagar por
+  /// Pago Móvil/Zelle/Binance — el admin lo cruza contra su estado de
+  /// cuenta antes de confirmar. Null para PayPal (la referencia real es
+  /// paypalCaptureId).
+  manualPaymentReference String?
+  /// URL (Vercel Blob) de la captura del comprobante que el cliente sube
+  /// para un pago manual — visible en el panel admin antes de confirmar.
+  manualPaymentProofUrl  String?
   notes           String?
   /// Datos adicionales que algunos servicios exigen para poder realizarse
   /// (ej. fecha/hora/lugar de nacimiento para Carta Astral) — ver
