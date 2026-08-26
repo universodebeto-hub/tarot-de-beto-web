@@ -5,7 +5,7 @@ import { getBookingById } from "@/server/bookings";
 import { minutesInBusinessDay, formatMinutes, businessDateString } from "@/lib/timezone";
 import { fullDateLabel } from "@/lib/date-labels";
 import { BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL } from "@/lib/booking-labels";
-import { siteConfig } from "@/config/site";
+import { siteConfig, buildWhatsAppLink } from "@/config/site";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { PendingPaymentPanel } from "@/components/booking/PendingPaymentPanel";
@@ -29,6 +29,7 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
   if (!booking) notFound();
 
   const isReport = isReportOnlyService(booking.service.slug);
+  const isConsultation = Boolean(booking.tarotistaId) && !isReport;
   const dateLabel = fullDateLabel(businessDateString(booking.startsAt));
   const timeLabel = formatMinutes(minutesInBusinessDay(booking.startsAt));
   const isPending = booking.status === "PENDING_PAYMENT";
@@ -93,6 +94,13 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
                   </span>
                   <span className="text-bone">{REPORT_DELIVERY_TEXT} tras confirmar el pago</span>
                 </div>
+              ) : isConsultation ? (
+                <div>
+                  <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">
+                    Tarotista
+                  </span>
+                  <span className="text-bone">{booking.tarotista?.name}</span>
+                </div>
               ) : (
                 <>
                   <div>
@@ -141,7 +149,9 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
                   message={
                     isReport
                       ? `Hola Beto, quiero confirmar el pago de mi solicitud ${booking.bookingNumber} (${booking.service.name}).`
-                      : `Hola Beto, quiero confirmar el pago de mi reserva ${booking.bookingNumber} (${booking.service.name}, ${dateLabel} a las ${timeLabel}).`
+                      : isConsultation
+                        ? `Hola, quiero confirmar el pago de mi consulta ${booking.bookingNumber} con ${booking.tarotista?.name} (${booking.service.name}).`
+                        : `Hola Beto, quiero confirmar el pago de mi reserva ${booking.bookingNumber} (${booking.service.name}, ${dateLabel} a las ${timeLabel}).`
                   }
                 />
               </div>
@@ -150,11 +160,42 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
                 <p className="mb-0 text-sm">
                   {isReport
                     ? "El pago no se completó a tiempo. Puedes solicitarlo de nuevo cuando quieras."
-                    : "El horario no se confirmó a tiempo y ya volvió a quedar disponible para otras personas."}
+                    : isConsultation
+                      ? "El pago no se completó a tiempo y la consulta ya no está reservada."
+                      : "El horario no se confirmó a tiempo y ya volvió a quedar disponible para otras personas."}
                 </p>
-                <Button href={isReport ? `/reservar?service=${booking.service.id}` : "/agenda"} className="self-start">
-                  {isReport ? "Solicitar de nuevo" : "Elegir otro horario"}
+                <Button
+                  href={
+                    isReport
+                      ? `/reservar?service=${booking.service.id}`
+                      : isConsultation && booking.tarotista
+                        ? `/tarotistas/${booking.tarotista.slug}`
+                        : "/agenda"
+                  }
+                  className="self-start"
+                >
+                  {isReport ? "Solicitar de nuevo" : isConsultation ? "Volver al tarotista" : "Elegir otro horario"}
                 </Button>
+              </div>
+            ) : isConsultation ? (
+              <div className="flex flex-col gap-3">
+                <p className="mb-0 text-sm text-bone-dim">
+                  Tu pago fue confirmado — tu consulta con{" "}
+                  <strong className="font-medium text-bone">{booking.tarotista?.name}</strong> ya está
+                  habilitada.
+                </p>
+                {siteConfig.contact.whatsappNumber ? (
+                  <Button
+                    href={buildWhatsAppLink(
+                      siteConfig.contact.whatsappNumber,
+                      `Hola, ya confirmé el pago de mi consulta ${booking.bookingNumber} con ${booking.tarotista?.name} (${booking.service.name}). ¿Comenzamos?`,
+                    )}
+                    external
+                    className="self-start"
+                  >
+                    Comenzar por WhatsApp
+                  </Button>
+                ) : null}
               </div>
             ) : (
               <div className="flex flex-wrap gap-3">

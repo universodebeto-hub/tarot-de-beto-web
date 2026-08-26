@@ -131,7 +131,10 @@ export default async function AdminBookingsPage({ searchParams }: PageProps) {
                     </Link>
                   </td>
                   <td className="py-2.5 pr-4 text-bone">{b.user ? `${b.user.firstName} ${b.user.lastName ?? ""}` : b.guestName}</td>
-                  <td className="py-2.5 pr-4 text-bone-dim">{b.service.name}</td>
+                  <td className="py-2.5 pr-4 text-bone-dim">
+                    {b.service.name}
+                    {b.tarotista ? <span className="text-ash"> · {b.tarotista.name}</span> : null}
+                  </td>
                   <td className="py-2.5 pr-4 text-bone-dim">
                     {fullDateLabel(businessDateString(b.startsAt))} · {formatMinutes(minutesInBusinessDay(b.startsAt))}
                   </td>

@@ -37,7 +37,7 @@ export async function listBookingsAdmin(filters: BookingFilters) {
           }
         : {}),
     },
-    include: { service: true, user: true },
+    include: { service: true, user: true, tarotista: true },
     orderBy: { startsAt: "desc" },
     take: 200,
   });
@@ -46,7 +46,7 @@ export async function listBookingsAdmin(filters: BookingFilters) {
 export async function getBookingAdminById(id: string) {
   return prisma.booking.findUnique({
     where: { id },
-    include: { service: true, user: true, transactions: true },
+    include: { service: true, user: true, transactions: true, tarotista: true },
   });
 }
 

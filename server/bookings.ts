@@ -215,7 +215,7 @@ export async function getBookingById(id: string) {
   await expireStaleBookings();
   return prisma.booking.findUnique({
     where: { id },
-    include: { service: true },
+    include: { service: true, tarotista: true },
   });
 }
 
@@ -223,7 +223,7 @@ export async function getUserBookings(userId: string) {
   await expireStaleBookings();
   return prisma.booking.findMany({
     where: { userId },
-    include: { service: true },
+    include: { service: true, tarotista: true },
     orderBy: { startsAt: "desc" },
   });
 }

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { getActiveTarotistas } from "@/server/tarotistas";
 import { TarotistaCard } from "@/components/tarotistas/TarotistaCard";
-import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/tarotistas" },
@@ -12,8 +11,8 @@ export const metadata: Metadata = {
 /**
  * Reemplaza conceptualmente "Agenda" como punto de entrada (Fase 2 de la
  * reestructuración): en vez de elegir un día/horario, el cliente ve quién
- * está disponible ahora. El flujo de reserva en sí (/agenda) sigue siendo
- * el mismo hasta la Fase 4.
+ * está disponible ahora. Cada tarjeta lleva a la ficha individual del
+ * tarotista (Fases 5-7), donde se resuelve la consulta o la solicitud.
  */
 export default async function TarotistasPage() {
   const tarotistas = await getActiveTarotistas();
@@ -34,7 +33,7 @@ export default async function TarotistasPage() {
         {tarotistas.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {tarotistas.map((t) => (
-              <TarotistaCard key={t.id} tarotista={t} whatsappNumber={siteConfig.contact.whatsappNumber} />
+              <TarotistaCard key={t.id} tarotista={t} />
             ))}
           </div>
         ) : (

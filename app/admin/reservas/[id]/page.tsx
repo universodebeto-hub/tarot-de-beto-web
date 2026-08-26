@@ -35,6 +35,7 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
   if (!booking) notFound();
 
   const isReport = isReportOnlyService(booking.service.slug);
+  const isConsultation = Boolean(booking.tarotistaId) && !isReport;
   const dateLabel = fullDateLabel(businessDateString(booking.startsAt));
   const timeLabel = formatMinutes(minutesInBusinessDay(booking.startsAt));
   const transitions = TRANSITIONS[booking.status] ?? [];
@@ -68,10 +69,10 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
           </div>
           <div>
             <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">
-              {isReport ? "Solicitado" : "Fecha"}
+              {isReport ? "Solicitado" : isConsultation ? "Tarotista" : "Fecha"}
             </span>
             <span className="text-bone">
-              {isReport ? dateLabel : `${dateLabel} · ${timeLabel}`}
+              {isReport ? dateLabel : isConsultation ? booking.tarotista?.name : `${dateLabel} · ${timeLabel}`}
             </span>
             {isReport ? (
               <p className="mb-0 text-xs text-gold-soft">Informe · entrega en {REPORT_DELIVERY_TEXT}</p>

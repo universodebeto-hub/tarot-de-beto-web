@@ -35,7 +35,8 @@ model Service {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
-  bookings Booking[]
+  bookings          Booking[]
+  attentionRequests AttentionRequest[]
 
   @@index([available, sortOrder])
 }
@@ -138,7 +139,39 @@ model Tarotista {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
+  bookings          Booking[]
+  attentionRequests AttentionRequest[]
+
   @@index([active, sortOrder])
+}
+
+enum AttentionRequestStatus {
+  PENDING
+  CONTACTED
+  DISMISSED
+}
+
+/// Solicitud pendiente (Fase 5): cuando un tarotista no está DISPONIBLE, el
+/// cliente puede dejar sus datos en vez de una consulta inmediata. NO
+/// reserva ningún horario ni bloque de agenda — es solo una nota para que
+/// el tarotista la revise desde su panel (ver server/tarotista-panel.ts) y
+/// decida si contacta a la persona por su cuenta (WhatsApp, etc.).
+model AttentionRequest {
+  id            String                  @id @default(cuid())
+  tarotistaId   String
+  tarotista     Tarotista               @relation(fields: [tarotistaId], references: [id])
+  name          String
+  email         String?
+  phone         String?
+  serviceId     String?
+  service       Service?                @relation(fields: [serviceId], references: [id])
+  preferredTime String?
+  message       String?
+  status        AttentionRequestStatus  @default(PENDING)
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+
+  @@index([tarotistaId, status])
 }
 
 /// Token de recuperación de contraseña (Fase 3). El envío real por email
@@ -250,6 +283,11 @@ model Booking {
   guestPhone      String?
   serviceId       String
   service         Service       @relation(fields: [serviceId], references: [id])
+  /// Tarotista de la consulta (Fase 6-7) — null en reservas creadas antes de
+  /// esta fase, o en informes (Numerología/Carta Astral) que no pasan por
+  /// disponibilidad de un tarotista. Ver server/consultations.ts.
+  tarotistaId     String?
+  tarotista       Tarotista?    @relation(fields: [tarotistaId], references: [id])
   startsAt        DateTime
   endsAt          DateTime
   timezone        String        @default("America/Bogota")
@@ -288,6 +326,7 @@ model Booking {
   @@index([userId])
   @@index([serviceId, startsAt])
   @@index([status, paymentDeadline])
+  @@index([tarotistaId])
 }
 
 /// Registro de auditoría de cada orden PayPal asociada a una reserva.

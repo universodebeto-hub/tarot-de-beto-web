@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { getOwnTarotista } from "@/server/tarotista-panel";
-import { setOwnStatusFormAction } from "@/app/panel-tarotista/actions";
+import { getOwnTarotista, getOwnAttentionRequests } from "@/server/tarotista-panel";
+import { setOwnStatusFormAction, setOwnRequestStatusFormAction } from "@/app/panel-tarotista/actions";
 import { GlassCard } from "@/components/ui/GlassCard";
 import {
   TAROTISTA_STATUS_LABEL,
@@ -21,8 +21,15 @@ const STATUS_ORDER: TarotistaStatus[] = ["DISPONIBLE", "EN_CONSULTA", "EN_REPOSO
  * server/tarotista-panel.ts::getOwnTarotista() — genérico, sirve para
  * cualquier tarotista futuro sin tocar código).
  */
+const REQUEST_STATUS_LABEL: Record<string, string> = {
+  PENDING: "Pendiente",
+  CONTACTED: "Contactada",
+  DISMISSED: "Descartada",
+};
+
 export default async function PanelTarotistaPage() {
   const tarotista = await getOwnTarotista();
+  const requests = tarotista ? await getOwnAttentionRequests() : [];
 
   if (!tarotista) {
     return (
@@ -82,6 +89,47 @@ export default async function PanelTarotistaPage() {
               </form>
             );
           })}
+        </div>
+
+        <div className="mt-10">
+          <span className="eyebrow mb-3">Solicitudes de atención</span>
+          {requests.length === 0 ? (
+            <p className="text-sm text-bone-dim">Todavía no tienes solicitudes.</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {requests.map((r) => (
+                <GlassCard key={r.id} className="flex flex-col gap-2 text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-bone">{r.name}</span>
+                    <span className="font-mono text-[10.5px] uppercase tracking-wide text-ash">
+                      {REQUEST_STATUS_LABEL[r.status]}
+                    </span>
+                  </div>
+                  {r.service ? <p className="mb-0 text-xs text-ash">{r.service.name}</p> : null}
+                  {r.email ? <p className="mb-0 text-bone-dim">{r.email}</p> : null}
+                  {r.phone ? <p className="mb-0 text-bone-dim">{r.phone}</p> : null}
+                  {r.preferredTime ? (
+                    <p className="mb-0 text-bone-dim">Preferencia: {r.preferredTime}</p>
+                  ) : null}
+                  {r.message ? <p className="mb-0 text-bone-dim">{r.message}</p> : null}
+                  {r.status === "PENDING" ? (
+                    <div className="mt-2 flex gap-2">
+                      <form action={setOwnRequestStatusFormAction.bind(null, r.id, "CONTACTED")}>
+                        <button type="submit" className="btn btn-ghost">
+                          Marcar contactada
+                        </button>
+                      </form>
+                      <form action={setOwnRequestStatusFormAction.bind(null, r.id, "DISMISSED")}>
+                        <button type="submit" className="btn btn-ghost">
+                          Descartar
+                        </button>
+                      </form>
+                    </div>
+                  ) : null}
+                </GlassCard>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>

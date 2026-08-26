@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { buildWhatsAppLink } from "@/config/site";
 import {
   TAROTISTA_STATUS_LABEL,
   TAROTISTA_STATUS_DESCRIPTION,
@@ -11,7 +10,6 @@ import type { Tarotista } from "@prisma/client";
 
 interface TarotistaCardProps {
   tarotista: Tarotista;
-  whatsappNumber: string;
 }
 
 function initials(name: string): string {
@@ -24,14 +22,11 @@ function initials(name: string): string {
 }
 
 /**
- * Ficha pública de un tarotista (Fase 2). El CTA todavía apunta al flujo de
- * reserva actual (/agenda) — el nuevo flujo "duración -> pago -> consulta
- * habilitada" sin fecha/hora es la Fase 4, no se adelanta acá. "Solicitar
- * atención" (tarotista no disponible) todavía no tiene backend propio (esa
- * es la Fase 5), así que de momento cae a WhatsApp, mismo criterio que ya
- * usa el resto del sitio para flujos aún no automatizados.
+ * Ficha pública de un tarotista (Fase 2). El CTA lleva a la ficha
+ * individual (/tarotistas/[slug], Fases 5-7): ahí se resuelve la consulta
+ * inmediata (si está disponible) o la solicitud de atención (si no).
  */
-export function TarotistaCard({ tarotista, whatsappNumber }: TarotistaCardProps) {
+export function TarotistaCard({ tarotista }: TarotistaCardProps) {
   const isAvailable = tarotista.status === "DISPONIBLE";
 
   return (
@@ -72,23 +67,9 @@ export function TarotistaCard({ tarotista, whatsappNumber }: TarotistaCardProps)
 
       <p className="mb-0 text-xs text-ash">{TAROTISTA_STATUS_DESCRIPTION[tarotista.status]}</p>
 
-      {isAvailable ? (
-        <Button href="/agenda" className="w-full justify-center">
-          Consultar ahora
-        </Button>
-      ) : whatsappNumber ? (
-        <Button
-          href={buildWhatsAppLink(
-            whatsappNumber,
-            `Hola Beto, quiero solicitar atención con ${tarotista.name} en cuanto esté disponible.`,
-          )}
-          external
-          variant="ghost"
-          className="w-full justify-center"
-        >
-          Solicitar atención
-        </Button>
-      ) : null}
+      <Button href={`/tarotistas/${tarotista.slug}`} variant={isAvailable ? "gold" : "ghost"} className="w-full justify-center">
+        {isAvailable ? "Consultar ahora" : "Solicitar atención"}
+      </Button>
     </GlassCard>
   );
 }

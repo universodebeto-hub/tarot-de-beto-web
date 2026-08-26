@@ -77,6 +77,7 @@ export default async function DashboardPage() {
               <div className="flex flex-col gap-3">
                 {bookings.map((booking) => {
                   const isReport = isReportOnlyService(booking.service.slug);
+                  const isConsultation = Boolean(booking.tarotistaId) && !isReport;
                   return (
                   <Link key={booking.id} href={`/reservas/${booking.id}`}>
                     <GlassCard className="flex flex-wrap items-center justify-between gap-3 transition-colors hover:border-gold/40">
@@ -85,7 +86,9 @@ export default async function DashboardPage() {
                         <p className="mb-0 font-mono text-[11.5px] uppercase tracking-wide text-ash">
                           {isReport
                             ? `Informe · entrega en ${REPORT_DELIVERY_TEXT}`
-                            : `${fullDateLabel(businessDateString(booking.startsAt))} · ${formatMinutes(minutesInBusinessDay(booking.startsAt))}`}{" "}
+                            : isConsultation
+                              ? `Consulta con ${booking.tarotista?.name}`
+                              : `${fullDateLabel(businessDateString(booking.startsAt))} · ${formatMinutes(minutesInBusinessDay(booking.startsAt))}`}{" "}
                           · #{booking.bookingNumber}
                         </p>
                       </div>
