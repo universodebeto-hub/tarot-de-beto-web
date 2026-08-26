@@ -184,18 +184,24 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
                   <strong className="font-medium text-bone">{booking.tarotista?.name}</strong> ya está
                   habilitada.
                 </p>
-                {siteConfig.contact.whatsappNumber ? (
-                  <Button
-                    href={buildWhatsAppLink(
-                      siteConfig.contact.whatsappNumber,
-                      `Hola, ya confirmé el pago de mi consulta ${booking.bookingNumber} con ${booking.tarotista?.name} (${booking.service.name}). ¿Comenzamos?`,
-                    )}
-                    external
-                    className="self-start"
-                  >
-                    Comenzar por WhatsApp
+                <div className="flex flex-wrap gap-3">
+                  <Button href={`/reservas/${booking.id}/llamada`} className="self-start">
+                    Entrar a la llamada
                   </Button>
-                ) : null}
+                  {siteConfig.contact.whatsappNumber ? (
+                    <Button
+                      href={buildWhatsAppLink(
+                        siteConfig.contact.whatsappNumber,
+                        `Hola, ya confirmé el pago de mi consulta ${booking.bookingNumber} con ${booking.tarotista?.name} (${booking.service.name}). ¿Comenzamos?`,
+                      )}
+                      external
+                      variant="ghost"
+                      className="self-start"
+                    >
+                      ¿Problemas? Escribir por WhatsApp
+                    </Button>
+                  ) : null}
+                </div>
               </div>
             ) : (
               <div className="flex flex-wrap gap-3">

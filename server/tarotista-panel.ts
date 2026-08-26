@@ -75,6 +75,19 @@ export async function setOwnAttentionRequestStatus(
   return {};
 }
 
+/** Consultas confirmadas y pagadas del tarotista vinculado a la cuenta actual — de acá se entra a la llamada (Fase 11). */
+export async function getOwnConfirmedConsultations() {
+  const tarotista = await getOwnTarotista();
+  if (!tarotista) return [];
+
+  return prisma.booking.findMany({
+    where: { tarotistaId: tarotista.id, status: "CONFIRMED", paymentStatus: "PAID" },
+    include: { service: true, user: true },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
+}
+
 export interface SubscribePushResult {
   error?: string;
 }

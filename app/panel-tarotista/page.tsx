@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
-import { getOwnTarotista, getOwnAttentionRequests } from "@/server/tarotista-panel";
+import Link from "next/link";
+import {
+  getOwnTarotista,
+  getOwnAttentionRequests,
+  getOwnConfirmedConsultations,
+} from "@/server/tarotista-panel";
 import { setOwnStatusFormAction, setOwnRequestStatusFormAction } from "@/app/panel-tarotista/actions";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { PanelClientTools } from "@/components/tarotistas/PanelClientTools";
@@ -31,6 +36,7 @@ const REQUEST_STATUS_LABEL: Record<string, string> = {
 export default async function PanelTarotistaPage() {
   const tarotista = await getOwnTarotista();
   const requests = tarotista ? await getOwnAttentionRequests() : [];
+  const consultations = tarotista ? await getOwnConfirmedConsultations() : [];
 
   if (!tarotista) {
     return (
@@ -92,6 +98,31 @@ export default async function PanelTarotistaPage() {
               </form>
             );
           })}
+        </div>
+
+        <div className="mt-10">
+          <span className="eyebrow mb-3">Consultas confirmadas</span>
+          {consultations.length === 0 ? (
+            <p className="text-sm text-bone-dim">No tienes consultas confirmadas por ahora.</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {consultations.map((c) => (
+                <GlassCard key={c.id} className="flex flex-wrap items-center justify-between gap-3 text-sm">
+                  <div>
+                    <p className="mb-0.5 text-bone">
+                      {c.user ? `${c.user.firstName} ${c.user.lastName ?? ""}` : c.guestName}
+                    </p>
+                    <p className="mb-0 text-xs text-ash">
+                      {c.service.name} · #{c.bookingNumber}
+                    </p>
+                  </div>
+                  <Link href={`/reservas/${c.id}/llamada`} className="btn btn-gold">
+                    Unirse a la llamada
+                  </Link>
+                </GlassCard>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="mt-10">

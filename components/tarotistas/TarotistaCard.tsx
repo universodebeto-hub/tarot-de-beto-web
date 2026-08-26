@@ -50,6 +50,12 @@ export function TarotistaCard({ tarotista }: TarotistaCardProps) {
         </span>
       </div>
 
+      {tarotista.experience ? (
+        <span className="font-mono text-[10.5px] uppercase tracking-wide text-gold-soft">
+          {tarotista.experience}
+        </span>
+      ) : null}
+
       {tarotista.bio ? <p className="mb-0 max-w-[32ch] text-sm text-bone-dim">{tarotista.bio}</p> : null}
 
       {tarotista.specialties.length > 0 ? (

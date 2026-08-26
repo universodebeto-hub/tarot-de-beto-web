@@ -59,6 +59,11 @@ export default async function TarotistaProfilePage({ params }: TarotistaPageProp
             />
             {TAROTISTA_STATUS_LABEL[tarotista.status]}
           </span>
+          {tarotista.experience ? (
+            <p className="mb-0 mt-2 font-mono text-[11px] uppercase tracking-wide text-gold-soft">
+              {tarotista.experience}
+            </p>
+          ) : null}
           {tarotista.bio ? <p className="mx-auto mt-3 max-w-[46ch] text-bone-dim">{tarotista.bio}</p> : null}
         </div>
 

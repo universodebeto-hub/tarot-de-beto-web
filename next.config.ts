@@ -24,7 +24,11 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google-analytics.com https://analytics.tiktok.com",
+  // *.livekit.cloud (no solo el hostname exacto del proyecto): las llamadas
+  // de audio (Fase 11) a veces enrutan a un edge de región distinto dentro
+  // del mismo dominio (ver "settings/regions" en las llamadas del SDK) —
+  // mismo criterio que recomienda la propia documentación de LiveKit.
+  "connect-src 'self' https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google-analytics.com https://analytics.tiktok.com https://*.livekit.cloud wss://*.livekit.cloud",
   "frame-src https://www.paypal.com https://www.sandbox.paypal.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
@@ -36,7 +40,10 @@ const SECURITY_HEADERS = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "geolocation=(), camera=(), microphone=()" },
+  // microphone=(self): las llamadas de audio (Fase 11, /reservas/[id]/llamada)
+  // necesitan poder pedir permiso de micrófono en este origen — camera y
+  // geolocation siguen bloqueadas del todo, la app nunca las usa.
+  { key: "Permissions-Policy", value: "geolocation=(), camera=(), microphone=(self)" },
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
 ];
 
