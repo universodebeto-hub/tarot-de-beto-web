@@ -8,6 +8,7 @@ import { hasRequiredIntakeData } from "@/lib/service-intake";
 import { isReportOnlyService } from "@/lib/service-fulfillment";
 import { notifyBookingReceived } from "@/server/notifications/send";
 import type { Booking } from "@prisma/client";
+import type { CurrentUser } from "@/lib/auth/session";
 
 async function nextBookingNumber(): Promise<string> {
   const year = new Date().getFullYear();
@@ -52,6 +53,7 @@ export interface CreateConsultationResult {
  */
 export async function createInstantConsultation(
   input: CreateConsultationInput,
+  loggedInUser?: CurrentUser | null,
 ): Promise<CreateConsultationResult> {
   const parsed = createConsultationSchema.safeParse(input);
   if (!parsed.success) {
@@ -78,7 +80,7 @@ export async function createInstantConsultation(
     return { error: "Faltan datos obligatorios para este servicio." };
   }
 
-  const currentUser = await getCurrentUser();
+  const currentUser = loggedInUser === undefined ? await getCurrentUser() : loggedInUser;
   let userId: string | null = null;
   if (currentUser) {
     userId = currentUser.id;

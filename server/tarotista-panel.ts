@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { savePushSubscription } from "@/server/push-notifications";
 import type { TarotistaStatus, AttentionRequestStatus } from "@prisma/client";
+import type { CurrentUser } from "@/lib/auth/session";
 
 const VALID_STATUSES: TarotistaStatus[] = ["DISPONIBLE", "EN_CONSULTA", "EN_REPOSO", "DESCONECTADO"];
 const VALID_REQUEST_STATUSES: AttentionRequestStatus[] = ["PENDING", "CONTACTED", "DISMISSED"];
@@ -11,11 +12,17 @@ const VALID_REQUEST_STATUSES: AttentionRequestStatus[] = ["PENDING", "CONTACTED"
  * Perfil de tarotista vinculado a la cuenta actualmente logueada — null si
  * no hay sesión, o si la cuenta no tiene ningún perfil vinculado (ver
  * server/admin/tarotistas.ts, que es donde el admin hace ese vínculo).
- * Genérico a propósito: no depende de saber quién es Alberto/Caína, solo
+ * Genérico a propósito: no depende de saber quién es Alberto/Kaina, solo
  * de si ESTA cuenta tiene una fila de Tarotista con userId = su id.
+ *
+ * `currentUser` es opcional: la web (Server Actions) no lo pasa y esta
+ * función resuelve la sesión sola por la cookie httpOnly; la API móvil
+ * (app/api/v1/...) lo pasa explícito, ya resuelto desde el Bearer token
+ * (ver lib/auth/api-auth.ts) — mismo patrón en todas las funciones de este
+ * archivo, para no duplicar la lógica entre web y app.
  */
-export async function getOwnTarotista() {
-  const user = await getCurrentUser();
+export async function getOwnTarotista(currentUser?: CurrentUser | null) {
+  const user = currentUser === undefined ? await getCurrentUser() : currentUser;
   if (!user) return null;
   return prisma.tarotista.findUnique({ where: { userId: user.id } });
 }
@@ -25,10 +32,13 @@ export interface SetOwnStatusResult {
 }
 
 /** Cambia el estado del tarotista vinculado a la cuenta actual — nunca el de otra persona. */
-export async function setOwnTarotistaStatus(status: TarotistaStatus): Promise<SetOwnStatusResult> {
+export async function setOwnTarotistaStatus(
+  status: TarotistaStatus,
+  currentUser?: CurrentUser | null,
+): Promise<SetOwnStatusResult> {
   if (!VALID_STATUSES.includes(status)) return { error: "Estado inválido." };
 
-  const tarotista = await getOwnTarotista();
+  const tarotista = await getOwnTarotista(currentUser);
   if (!tarotista) return { error: "Tu cuenta no tiene un perfil de tarotista vinculado." };
 
   await prisma.tarotista.update({
@@ -40,8 +50,8 @@ export async function setOwnTarotistaStatus(status: TarotistaStatus): Promise<Se
 }
 
 /** Solicitudes pendientes/recientes del tarotista vinculado a la cuenta actual (Fase 5). */
-export async function getOwnAttentionRequests() {
-  const tarotista = await getOwnTarotista();
+export async function getOwnAttentionRequests(currentUser?: CurrentUser | null) {
+  const tarotista = await getOwnTarotista(currentUser);
   if (!tarotista) return [];
 
   return prisma.attentionRequest.findMany({
@@ -60,10 +70,11 @@ export interface SetRequestStatusResult {
 export async function setOwnAttentionRequestStatus(
   requestId: string,
   status: AttentionRequestStatus,
+  currentUser?: CurrentUser | null,
 ): Promise<SetRequestStatusResult> {
   if (!VALID_REQUEST_STATUSES.includes(status)) return { error: "Estado inválido." };
 
-  const tarotista = await getOwnTarotista();
+  const tarotista = await getOwnTarotista(currentUser);
   if (!tarotista) return { error: "Tu cuenta no tiene un perfil de tarotista vinculado." };
 
   const request = await prisma.attentionRequest.findUnique({ where: { id: requestId } });
@@ -76,8 +87,8 @@ export async function setOwnAttentionRequestStatus(
 }
 
 /** Consultas confirmadas y pagadas del tarotista vinculado a la cuenta actual — de acá se entra a la llamada (Fase 11). */
-export async function getOwnConfirmedConsultations() {
-  const tarotista = await getOwnTarotista();
+export async function getOwnConfirmedConsultations(currentUser?: CurrentUser | null) {
+  const tarotista = await getOwnTarotista(currentUser);
   if (!tarotista) return [];
 
   return prisma.booking.findMany({
@@ -92,13 +103,14 @@ export interface SubscribePushResult {
   error?: string;
 }
 
-/** Registra la suscripción push del navegador actual para el tarotista de la cuenta logueada (Fase 9). */
+/** Registra la suscripción push del navegador/dispositivo actual para el tarotista de la cuenta logueada (Fase 9). */
 export async function subscribeOwnPush(
   endpoint: string,
   p256dh: string,
   auth: string,
+  currentUser?: CurrentUser | null,
 ): Promise<SubscribePushResult> {
-  const tarotista = await getOwnTarotista();
+  const tarotista = await getOwnTarotista(currentUser);
   if (!tarotista) return { error: "Tu cuenta no tiene un perfil de tarotista vinculado." };
   if (!endpoint || !p256dh || !auth) return { error: "Suscripción inválida." };
 

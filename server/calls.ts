@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createCallToken, isLiveKitConfigured } from "@/server/livekit";
+import type { CurrentUser } from "@/lib/auth/session";
 
 export interface CallAccessResult {
   token?: string;
@@ -20,12 +21,15 @@ export interface CallAccessResult {
  * /reservas/[id], mismo criterio de "no automatizar lo que no se puede
  * verificar sin sesión".
  */
-export async function getCallAccess(bookingId: string): Promise<CallAccessResult> {
+export async function getCallAccess(
+  bookingId: string,
+  currentUser?: CurrentUser | null,
+): Promise<CallAccessResult> {
   if (!isLiveKitConfigured()) {
     return { error: "Las llamadas todavía no están configuradas en este entorno." };
   }
 
-  const user = await getCurrentUser();
+  const user = currentUser === undefined ? await getCurrentUser() : currentUser;
   if (!user) return { error: "Necesitas iniciar sesión para entrar a la llamada." };
 
   const booking = await prisma.booking.findUnique({
