@@ -6,6 +6,7 @@ const LINKS = [
   { href: "/admin/calendario", label: "Calendario" },
   { href: "/admin/clientes", label: "Clientes" },
   { href: "/admin/servicios", label: "Servicios" },
+  { href: "/admin/tarotistas", label: "Tarotistas" },
   { href: "/admin/testimonios", label: "Testimonios" },
   { href: "/admin/configuracion", label: "Configuración" },
 ];

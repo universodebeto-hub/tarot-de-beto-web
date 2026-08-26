@@ -19,9 +19,11 @@ const NAV_LINKS = [
 interface NavbarProps {
   whatsappNumber: string;
   userFirstName?: string | null;
+  /** "/panel-tarotista" si la cuenta logueada es un tarotista, "/dashboard" en caso contrario. */
+  accountHref?: string;
 }
 
-export function Navbar({ whatsappNumber, userFirstName }: NavbarProps) {
+export function Navbar({ whatsappNumber, userFirstName, accountHref = "/dashboard" }: NavbarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -94,7 +96,7 @@ export function Navbar({ whatsappNumber, userFirstName }: NavbarProps) {
 
           <div className="mt-2 flex flex-col gap-2 sm:mt-0 sm:ml-2 sm:flex-row">
             <Link
-              href={userFirstName ? "/dashboard" : "/login"}
+              href={userFirstName ? accountHref : "/login"}
               onClick={() => setOpen(false)}
               className="rounded-full border px-5 py-2.5 text-center font-mono text-[12.5px] uppercase tracking-[0.14em] text-bone-dim border-transparent hover:border-gold/30 hover:bg-gold/6 hover:text-gold-soft transition-all"
             >

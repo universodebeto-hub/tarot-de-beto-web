@@ -10,6 +10,7 @@ import { ToastProvider } from "@/components/ui/Toast";
 import { siteConfig } from "@/config/site";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getProviderPresence } from "@/server/presence";
+import { prisma } from "@/lib/prisma";
 import { Analytics } from "@/components/analytics/Analytics";
 import { LocalBusinessJsonLd } from "@/components/seo/LocalBusinessJsonLd";
 
@@ -69,6 +70,12 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   // públicas.
   const user = await getCurrentUser();
   const presence = await getProviderPresence();
+  // Si la cuenta logueada tiene un perfil de tarotista vinculado (ver
+  // server/tarotista-panel.ts), "Hola, X" en el navbar lleva a su panel de
+  // disponibilidad en vez del dashboard de cliente.
+  const ownTarotista = user
+    ? await prisma.tarotista.findUnique({ where: { userId: user.id }, select: { id: true } })
+    : null;
 
   return (
     <html
@@ -79,7 +86,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <LocalBusinessJsonLd />
         <StarsField />
         <ToastProvider>
-          <Navbar whatsappNumber={siteConfig.contact.whatsappNumber} userFirstName={user?.firstName} />
+          <Navbar
+            whatsappNumber={siteConfig.contact.whatsappNumber}
+            userFirstName={user?.firstName}
+            accountHref={ownTarotista ? "/panel-tarotista" : "/dashboard"}
+          />
           <main className="relative z-10 flex-1">{children}</main>
           <Footer />
           <WhatsAppButton
