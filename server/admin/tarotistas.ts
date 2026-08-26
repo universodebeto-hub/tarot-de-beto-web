@@ -3,7 +3,38 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAdminAction } from "@/server/audit";
 
+/**
+ * Los 2 perfiles iniciales del proyecto (mismos datos que prisma/seed.ts).
+ * Se autocompletan acá, no solo en el seed, porque el seed es un paso
+ * manual que no corre solo contra producción (a propósito, para no crear
+ * ahí cuentas de prueba) — así el admin no depende de poder ejecutar un
+ * script aparte para que existan estos 2 perfiles la primera vez.
+ * Idempotente: upsert por slug, nunca duplica ni pisa datos ya editados.
+ */
+async function ensureInitialTarotistas(): Promise<void> {
+  await prisma.tarotista.upsert({
+    where: { slug: "alberto-arango" },
+    update: {},
+    create: {
+      slug: "alberto-arango",
+      name: "Alberto Arango",
+      bio: "Tarotista principal de Universo de Beto.",
+      sortOrder: 0,
+    },
+  });
+  await prisma.tarotista.upsert({
+    where: { slug: "caina" },
+    update: {},
+    create: { slug: "caina", name: "Caína", sortOrder: 1 },
+  });
+}
+
 export async function listTarotistasAdmin() {
+  const count = await prisma.tarotista.count();
+  if (count === 0) {
+    await ensureInitialTarotistas();
+  }
+
   return prisma.tarotista.findMany({
     orderBy: { sortOrder: "asc" },
     include: { user: { select: { id: true, email: true, firstName: true } } },
