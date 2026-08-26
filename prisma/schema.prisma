@@ -93,8 +93,52 @@ model User {
   passwordResets PasswordReset[]
   bookings       Booking[]
   auditLogs      AuditLog[]
+  /// Perfil de tarotista vinculado a esta cuenta (null si el usuario no es
+  /// un tarotista, ej. un cliente) — ver modelo Tarotista.
+  tarotista      Tarotista?
 
   @@index([role])
+}
+
+/// Reestructuración de la agenda (arquitectura "perfiles de tarotistas +
+/// disponibilidad en tiempo real", reemplaza el calendario tradicional):
+/// cada tarotista es un perfil independiente y dinámico — el sistema NO
+/// está programado para una cantidad fija de perfiles, se agregan filas
+/// nuevas sin tocar código. Fase 1: solo el modelo y el estado, sin UI
+/// todavía (ver Availability/BlockedTime, que siguen existiendo por ahora
+/// y se retiran en una fase posterior cuando el nuevo flujo de consulta
+/// las reemplace del todo).
+enum TarotistaStatus {
+  DISPONIBLE
+  EN_CONSULTA
+  EN_REPOSO
+  DESCONECTADO
+}
+
+model Tarotista {
+  id          String          @id @default(cuid())
+  slug        String          @unique
+  name        String
+  photoUrl    String?
+  bio         String?
+  /// Lista libre de especialidades (ej. "Tarot", "Numerología") — mostrada
+  /// en la ficha pública, editable sin migración.
+  specialties String[]        @default([])
+  experience  String?
+  status      TarotistaStatus @default(DESCONECTADO)
+  /// Cuándo cambió de estado por última vez — para mostrar "desde hace X"
+  /// en el panel admin/propio más adelante.
+  statusChangedAt DateTime    @default(now())
+  sortOrder   Int             @default(0)
+  active      Boolean         @default(true)
+  /// Cuenta de acceso al panel privado del tarotista (Fase 3) — null
+  /// mientras el perfil todavía no tiene login propio creado.
+  userId      String?         @unique
+  user        User?           @relation(fields: [userId], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([active, sortOrder])
 }
 
 /// Token de recuperación de contraseña (Fase 3). El envío real por email

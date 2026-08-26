@@ -382,9 +382,39 @@ async function main() {
     },
   });
 
-  const [serviceCount, settingCount] = await Promise.all([prisma.service.count(), prisma.setting.count()]);
+  // Reestructuración de agenda -> perfiles de tarotistas (Fase 1, solo
+  // modelo + estado, sin UI todavía): los dos perfiles iniciales, sin
+  // vincular todavía a una cuenta de acceso (userId null) -- eso se decide
+  // en la Fase 3 (panel privado del tarotista), no acá. `status` arranca
+  // en DESCONECTADO por default: nadie queda "disponible" hasta que el
+  // propio tarotista lo active.
+  await prisma.tarotista.upsert({
+    where: { slug: "alberto-arango" },
+    update: {},
+    create: {
+      slug: "alberto-arango",
+      name: "Alberto Arango",
+      bio: "Tarotista principal de Universo de Beto.",
+      sortOrder: 0,
+    },
+  });
+  await prisma.tarotista.upsert({
+    where: { slug: "caina" },
+    update: {},
+    create: {
+      slug: "caina",
+      name: "Caína",
+      sortOrder: 1,
+    },
+  });
+
+  const [serviceCount, settingCount, tarotistaCount] = await Promise.all([
+    prisma.service.count(),
+    prisma.setting.count(),
+    prisma.tarotista.count(),
+  ]);
   console.log(
-    `Seed completo: ${serviceCount} servicios (catálogo: Lecturas de Tarot, Rituales Energéticos, Otros), 3 testimonios publicados, ${settingCount} settings, horario semanal (7 días), 2 usuarios de prueba.`,
+    `Seed completo: ${serviceCount} servicios (catálogo: Lecturas de Tarot, Rituales Energéticos, Otros), 3 testimonios publicados, ${settingCount} settings, horario semanal (7 días), ${tarotistaCount} perfiles de tarotista, 2 usuarios de prueba.`,
   );
 }
 
