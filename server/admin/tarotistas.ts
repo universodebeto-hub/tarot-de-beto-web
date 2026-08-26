@@ -8,13 +8,15 @@ import { logAdminAction } from "@/server/audit";
  * Se autocompletan acá, no solo en el seed, porque el seed es un paso
  * manual que no corre solo contra producción (a propósito, para no crear
  * ahí cuentas de prueba) — así el admin no depende de poder ejecutar un
- * script aparte para que existan estos 2 perfiles la primera vez.
- * Idempotente: upsert por slug, nunca duplica ni pisa datos ya editados.
+ * script aparte para que existan estos 2 perfiles. Corre siempre (no solo
+ * si la tabla está vacía) para que una corrección de nombre acá también
+ * se refleje en producción sin necesitar acceso directo a la base de
+ * datos — solo toca `name`, nunca pisa bio/foto/specialties ya editados.
  */
 async function ensureInitialTarotistas(): Promise<void> {
   await prisma.tarotista.upsert({
     where: { slug: "alberto-arango" },
-    update: {},
+    update: { name: "Alberto Arango" },
     create: {
       slug: "alberto-arango",
       name: "Alberto Arango",
@@ -24,16 +26,13 @@ async function ensureInitialTarotistas(): Promise<void> {
   });
   await prisma.tarotista.upsert({
     where: { slug: "caina" },
-    update: {},
-    create: { slug: "caina", name: "Caína", sortOrder: 1 },
+    update: { name: "Kaina" },
+    create: { slug: "caina", name: "Kaina", sortOrder: 1 },
   });
 }
 
 export async function listTarotistasAdmin() {
-  const count = await prisma.tarotista.count();
-  if (count === 0) {
-    await ensureInitialTarotistas();
-  }
+  await ensureInitialTarotistas();
 
   return prisma.tarotista.findMany({
     orderBy: { sortOrder: "asc" },

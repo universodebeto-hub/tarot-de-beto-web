@@ -400,10 +400,10 @@ async function main() {
   });
   await prisma.tarotista.upsert({
     where: { slug: "caina" },
-    update: {},
+    update: { name: "Kaina" },
     create: {
       slug: "caina",
-      name: "Caína",
+      name: "Kaina",
       sortOrder: 1,
     },
   });
