@@ -41,17 +41,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  // No se valida un token específico de antemano: Vercel Blob se puede
+  // conectar por token clásico (BLOB_READ_WRITE_TOKEN) o por OIDC (sin esa
+  // variable, ver conexión del Store en el dashboard) — @vercel/blob
+  // resuelve solo cuál usar. Si el Store no está conectado en este
+  // entorno, put() lanza y el catch de abajo responde igual de claro.
+  try {
+    const blob = await put(`comprobantes/${bookingId}-${Date.now()}.${ext}`, file, {
+      access: "public",
+      addRandomSuffix: true,
+    });
+    return NextResponse.json({ url: blob.url });
+  } catch (err) {
+    console.error("[blob] error subiendo comprobante:", err);
     return NextResponse.json(
       { error: "La subida de comprobantes todavía no está configurada en este entorno." },
       { status: 503 },
     );
   }
-
-  const blob = await put(`comprobantes/${bookingId}-${Date.now()}.${ext}`, file, {
-    access: "public",
-    addRandomSuffix: true,
-  });
-
-  return NextResponse.json({ url: blob.url });
 }
