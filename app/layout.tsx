@@ -60,6 +60,19 @@ export const metadata: Metadata = {
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
   },
+  // Fase 8 (PWA): permite "Agregar a pantalla de inicio" en iPhone (Safari
+  // no sigue el manifest.webmanifest para esto, necesita sus propios meta
+  // tags) — en Android, app/manifest.ts ya alcanza. themeColor colorea la
+  // barra de estado del sistema al abrir como app instalada.
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: siteConfig.siteName,
+  },
+};
+
+export const viewport = {
+  themeColor: "#0b0a0c",
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
