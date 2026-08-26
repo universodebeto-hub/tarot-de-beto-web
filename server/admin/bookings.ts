@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth/session";
 import { logAdminAction } from "@/server/audit";
 import { expireStaleBookings } from "@/server/availability";
 import { notifyPaymentConfirmed, notifyCancelled } from "@/server/notifications/send";
+import { sendPushToTarotista } from "@/server/push-notifications";
 import type { BookingStatus } from "@prisma/client";
 
 export interface BookingFilters {
@@ -94,6 +95,13 @@ export async function setBookingStatus(bookingId: string, next: BookingStatus): 
 
   if (willMarkPaid) {
     await notifyPaymentConfirmed(booking).catch((err) => console.error("[notify] payment_confirmed:", err));
+    if (booking.tarotistaId) {
+      await sendPushToTarotista(booking.tarotistaId, {
+        title: "Consulta habilitada",
+        body: `Pago confirmado — ${booking.service.name} (#${booking.bookingNumber}).`,
+        url: "/panel-tarotista",
+      }).catch((err) => console.error("[push] payment_confirmed:", err));
+    }
   } else if (next === "CANCELLED") {
     await notifyCancelled(booking).catch((err) => console.error("[notify] cancelled:", err));
   }

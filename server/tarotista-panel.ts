@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
+import { savePushSubscription } from "@/server/push-notifications";
 import type { TarotistaStatus, AttentionRequestStatus } from "@prisma/client";
 
 const VALID_STATUSES: TarotistaStatus[] = ["DISPONIBLE", "EN_CONSULTA", "EN_REPOSO", "DESCONECTADO"];
@@ -71,5 +72,23 @@ export async function setOwnAttentionRequestStatus(
   }
 
   await prisma.attentionRequest.update({ where: { id: requestId }, data: { status } });
+  return {};
+}
+
+export interface SubscribePushResult {
+  error?: string;
+}
+
+/** Registra la suscripción push del navegador actual para el tarotista de la cuenta logueada (Fase 9). */
+export async function subscribeOwnPush(
+  endpoint: string,
+  p256dh: string,
+  auth: string,
+): Promise<SubscribePushResult> {
+  const tarotista = await getOwnTarotista();
+  if (!tarotista) return { error: "Tu cuenta no tiene un perfil de tarotista vinculado." };
+  if (!endpoint || !p256dh || !auth) return { error: "Suscripción inválida." };
+
+  await savePushSubscription({ tarotistaId: tarotista.id, endpoint, p256dh, auth });
   return {};
 }

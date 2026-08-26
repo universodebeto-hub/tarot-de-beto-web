@@ -141,8 +141,26 @@ model Tarotista {
 
   bookings          Booking[]
   attentionRequests AttentionRequest[]
+  pushSubscriptions PushSubscription[]
 
   @@index([active, sortOrder])
+}
+
+/// Suscripción push del navegador/teléfono del tarotista (Fase 9) —
+/// estándar Web Push (sin proveedor externo, ver server/push-notifications.ts).
+/// Un tarotista puede tener varias (ej. teléfono + laptop); `endpoint` es
+/// único por navegador/dispositivo, así que reactivar la misma suscripción
+/// no duplica la fila.
+model PushSubscription {
+  id          String    @id @default(cuid())
+  tarotistaId String
+  tarotista   Tarotista @relation(fields: [tarotistaId], references: [id])
+  endpoint    String    @unique
+  p256dh      String
+  auth        String
+  createdAt   DateTime  @default(now())
+
+  @@index([tarotistaId])
 }
 
 enum AttentionRequestStatus {

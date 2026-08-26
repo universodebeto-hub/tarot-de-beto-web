@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { sendPushToTarotista } from "@/server/push-notifications";
 
 const createAttentionRequestSchema = z.object({
   tarotistaId: z.string().min(1),
@@ -53,6 +54,12 @@ export async function createAttentionRequest(
       message: message || null,
     },
   });
+
+  await sendPushToTarotista(tarotistaId, {
+    title: "Nueva solicitud de atención",
+    body: `${name} quiere que la contactes.`,
+    url: "/panel-tarotista",
+  }).catch((err) => console.error("[push] attention_request:", err));
 
   return { success: true };
 }

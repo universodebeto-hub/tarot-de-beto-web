@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getOwnTarotista, getOwnAttentionRequests } from "@/server/tarotista-panel";
 import { setOwnStatusFormAction, setOwnRequestStatusFormAction } from "@/app/panel-tarotista/actions";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { PanelClientTools } from "@/components/tarotistas/PanelClientTools";
 import {
   TAROTISTA_STATUS_LABEL,
   TAROTISTA_STATUS_DESCRIPTION,
@@ -62,6 +63,8 @@ export default async function PanelTarotistaPage() {
             Estado actual: {TAROTISTA_STATUS_LABEL[tarotista.status]}
           </span>
         </div>
+
+        <PanelClientTools vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} />
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {STATUS_ORDER.map((status) => {

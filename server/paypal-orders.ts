@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { createPaypalOrder, capturePaypalOrder, getPaypalOrder, isPaypalConfigured } from "@/lib/paypal";
 import { expireStaleBookings } from "@/server/availability";
 import { notifyPaymentConfirmed } from "@/server/notifications/send";
+import { sendPushToTarotista } from "@/server/push-notifications";
 
 export interface OrderResult {
   orderId?: string;
@@ -133,6 +134,13 @@ export async function captureOrderForBooking(orderId: string): Promise<CaptureRe
   ]);
 
   await notifyPaymentConfirmed(booking).catch((err) => console.error("[notify] payment_confirmed:", err));
+  if (booking.tarotistaId) {
+    await sendPushToTarotista(booking.tarotistaId, {
+      title: "Consulta habilitada",
+      body: `Pago confirmado — ${booking.service.name} (#${booking.bookingNumber}).`,
+      url: "/panel-tarotista",
+    }).catch((err) => console.error("[push] payment_confirmed:", err));
+  }
 
   return { success: true, bookingId: booking.id };
 }
