@@ -8,11 +8,7 @@ El desarrollo local usa un PostgreSQL portátil (ver README → "Requisitos"), p
 
 1. Crea una base de datos gestionada en [Neon](https://neon.tech) o [Supabase](https://supabase.com) (ambos tienen plan gratuito suficiente para empezar). Elige la región más cercana a donde esté la mayoría de tus visitantes.
 2. Copia la connection string (formato `postgresql://usuario:password@host/basededatos?sslmode=require`) — la vas a necesitar como `DATABASE_URL` en el paso 3.
-3. Aplica el esquema contra esa base de datos **antes** del primer deploy:
-   ```bash
-   DATABASE_URL="<tu connection string de producción>" npx prisma migrate deploy
-   ```
-   `migrate deploy` (a diferencia de `migrate dev`) no genera migraciones nuevas ni te pide confirmación — solo aplica las que ya existen en `prisma/migrations/`. Es el comando correcto para CI/producción.
+3. El comando `build` del proyecto (`package.json`) ya corre `prisma migrate deploy` automáticamente antes de `next build` — cada deploy en Vercel aplica solo las migraciones nuevas que falten, sin necesitar correr nada a mano ni exponer la connection string fuera de Vercel. `migrate deploy` (a diferencia de `migrate dev`) no genera migraciones nuevas ni pide confirmación — es el comando correcto para CI/producción, y es seguro que corra en cada build (si no hay migraciones pendientes, no hace nada).
 4. (Opcional pero recomendado) Corre el seed para tener servicios/settings iniciales y un usuario admin de prueba:
    ```bash
    DATABASE_URL="<tu connection string de producción>" npx prisma db seed
