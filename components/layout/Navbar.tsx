@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/Button";
 const NAV_LINKS = [
   { href: "/quienes-somos", label: "Quiénes somos" },
   { href: "/servicios", label: "Servicios" },
-  { href: "/agenda", label: "Agenda" },
+  { href: "/tarotistas", label: "Tarotistas" },
   { href: "/#referencias", label: "Referencias" },
   { href: "/faq", label: "Preguntas frecuentes" },
   { href: "/contacto", label: "Contacto" },
@@ -100,7 +100,7 @@ export function Navbar({ whatsappNumber, userFirstName }: NavbarProps) {
             >
               {userFirstName ? `Hola, ${userFirstName}` : "Iniciar sesión"}
             </Link>
-            <Button href="/agenda" variant="gold" className="justify-center">
+            <Button href="/tarotistas" variant="gold" className="justify-center">
               Reservar consulta
             </Button>
             {whatsappNumber ? (

@@ -18,6 +18,12 @@
   --color-ember: #c6642a;
   --color-bone: #f3efe8;
   --color-bone-dim: #cfc9c2;
+  /* Único color semántico fuera de la paleta cálida: estado "disponible"
+     de un tarotista (ver components/tarotistas/TarotistaCard.tsx). Los
+     otros 3 estados reutilizan tokens ya existentes (gold=en consulta,
+     ash=en reposo, ember=desconectado) a propósito, sin agregar más
+     colores nuevos de los necesarios. */
+  --color-emerald: #4fae7a;
 
   --glass-bg: rgba(23, 21, 26, 0.52);
   --glass-bg-strong: rgba(23, 21, 26, 0.78);
@@ -38,6 +44,7 @@
   --color-ember: var(--color-ember);
   --color-bone: var(--color-bone);
   --color-bone-dim: var(--color-bone-dim);
+  --color-emerald: var(--color-emerald);
 
   --font-display: var(--font-fraunces);
   --font-body: var(--font-worksans);

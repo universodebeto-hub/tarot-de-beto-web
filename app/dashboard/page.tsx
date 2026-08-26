@@ -66,10 +66,10 @@ export default async function DashboardPage() {
             {bookings.length === 0 ? (
               <EmptyState
                 title="Todavía no tienes reservas"
-                description="Elige un servicio y un horario disponible para agendar tu primera consulta."
+                description="Elige un tarotista disponible para agendar tu primera consulta."
                 action={
-                  <Button href="/agenda" className="mt-2">
-                    Ver disponibilidad
+                  <Button href="/tarotistas" className="mt-2">
+                    Ver tarotistas
                   </Button>
                 }
               />

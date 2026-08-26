@@ -21,7 +21,7 @@ export function Hero() {
             cercana, honesta y sin vueltas.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
-            <Button href="/agenda">Reservar consulta</Button>
+            <Button href="/tarotistas">Reservar consulta</Button>
             <Button href="/servicios" variant="ghost">
               Ver servicios
             </Button>
