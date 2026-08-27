@@ -88,7 +88,7 @@ export default async function HomePage() {
             Descubre lo que <em>las cartas tienen para decirte</em>
           </>
         }
-        href="/agenda"
+        href="/tarotistas"
         cta="Reservar consulta"
       />
 

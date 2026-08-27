@@ -20,7 +20,6 @@ export default async function EditServicePage({ params }: { params: Promise<{ id
       revalidatePath("/admin/servicios");
       revalidatePath("/servicios");
       revalidatePath("/");
-      revalidatePath("/agenda");
     }
     return result;
   }

@@ -71,10 +71,7 @@ export function ServiceCard({ service, index }: ServiceCardProps) {
         </div>
 
         {service.available ? (
-          <Button
-            href={isReport ? `/reservar?service=${service.id}` : `/agenda?service=${service.slug}`}
-            className="w-full justify-center"
-          >
+          <Button href={isReport ? `/reservar?service=${service.id}` : "/tarotistas"} className="w-full justify-center">
             {isReport ? "Solicitar informe" : "Reservar ahora"}
           </Button>
         ) : (

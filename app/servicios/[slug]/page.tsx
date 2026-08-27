@@ -71,7 +71,7 @@ export default async function RitualDetailPage({ params }: RitualPageProps) {
               <Button
                 href={
                   service.available
-                    ? `/agenda?service=${service.slug}`
+                    ? "/tarotistas"
                     : buildWhatsAppLink(siteConfig.contact.whatsappNumber, whatsappMessage)
                 }
                 external={!service.available}

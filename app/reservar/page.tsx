@@ -1,24 +1,23 @@
 import type { Metadata } from "next";
 import { BookingWizard } from "@/components/booking/BookingWizard";
 import { getServices } from "@/server/services";
-import { nextBusinessDates } from "@/lib/timezone";
 import { getCurrentUser } from "@/lib/auth/session";
+import { isReportOnlyService } from "@/lib/service-fulfillment";
 
 export const metadata: Metadata = {
-  title: "Reservar consulta",
-  description: "Elige tu servicio, fecha y horario para reservar tu consulta con Alberto Arango.",
+  title: "Solicitar informe",
+  description: "Solicita tu Informe Numerológico o Carta Astral con Alberto Arango.",
   robots: { index: false },
 };
 
-const DAYS_AHEAD = 14;
-
 interface ReservarPageProps {
-  searchParams: Promise<{ service?: string; date?: string; slot?: string }>;
+  searchParams: Promise<{ service?: string }>;
 }
 
+/** Solo Numerología y Carta Astral pasan por acá — el resto de las consultas se reservan como instantáneas desde /tarotistas/[slug]. */
 export default async function ReservarPage({ searchParams }: ReservarPageProps) {
   const [services, params, user] = await Promise.all([getServices(), searchParams, getCurrentUser()]);
-  const dates = nextBusinessDates(DAYS_AHEAD);
+  const reportServices = services.filter((s) => isReportOnlyService(s.slug));
 
   return (
     <section className="py-[88px]">
@@ -26,18 +25,11 @@ export default async function ReservarPage({ searchParams }: ReservarPageProps) 
         <div className="mb-10 max-w-2xl">
           <span className="eyebrow">Reservar</span>
           <h1 className="mt-3">
-            Tu <em>consulta</em>
+            Tu <em>informe</em>
           </h1>
         </div>
 
-        <BookingWizard
-          services={services}
-          dates={dates}
-          currentUser={user}
-          initialServiceId={params.service}
-          initialDate={params.date}
-          initialSlotUtc={params.slot}
-        />
+        <BookingWizard services={reportServices} currentUser={user} initialServiceId={params.service} />
       </div>
     </section>
   );

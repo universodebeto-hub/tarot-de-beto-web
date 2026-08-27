@@ -2,15 +2,12 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { submitBooking, submitReportRequest } from "@/server/booking-actions";
-import type { TimeSlot } from "@/server/availability";
-import { fullDateLabel, formatBusinessTime } from "@/lib/date-labels";
+import { submitReportRequest } from "@/server/booking-actions";
 import { ServicePicker } from "@/components/agenda/ServicePicker";
-import { CalendarGrid } from "@/components/agenda/CalendarGrid";
 import { StepIndicator, REPORT_STEPS } from "@/components/booking/StepIndicator";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { intakeFieldsFor, hasRequiredIntakeData } from "@/lib/service-intake";
-import { isReportOnlyService, REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
+import { REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
 import type { Service } from "@/types/content";
 
 interface CurrentUserInfo {
@@ -22,44 +19,31 @@ interface CurrentUserInfo {
 
 interface BookingWizardProps {
   services: Service[];
-  dates: string[];
   currentUser: CurrentUserInfo | null;
   initialServiceId?: string;
-  initialDate?: string;
-  initialSlotUtc?: string;
 }
 
 const inputClass =
   "w-full rounded-lg border border-white/15 bg-white/5 px-4 py-3 text-bone outline-none focus:border-gold/50";
 const labelClass = "mb-1.5 block font-mono text-[11px] uppercase tracking-wide text-ash";
 
-export function BookingWizard({
-  services,
-  dates,
-  currentUser,
-  initialServiceId,
-  initialDate,
-  initialSlotUtc,
-}: BookingWizardProps) {
+/**
+ * Solicitud de informe (Numerología/Carta Astral) — únicas dos servicios
+ * que todavía usan /reservar. Las consultas con tarotista (todo lo demás)
+ * pasan por la consulta instantánea desde /tarotistas/[slug] — ver
+ * ConsultationForm. No hay paso de fecha/horario acá: el informe se
+ * entrega en un plazo de días, no en una llamada agendada.
+ */
+export function BookingWizard({ services, currentUser, initialServiceId }: BookingWizardProps) {
   const router = useRouter();
   const availableServices = useMemo(() => services.filter((s) => s.available), [services]);
 
   const startServiceId = availableServices.some((s) => s.id === initialServiceId)
     ? initialServiceId!
     : (availableServices[0]?.id ?? "");
-  // El wizard fusiona "Fecha" y "Hora" en un solo paso 2 ("Fecha y horario") —
-  // el enlace de la agenda que trae fecha+horario ya elegidos salta directo
-  // al paso 3 ("Datos").
-  const canSkipToDataStep = Boolean(initialServiceId && initialDate && initialSlotUtc);
 
-  const [step, setStep] = useState(canSkipToDataStep ? 3 : 1);
+  const [step, setStep] = useState(1);
   const [serviceId, setServiceId] = useState(startServiceId);
-  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(
-    canSkipToDataStep && initialSlotUtc
-      ? { startUtc: initialSlotUtc, endUtc: initialSlotUtc, label: formatBusinessTime(initialSlotUtc) }
-      : null,
-  );
-
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
@@ -69,43 +53,22 @@ export function BookingWizard({
 
   const selectedService = availableServices.find((s) => s.id === serviceId) ?? null;
   const intakeFields = selectedService ? intakeFieldsFor(selectedService.slug) : [];
-  const date = selectedSlot ? selectedSlot.startUtc.slice(0, 10) : (initialDate ?? dates[0] ?? "");
-
-  // Informe Numerológico y Carta Astral se solicitan como informe con
-  // entrega en días — no usan la agenda de llamadas, así que el paso de
-  // "Fecha y horario" no existe para ellos y el paso de datos queda en la
-  // posición 2 en vez de 3.
-  const isReportFlow = Boolean(selectedService && isReportOnlyService(selectedService.slug));
-  const dataStep = isReportFlow ? 2 : 3;
-  const steps = isReportFlow ? REPORT_STEPS : undefined;
 
   async function handleConfirm() {
     if (!serviceId || !selectedService) return;
-    if (!isReportFlow && !selectedSlot) return;
     setSubmitError(null);
 
     startSubmitTransition(async () => {
-      const result = isReportFlow
-        ? await submitReportRequest({
-            serviceId,
-            guestName: currentUser ? undefined : guestName,
-            guestEmail: currentUser ? undefined : guestEmail,
-            guestPhone: currentUser ? undefined : guestPhone || undefined,
-            intakeData: intakeFields.length > 0 ? intakeData : undefined,
-          })
-        : await submitBooking({
-            serviceId,
-            startUtc: selectedSlot!.startUtc,
-            guestName: currentUser ? undefined : guestName,
-            guestEmail: currentUser ? undefined : guestEmail,
-            guestPhone: currentUser ? undefined : guestPhone || undefined,
-            intakeData: intakeFields.length > 0 ? intakeData : undefined,
-          });
+      const result = await submitReportRequest({
+        serviceId,
+        guestName: currentUser ? undefined : guestName,
+        guestEmail: currentUser ? undefined : guestEmail,
+        guestPhone: currentUser ? undefined : guestPhone || undefined,
+        intakeData: intakeFields.length > 0 ? intakeData : undefined,
+      });
 
       if (result.error || !result.booking) {
-        setSubmitError(
-          result.error ?? (isReportFlow ? "No se pudo enviar la solicitud. Intenta de nuevo." : "No se pudo crear la reserva. Intenta de nuevo."),
-        );
+        setSubmitError(result.error ?? "No se pudo enviar la solicitud. Intenta de nuevo.");
         return;
       }
 
@@ -113,20 +76,12 @@ export function BookingWizard({
     });
   }
 
-  function backToCalendarStep() {
-    setStep(2);
-    setSelectedSlot(null);
-    setSubmitError(null);
-  }
-
   function backFromDataStep() {
-    setStep(isReportFlow ? 1 : 2);
-    setSelectedSlot(null);
+    setStep(1);
     setSubmitError(null);
   }
 
   const canGoStep1Next = Boolean(serviceId);
-  const canGoStep2Next = Boolean(selectedSlot);
   const hasContactData = currentUser ? true : Boolean(guestName.trim() && guestEmail.trim());
   const hasIntakeData =
     intakeFields.length === 0 || hasRequiredIntakeData(selectedService?.slug ?? "", intakeData);
@@ -134,7 +89,7 @@ export function BookingWizard({
 
   return (
     <div>
-      <StepIndicator current={step} steps={steps} />
+      <StepIndicator current={step} steps={REPORT_STEPS} />
 
       {step === 1 ? (
         <div className="flex flex-col gap-6">
@@ -150,51 +105,15 @@ export function BookingWizard({
         </div>
       ) : null}
 
-      {step === 2 && !isReportFlow && selectedService ? (
-        <div className="flex flex-col gap-6">
-          <span className="font-mono text-[11px] uppercase tracking-wide text-ash">
-            {selectedService.name} · {selectedService.durationMinutes} min
-          </span>
-          <CalendarGrid
-            mode="booking"
-            dates={dates}
-            durationMinutes={selectedService.durationMinutes}
-            selectedStartUtc={selectedSlot?.startUtc ?? null}
-            onSelectStart={setSelectedSlot}
-          />
-          <div className="flex gap-3">
-            <button type="button" onClick={() => setStep(1)} className="btn btn-ghost">
-              Atrás
-            </button>
-            <button
-              type="button"
-              disabled={!canGoStep2Next}
-              onClick={() => setStep(3)}
-              className="btn btn-gold disabled:opacity-40"
-            >
-              Siguiente
-            </button>
-          </div>
-        </div>
-      ) : null}
-
-      {step === dataStep && selectedService && (isReportFlow || selectedSlot) ? (
+      {step === 2 && selectedService ? (
         <div className="flex flex-col gap-6">
           <GlassCard className="flex flex-col gap-3">
             <span className="eyebrow">Resumen</span>
-            {isReportFlow ? (
-              <p className="mb-0 text-bone">
-                <strong className="font-medium">{selectedService.name}</strong> — informe personalizado, sin
-                horario ni llamada. Se elaborará y enviará dentro de un plazo de{" "}
-                <strong className="font-medium">{REPORT_DELIVERY_TEXT}</strong> tras confirmar el pago.
-              </p>
-            ) : (
-              <p className="mb-0 text-bone">
-                <strong className="font-medium">{selectedService.name}</strong> ({selectedService.durationMinutes}{" "}
-                min) — {fullDateLabel(date)}
-                {selectedSlot!.label ? ` a las ${selectedSlot!.label}` : ""} (hora Colombia).
-              </p>
-            )}
+            <p className="mb-0 text-bone">
+              <strong className="font-medium">{selectedService.name}</strong> — informe personalizado, sin
+              horario ni llamada. Se elaborará y enviará dentro de un plazo de{" "}
+              <strong className="font-medium">{REPORT_DELIVERY_TEXT}</strong> tras confirmar el pago.
+            </p>
             <p className="mb-0 font-mono text-[1.05rem] text-gold-soft">
               {selectedService.price} {selectedService.currency}
             </p>
@@ -278,16 +197,7 @@ export function BookingWizard({
             </GlassCard>
           ) : null}
 
-          {submitError ? (
-            <div className="flex flex-col gap-2">
-              <p className="mb-0 text-sm text-ember">{submitError}</p>
-              {!isReportFlow ? (
-                <button type="button" onClick={backToCalendarStep} className="btn btn-ghost self-start">
-                  Elegir otro horario
-                </button>
-              ) : null}
-            </div>
-          ) : null}
+          {submitError ? <p className="mb-0 text-sm text-ember">{submitError}</p> : null}
 
           <div className="flex gap-3">
             <button type="button" onClick={backFromDataStep} className="btn btn-ghost">
@@ -299,13 +209,7 @@ export function BookingWizard({
               onClick={handleConfirm}
               className="btn btn-gold disabled:opacity-40"
             >
-              {isReportFlow
-                ? submitting
-                  ? "Enviando…"
-                  : "Enviar solicitud"
-                : submitting
-                  ? "Reservando…"
-                  : "Confirmar reserva"}
+              {submitting ? "Enviando…" : "Enviar solicitud"}
             </button>
           </div>
         </div>
