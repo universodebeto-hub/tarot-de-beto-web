@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { buildWhatsAppLink } from "@/config/site";
 import { Button } from "@/components/ui/Button";
+import { logoutUser } from "@/server/auth";
 
 const NAV_LINKS = [
   { href: "/quienes-somos", label: "Quiénes somos" },
@@ -70,11 +71,11 @@ export function Navbar({ whatsappNumber, userFirstName, accountHref = "/dashboar
         </button>
 
         <nav
-          className={`main-nav flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2.5
+          className={`main-nav flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-2.5
             ${open ? "flex" : "hidden"} sm:flex
             fixed sm:static left-0 right-0 top-(--header-h) sm:top-auto
             border-b sm:border-b-0 border-white/10 bg-carbon/95 sm:bg-transparent backdrop-blur-2xl sm:backdrop-blur-none
-            px-5 py-3.5 sm:p-0`}
+            px-5 py-3.5 sm:p-0 max-h-[calc(100vh-var(--header-h))] overflow-y-auto sm:max-h-none sm:overflow-visible`}
         >
           {NAV_LINKS.map((link) => {
             const active =
@@ -102,6 +103,17 @@ export function Navbar({ whatsappNumber, userFirstName, accountHref = "/dashboar
             >
               {userFirstName ? `Hola, ${userFirstName}` : "Iniciar sesión"}
             </Link>
+            {userFirstName ? (
+              <form action={logoutUser}>
+                <button
+                  type="submit"
+                  onClick={() => setOpen(false)}
+                  className="w-full rounded-full border border-transparent px-5 py-2.5 text-center font-mono text-[12.5px] uppercase tracking-[0.14em] text-bone-dim transition-all hover:border-gold/30 hover:bg-gold/6 hover:text-gold-soft sm:w-auto"
+                >
+                  Cerrar sesión
+                </button>
+              </form>
+            ) : null}
             <Button href="/tarotistas" variant="gold" className="justify-center">
               Reservar consulta
             </Button>
