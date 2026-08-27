@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAdminAction } from "@/server/audit";
+import type { CurrentUser } from "@/lib/auth/session";
 
 /**
  * Los 2 perfiles iniciales del proyecto (mismos datos que prisma/seed.ts).
@@ -9,12 +10,11 @@ import { logAdminAction } from "@/server/audit";
  * manual que no corre solo contra producción (a propósito, para no crear
  * ahí cuentas de prueba) — así el admin no depende de poder ejecutar un
  * script aparte para que existan estos 2 perfiles ni sus datos reales.
- * Corre siempre (no solo si la tabla está vacía), para que una corrección
- * acá también se refleje en producción sin necesitar acceso directo a la
- * base de datos. Seguro por ahora porque no existe ningún formulario para
- * que el admin edite estos campos a mano todavía (Fase 6) — el día que
- * exista, esto debe pasar a tocar `update` solo en la creación inicial,
- * para no pisar una edición manual en cada visita.
+ *
+ * Solo CREA si el slug no existe todavía — nunca actualiza (a diferencia
+ * de antes de la Fase 5 del panel admin, cuando este `upsert` corría en
+ * modo `update` en cada visita y pisaba silenciosamente cualquier edición
+ * manual hecha desde `updateTarotistaProfile`).
  */
 async function ensureInitialTarotistas(): Promise<void> {
   const alberto = {
@@ -25,7 +25,7 @@ async function ensureInitialTarotistas(): Promise<void> {
   };
   await prisma.tarotista.upsert({
     where: { slug: "alberto-arango" },
-    update: alberto,
+    update: {},
     create: { slug: "alberto-arango", sortOrder: 0, ...alberto },
   });
 
@@ -37,7 +37,7 @@ async function ensureInitialTarotistas(): Promise<void> {
   };
   await prisma.tarotista.upsert({
     where: { slug: "caina" },
-    update: kaina,
+    update: {},
     create: { slug: "caina", sortOrder: 1, ...kaina },
   });
 }
@@ -61,8 +61,12 @@ export interface LinkResult {
  * esto, el modelo Tarotista.userId opcional (Fase 1) queda sin forma de
  * completarse: acá es donde el admin decide quién controla cada perfil.
  */
-export async function linkTarotistaAccount(tarotistaId: string, email: string): Promise<LinkResult> {
-  const admin = await requireAdmin();
+export async function linkTarotistaAccount(
+  tarotistaId: string,
+  email: string,
+  currentUser?: CurrentUser | null,
+): Promise<LinkResult> {
+  const admin = await requireAdmin(currentUser);
   const normalizedEmail = email.trim().toLowerCase();
   if (!normalizedEmail) return { error: "Ingresa el correo de la cuenta a vincular." };
 
@@ -86,13 +90,63 @@ export async function linkTarotistaAccount(tarotistaId: string, email: string): 
   return {};
 }
 
-export async function unlinkTarotistaAccount(tarotistaId: string): Promise<LinkResult> {
-  const admin = await requireAdmin();
+export async function unlinkTarotistaAccount(tarotistaId: string, currentUser?: CurrentUser | null): Promise<LinkResult> {
+  const admin = await requireAdmin(currentUser);
 
   await prisma.tarotista.update({ where: { id: tarotistaId }, data: { userId: null } });
   await logAdminAction({
     adminId: admin.id,
     action: "tarotista.account_unlinked",
+    targetType: "Tarotista",
+    targetId: tarotistaId,
+  });
+
+  return {};
+}
+
+export interface UpdateTarotistaInput {
+  bio?: string;
+  experience?: string;
+}
+
+/**
+ * Edición de perfil (Fase 5, panel admin móvil) -- la web todavía no tiene
+ * un formulario para esto (solo el autocompletado de `ensureInitialTarotistas`),
+ * así que esta es la primera forma real de editar bio/experiencia sin tocar
+ * la base de datos a mano.
+ */
+export async function updateTarotistaProfile(
+  tarotistaId: string,
+  input: UpdateTarotistaInput,
+  currentUser?: CurrentUser | null,
+): Promise<LinkResult> {
+  const admin = await requireAdmin(currentUser);
+
+  await prisma.tarotista.update({
+    where: { id: tarotistaId },
+    data: {
+      bio: input.bio?.trim() || undefined,
+      experience: input.experience?.trim() || undefined,
+    },
+  });
+  await logAdminAction({
+    adminId: admin.id,
+    action: "tarotista.profile_updated",
+    targetType: "Tarotista",
+    targetId: tarotistaId,
+  });
+
+  return {};
+}
+
+export async function toggleTarotistaActive(tarotistaId: string, currentUser?: CurrentUser | null): Promise<LinkResult> {
+  const admin = await requireAdmin(currentUser);
+
+  const row = await prisma.tarotista.findUniqueOrThrow({ where: { id: tarotistaId } });
+  await prisma.tarotista.update({ where: { id: tarotistaId }, data: { active: !row.active } });
+  await logAdminAction({
+    adminId: admin.id,
+    action: row.active ? "tarotista.deactivated" : "tarotista.activated",
     targetType: "Tarotista",
     targetId: tarotistaId,
   });
