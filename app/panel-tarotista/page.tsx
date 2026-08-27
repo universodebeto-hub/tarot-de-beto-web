@@ -109,8 +109,16 @@ export default async function PanelTarotistaPage() {
               {consultations.map((c) => (
                 <GlassCard key={c.id} className="flex flex-wrap items-center justify-between gap-3 text-sm">
                   <div>
-                    <p className="mb-0.5 text-bone">
+                    <p className="mb-0.5 flex items-center gap-2 text-bone">
                       {c.user ? `${c.user.firstName} ${c.user.lastName ?? ""}` : c.guestName}
+                      {c.unreadCount > 0 ? (
+                        <span
+                          className="rounded-full bg-gold px-2 py-0.5 font-mono text-[10px] font-semibold"
+                          style={{ color: "#1a0f05" }}
+                        >
+                          {c.unreadCount} mensaje{c.unreadCount === 1 ? "" : "s"}
+                        </span>
+                      ) : null}
                     </p>
                     <p className="mb-0 text-xs text-ash">
                       {c.service.name} · #{c.bookingNumber}

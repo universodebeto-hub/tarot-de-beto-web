@@ -340,11 +340,36 @@ model Booking {
   updatedAt       DateTime      @updatedAt
 
   transactions PaypalTransaction[]
+  messages     Message[]
 
   @@index([userId])
   @@index([serviceId, startsAt])
   @@index([status, paymentDeadline])
   @@index([tarotistaId])
+}
+
+enum MessageSenderRole {
+  CLIENT
+  TAROTISTA
+}
+
+/// Chat de una consulta (app móvil) — un hilo por reserva, solo utilizable
+/// mientras la reserva esté CONFIRMED + PAID (ver server/messages.ts,
+/// mismo criterio de habilitación que las llamadas de audio). `senderName`
+/// queda guardado en el momento del envío (no se recalcula desde User/
+/// Tarotista) para que el historial no cambie si alguien edita su nombre
+/// después.
+model Message {
+  id         String            @id @default(cuid())
+  bookingId  String
+  booking    Booking           @relation(fields: [bookingId], references: [id])
+  senderRole MessageSenderRole
+  senderName String
+  text       String
+  readAt     DateTime?
+  createdAt  DateTime          @default(now())
+
+  @@index([bookingId, createdAt])
 }
 
 /// Registro de auditoría de cada orden PayPal asociada a una reserva.

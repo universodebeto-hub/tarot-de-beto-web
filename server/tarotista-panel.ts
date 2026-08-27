@@ -86,17 +86,32 @@ export async function setOwnAttentionRequestStatus(
   return {};
 }
 
-/** Consultas confirmadas y pagadas del tarotista vinculado a la cuenta actual — de acá se entra a la llamada (Fase 11). */
+/**
+ * Consultas confirmadas y pagadas del tarotista vinculado a la cuenta
+ * actual — de acá se entra a la llamada (Fase 11) y al chat (Módulo B de
+ * la app). Cada consulta trae `unreadCount`: mensajes del cliente sin leer
+ * por este tarotista.
+ */
 export async function getOwnConfirmedConsultations(currentUser?: CurrentUser | null) {
   const tarotista = await getOwnTarotista(currentUser);
   if (!tarotista) return [];
 
-  return prisma.booking.findMany({
+  const bookings = await prisma.booking.findMany({
     where: { tarotistaId: tarotista.id, status: "CONFIRMED", paymentStatus: "PAID" },
     include: { service: true, user: true },
     orderBy: { createdAt: "desc" },
     take: 20,
   });
+  if (bookings.length === 0) return [];
+
+  const unread = await prisma.message.groupBy({
+    by: ["bookingId"],
+    where: { bookingId: { in: bookings.map((b) => b.id) }, senderRole: "CLIENT", readAt: null },
+    _count: { _all: true },
+  });
+  const unreadByBooking = new Map(unread.map((row) => [row.bookingId, row._count._all]));
+
+  return bookings.map((booking) => ({ ...booking, unreadCount: unreadByBooking.get(booking.id) ?? 0 }));
 }
 
 export interface SubscribePushResult {
