@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAdminAction } from "@/server/audit";
+import type { CurrentUser } from "@/lib/auth/session";
 
 const serviceSchema = z.object({
   name: z.string().trim().min(1, "El nombre es obligatorio").max(120),
@@ -29,8 +30,12 @@ export interface AdminFormState {
   success?: boolean;
 }
 
-export async function createServiceAdmin(_prev: AdminFormState, formData: FormData): Promise<AdminFormState> {
-  const admin = await requireAdmin();
+export async function createServiceAdmin(
+  _prev: AdminFormState,
+  formData: FormData,
+  currentUser?: CurrentUser | null,
+): Promise<AdminFormState> {
+  const admin = await requireAdmin(currentUser);
 
   const parsed = serviceSchema.safeParse({
     name: formData.get("name"),
@@ -68,8 +73,9 @@ export async function updateServiceAdmin(
   serviceId: string,
   _prev: AdminFormState,
   formData: FormData,
+  currentUser?: CurrentUser | null,
 ): Promise<AdminFormState> {
-  const admin = await requireAdmin();
+  const admin = await requireAdmin(currentUser);
 
   const parsed = serviceSchema.safeParse({
     name: formData.get("name"),
@@ -105,8 +111,8 @@ export async function updateServiceAdmin(
   return { success: true };
 }
 
-export async function toggleServiceAvailability(serviceId: string): Promise<void> {
-  const admin = await requireAdmin();
+export async function toggleServiceAvailability(serviceId: string, currentUser?: CurrentUser | null): Promise<void> {
+  const admin = await requireAdmin(currentUser);
   const service = await prisma.service.findUniqueOrThrow({ where: { id: serviceId } });
   await prisma.service.update({ where: { id: serviceId }, data: { available: !service.available } });
   await logAdminAction({

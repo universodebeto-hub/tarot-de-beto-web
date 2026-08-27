@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAdminAction } from "@/server/audit";
+import type { CurrentUser } from "@/lib/auth/session";
 
 export async function listSettingsAdmin() {
   return prisma.setting.findMany({ orderBy: { key: "asc" } });
@@ -17,8 +18,9 @@ export async function upsertSettingAdmin(
   key: string,
   _prev: AdminFormState,
   formData: FormData,
+  currentUser?: CurrentUser | null,
 ): Promise<AdminFormState> {
-  const admin = await requireAdmin();
+  const admin = await requireAdmin(currentUser);
   const rawValue = String(formData.get("value") ?? "");
 
   let value: string;
