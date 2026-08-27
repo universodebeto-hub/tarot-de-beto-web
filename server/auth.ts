@@ -29,6 +29,7 @@ export async function registerUser(_prev: AuthFormState, formData: FormData): Pr
       firstName: formData.get("firstName"),
       lastName: formData.get("lastName") || undefined,
       email: formData.get("email"),
+      username: formData.get("username"),
       phone: formData.get("phone") || undefined,
       country: formData.get("country") || undefined,
       password: formData.get("password"),

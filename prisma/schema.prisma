@@ -78,6 +78,10 @@ model User {
   firstName    String
   lastName     String?
   email        String   @unique
+  /// Nombre de usuario elegido al registrarse — alternativa al correo para
+  /// iniciar sesión (ver server/user-auth.ts::loginAccount). Nullable
+  /// porque las cuentas creadas antes de este campo no tienen uno.
+  username     String?  @unique
   phone        String?
   country      String?
   passwordHash String

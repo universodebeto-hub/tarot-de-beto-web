@@ -47,10 +47,10 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
 
         <div className="relative">
           <label htmlFor="email" className={labelClass}>
-            Email
+            Correo o usuario
           </label>
           <FieldIcon>{MailIcon}</FieldIcon>
-          <input id="email" name="email" type="email" required className={inputClass} />
+          <input id="email" name="email" required className={inputClass} />
         </div>
 
         <div className="relative">

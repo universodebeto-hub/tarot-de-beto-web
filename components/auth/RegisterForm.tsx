@@ -41,6 +41,23 @@ export function RegisterForm() {
         </div>
 
         <div>
+          <label htmlFor="username" className={labelClass}>
+            Usuario
+          </label>
+          <input
+            id="username"
+            name="username"
+            required
+            minLength={3}
+            maxLength={24}
+            pattern="[a-zA-Z0-9_.]+"
+            title="Solo letras, números, punto y guion bajo"
+            placeholder="ej. juanperez"
+            className={inputClass}
+          />
+        </div>
+
+        <div>
           <label htmlFor="phone" className={labelClass}>
             Teléfono / WhatsApp (opcional)
           </label>

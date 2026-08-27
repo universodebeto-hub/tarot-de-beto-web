@@ -27,6 +27,13 @@ const registerSchema = z.object({
   firstName: z.string().trim().min(1, "El nombre es obligatorio").max(80),
   lastName: z.string().trim().max(80).optional(),
   email: z.string().trim().toLowerCase().email("Correo inválido"),
+  username: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(3, "El usuario debe tener al menos 3 caracteres")
+    .max(24, "El usuario debe tener como máximo 24 caracteres")
+    .regex(/^[a-z0-9_.]+$/, "El usuario solo puede tener letras, números, punto y guion bajo"),
   phone: z.string().trim().max(30).optional(),
   country: z.string().trim().max(80).optional(),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
@@ -43,16 +50,21 @@ export async function registerAccount(input: unknown, ip: string): Promise<Accou
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
   }
 
-  const { firstName, lastName, email, phone, country, password } = parsed.data;
+  const { firstName, lastName, email, username, phone, country, password } = parsed.data;
 
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const existing = await prisma.user.findFirst({ where: { OR: [{ email }, { username }] } });
   if (existing) {
-    return { error: "Ya existe una cuenta con ese correo. Intenta iniciar sesión." };
+    return {
+      error:
+        existing.email === email
+          ? "Ya existe una cuenta con ese correo. Intenta iniciar sesión."
+          : "Ese nombre de usuario ya está en uso. Elige otro.",
+    };
   }
 
   const passwordHash = await hashPassword(password);
   const user = await prisma.user.create({
-    data: { firstName, lastName, email, phone, country, passwordHash },
+    data: { firstName, lastName, email, username, phone, country, passwordHash },
   });
 
   const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
@@ -70,7 +82,8 @@ export async function registerAccount(input: unknown, ip: string): Promise<Accou
 }
 
 const loginSchema = z.object({
-  email: z.string().trim().toLowerCase().email("Correo inválido"),
+  /** Correo o nombre de usuario — se acepta cualquiera de los dos (ver loginAccount). */
+  email: z.string().trim().toLowerCase().min(1, "Ingresa tu correo o usuario"),
   password: z.string().min(1, "Ingresa tu contraseña"),
 });
 
@@ -85,11 +98,11 @@ export async function loginAccount(input: unknown, ip: string): Promise<AccountR
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
   }
 
-  const { email, password } = parsed.data;
-  const user = await prisma.user.findUnique({ where: { email } });
+  const { email: identifier, password } = parsed.data;
+  const user = await prisma.user.findFirst({ where: { OR: [{ email: identifier }, { username: identifier }] } });
 
-  // Mensaje genérico para no revelar si el correo existe o no.
-  const invalidCredentials = { error: "Correo o contraseña incorrectos." };
+  // Mensaje genérico para no revelar si la cuenta existe o no.
+  const invalidCredentials = { error: "Correo/usuario o contraseña incorrectos." };
   if (!user) return invalidCredentials;
 
   const valid = await verifyPassword(password, user.passwordHash);
