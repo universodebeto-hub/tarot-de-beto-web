@@ -5,11 +5,12 @@ import { logAdminAction } from "@/server/audit";
 import { expireStaleBookings } from "@/server/availability";
 import { notifyPaymentConfirmed, notifyCancelled } from "@/server/notifications/send";
 import { sendPushToTarotista } from "@/server/push-notifications";
-import type { BookingStatus } from "@prisma/client";
+import type { BookingStatus, PaymentStatus } from "@prisma/client";
 import type { CurrentUser } from "@/lib/auth/session";
 
 export interface BookingFilters {
   status?: BookingStatus;
+  paymentStatus?: PaymentStatus;
   serviceId?: string;
   from?: string;
   to?: string;
@@ -22,6 +23,7 @@ export async function listBookingsAdmin(filters: BookingFilters) {
   return prisma.booking.findMany({
     where: {
       status: filters.status,
+      paymentStatus: filters.paymentStatus,
       serviceId: filters.serviceId || undefined,
       startsAt: {
         gte: filters.from ? new Date(filters.from) : undefined,

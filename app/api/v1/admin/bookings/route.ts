@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdminFromRequest, UnauthorizedError } from "@/lib/auth/api-auth";
 import { listBookingsAdmin } from "@/server/admin/bookings";
-import type { BookingStatus } from "@prisma/client";
+import type { BookingStatus, PaymentStatus } from "@prisma/client";
 
 export async function GET(request: Request) {
   try {
@@ -9,6 +9,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const bookings = await listBookingsAdmin({
       status: (searchParams.get("status") as BookingStatus | null) ?? undefined,
+      paymentStatus: (searchParams.get("paymentStatus") as PaymentStatus | null) ?? undefined,
       serviceId: searchParams.get("serviceId") ?? undefined,
       from: searchParams.get("from") ?? undefined,
       to: searchParams.get("to") ?? undefined,
