@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAdminAction } from "@/server/audit";
 import { businessLocalToUtc, formatMinutes } from "@/lib/timezone";
+import type { CurrentUser } from "@/lib/auth/session";
 
 export async function listAvailabilityAdmin() {
   return prisma.availability.findMany({ orderBy: [{ dayOfWeek: "asc" }, { startMinute: "asc" }] });
@@ -149,8 +150,12 @@ export async function deleteBlockedTimeAdmin(id: string): Promise<void> {
  * `BlockedTime` que usa `createBlockedTimeAdmin`/`deleteBlockedTimeAdmin`
  * para bloqueos por rango; este solo cubre el caso de una celda exacta.
  */
-export async function toggleQuickBlock(date: string, startMinute: number): Promise<void> {
-  const admin = await requireAdmin();
+export async function toggleQuickBlock(
+  date: string,
+  startMinute: number,
+  currentUser?: CurrentUser | null,
+): Promise<void> {
+  const admin = await requireAdmin(currentUser);
   const startsAt = businessLocalToUtc(date, startMinute);
   const endsAt = businessLocalToUtc(date, startMinute + 15);
 

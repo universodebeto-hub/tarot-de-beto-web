@@ -68,9 +68,14 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
  * administrativa — la protección de `proxy.ts` cubre la navegación normal,
  * pero una Server Action es un endpoint de red por su cuenta y necesita su
  * propia verificación (defensa en profundidad).
+ *
+ * `currentUser` es opcional, mismo patrón que el resto del proyecto: la
+ * web (Server Actions) no lo pasa y esta función resuelve la sesión sola
+ * por la cookie httpOnly; el panel admin de la app móvil (app/api/v1/admin/...)
+ * lo pasa explícito, ya resuelto desde el Bearer token.
  */
-export async function requireAdmin(): Promise<CurrentUser> {
-  const user = await getCurrentUser();
+export async function requireAdmin(currentUser?: CurrentUser | null): Promise<CurrentUser> {
+  const user = currentUser === undefined ? await getCurrentUser() : currentUser;
   if (!user || user.role !== "ADMIN") {
     throw new Error("No autorizado.");
   }

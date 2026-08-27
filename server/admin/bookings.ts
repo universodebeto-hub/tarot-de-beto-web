@@ -6,6 +6,7 @@ import { expireStaleBookings } from "@/server/availability";
 import { notifyPaymentConfirmed, notifyCancelled } from "@/server/notifications/send";
 import { sendPushToTarotista } from "@/server/push-notifications";
 import type { BookingStatus } from "@prisma/client";
+import type { CurrentUser } from "@/lib/auth/session";
 
 export interface BookingFilters {
   status?: BookingStatus;
@@ -57,8 +58,12 @@ const ALLOWED_TRANSITIONS: Record<string, BookingStatus[]> = {
   RESCHEDULE_REQUESTED: ["CONFIRMED", "CANCELLED"],
 };
 
-export async function setBookingStatus(bookingId: string, next: BookingStatus): Promise<{ error?: string }> {
-  const admin = await requireAdmin();
+export async function setBookingStatus(
+  bookingId: string,
+  next: BookingStatus,
+  currentUser?: CurrentUser | null,
+): Promise<{ error?: string }> {
+  const admin = await requireAdmin(currentUser);
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
@@ -109,8 +114,12 @@ export async function setBookingStatus(bookingId: string, next: BookingStatus): 
   return {};
 }
 
-export async function addBookingNote(bookingId: string, note: string): Promise<{ error?: string }> {
-  const admin = await requireAdmin();
+export async function addBookingNote(
+  bookingId: string,
+  note: string,
+  currentUser?: CurrentUser | null,
+): Promise<{ error?: string }> {
+  const admin = await requireAdmin(currentUser);
   if (!note.trim()) return { error: "La nota no puede estar vacía." };
 
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
