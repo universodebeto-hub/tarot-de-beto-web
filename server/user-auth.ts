@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { notifyPasswordReset } from "@/server/notifications/send";
+import { sendExpoPushToUser } from "@/server/expo-push";
 import { checkRateLimit } from "@/lib/rate-limit";
 import type { Role } from "@prisma/client";
 
@@ -53,6 +54,17 @@ export async function registerAccount(input: unknown, ip: string): Promise<Accou
   const user = await prisma.user.create({
     data: { firstName, lastName, email, phone, country, passwordHash },
   });
+
+  const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
+  await Promise.all(
+    admins.map((admin) =>
+      sendExpoPushToUser(admin.id, {
+        title: "Nuevo cliente registrado",
+        body: `${firstName} — ${email}`,
+        data: { type: "new_client" },
+      }).catch((err) => console.error("[expo-push] new_client:", err)),
+    ),
+  );
 
   return { user: { id: user.id, role: user.role } };
 }

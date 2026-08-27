@@ -5,6 +5,7 @@ import { logAdminAction } from "@/server/audit";
 import { expireStaleBookings } from "@/server/availability";
 import { notifyPaymentConfirmed, notifyCancelled } from "@/server/notifications/send";
 import { sendPushToTarotista } from "@/server/push-notifications";
+import { sendExpoPushToUser } from "@/server/expo-push";
 import type { BookingStatus, PaymentStatus } from "@prisma/client";
 import type { CurrentUser } from "@/lib/auth/session";
 
@@ -109,8 +110,22 @@ export async function setBookingStatus(
         url: "/panel-tarotista",
       }).catch((err) => console.error("[push] payment_confirmed:", err));
     }
+    if (booking.userId) {
+      await sendExpoPushToUser(booking.userId, {
+        title: "Pago confirmado",
+        body: `Tu consulta de ${booking.service.name} ya está habilitada.`,
+        data: { type: "payment_confirmed", bookingId },
+      }).catch((err) => console.error("[expo-push] payment_confirmed:", err));
+    }
   } else if (next === "CANCELLED") {
     await notifyCancelled(booking).catch((err) => console.error("[notify] cancelled:", err));
+    if (booking.userId) {
+      await sendExpoPushToUser(booking.userId, {
+        title: "Reserva cancelada",
+        body: `Tu reserva de ${booking.service.name} (#${booking.bookingNumber}) fue cancelada.`,
+        data: { type: "booking_cancelled", bookingId },
+      }).catch((err) => console.error("[expo-push] booking_cancelled:", err));
+    }
   }
 
   return {};

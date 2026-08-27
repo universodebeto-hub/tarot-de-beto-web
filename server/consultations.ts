@@ -7,6 +7,7 @@ import { getSetting } from "@/server/settings";
 import { hasRequiredIntakeData } from "@/lib/service-intake";
 import { isReportOnlyService } from "@/lib/service-fulfillment";
 import { notifyBookingReceived } from "@/server/notifications/send";
+import { sendExpoPushToUser } from "@/server/expo-push";
 import type { Booking } from "@prisma/client";
 import type { CurrentUser } from "@/lib/auth/session";
 
@@ -110,5 +111,17 @@ export async function createInstantConsultation(
     include: { service: true, user: true },
   });
   await notifyBookingReceived(booking).catch((err) => console.error("[notify] booking_received:", err));
+
+  const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
+  await Promise.all(
+    admins.map((admin) =>
+      sendExpoPushToUser(admin.id, {
+        title: "Nueva reserva",
+        body: `${booking.user?.firstName ?? booking.guestName ?? "Un cliente"} — ${service.name} (#${booking.bookingNumber}).`,
+        data: { type: "new_booking", bookingId: booking.id },
+      }).catch((err) => console.error("[expo-push] new_booking:", err)),
+    ),
+  );
+
   return { booking: { id: booking.id } };
 }
