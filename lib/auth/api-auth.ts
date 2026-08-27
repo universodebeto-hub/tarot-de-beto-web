@@ -36,3 +36,10 @@ export async function requireAuthFromRequest(request: Request): Promise<CurrentU
   if (!user) throw new UnauthorizedError();
   return user;
 }
+
+/** Mismo criterio que `requireAdmin()` (web, cookie) pero para el Bearer token de la app -- panel de administrador móvil. */
+export async function requireAdminFromRequest(request: Request): Promise<CurrentUser> {
+  const user = await requireAuthFromRequest(request);
+  if (user.role !== "ADMIN") throw new UnauthorizedError("No tienes permisos de administrador.");
+  return user;
+}
