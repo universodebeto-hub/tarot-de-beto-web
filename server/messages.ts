@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { sendPushToTarotista } from "@/server/push-notifications";
+import { sendExpoPushToUser } from "@/server/expo-push";
 import type { CurrentUser } from "@/lib/auth/session";
 import type { MessageSenderRole } from "@prisma/client";
 
@@ -89,15 +90,25 @@ export async function sendMessage(
     data: { bookingId, senderRole: role, senderName, text: trimmed },
   });
 
-  // Aviso push solo del lado del tarotista por ahora -- el cliente todavía
-  // no tiene notificaciones push nativas en la app (queda para una fase
-  // posterior, ver reporte de módulos).
   if (role === "CLIENT" && booking.tarotistaId) {
     await sendPushToTarotista(booking.tarotistaId, {
       title: `Nuevo mensaje de ${senderName}`,
       body: trimmed.slice(0, 120),
       url: "/panel-tarotista",
     }).catch((err) => console.error("[push] new_message:", err));
+    if (booking.tarotista?.userId) {
+      await sendExpoPushToUser(booking.tarotista.userId, {
+        title: `Nuevo mensaje de ${senderName}`,
+        body: trimmed.slice(0, 120),
+        data: { type: "new_message", bookingId, viewerRole: "TAROTISTA" },
+      }).catch((err) => console.error("[expo-push] new_message:", err));
+    }
+  } else if (role === "TAROTISTA" && booking.userId) {
+    await sendExpoPushToUser(booking.userId, {
+      title: `Nuevo mensaje de ${senderName}`,
+      body: trimmed.slice(0, 120),
+      data: { type: "new_message", bookingId, viewerRole: "CLIENT" },
+    }).catch((err) => console.error("[expo-push] new_message:", err));
   }
 
   return { success: true };

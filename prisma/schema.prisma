@@ -91,12 +91,13 @@ model User {
   isOnline   Boolean   @default(false)
   lastSeenAt DateTime?
 
-  passwordResets PasswordReset[]
-  bookings       Booking[]
-  auditLogs      AuditLog[]
+  passwordResets  PasswordReset[]
+  bookings        Booking[]
+  auditLogs       AuditLog[]
   /// Perfil de tarotista vinculado a esta cuenta (null si el usuario no es
   /// un tarotista, ej. un cliente) — ver modelo Tarotista.
-  tarotista      Tarotista?
+  tarotista       Tarotista?
+  expoPushTokens  ExpoPushToken[]
 
   @@index([role])
 }
@@ -161,6 +162,20 @@ model PushSubscription {
   createdAt   DateTime  @default(now())
 
   @@index([tarotistaId])
+}
+
+/// Token de push nativo (Expo Push, app móvil, Módulo C) — separado de
+/// PushSubscription (Web Push del navegador) porque el proveedor y el
+/// formato del envío son distintos. Vinculado a User (no a Tarotista) para
+/// que sirva tanto a clientes como a tarotistas — ver server/expo-push.ts.
+model ExpoPushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  token     String   @unique
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 enum AttentionRequestStatus {
