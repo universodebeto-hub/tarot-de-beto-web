@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { getBookingById } from "@/server/bookings";
 import { minutesInBusinessDay, formatMinutes, businessDateString } from "@/lib/timezone";
 import { fullDateLabel } from "@/lib/date-labels";
@@ -131,7 +132,10 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
               <div className="flex flex-col gap-5">
                 {process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ? (
                   <div>
-                    <span className="eyebrow mb-3">Pagar con PayPal</span>
+                    <span className="eyebrow mb-3 flex items-center gap-2">
+                      <Image src="/assets/payment-logos/paypal.png" alt="" width={24} height={24} className="rounded" />
+                      Pagar con PayPal
+                    </span>
                     <PayPalButton
                       clientId={process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}
                       currency={booking.service.currency}

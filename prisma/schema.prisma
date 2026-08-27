@@ -293,6 +293,9 @@ enum PaymentMethod {
   PAGO_MOVIL
   ZELLE
   BINANCE
+  REMITLY
+  WESTERN_UNION
+  MONEYGRAM
 }
 
 /// Reserva de una consulta. `startsAt`/`endsAt` son instantes UTC absolutos

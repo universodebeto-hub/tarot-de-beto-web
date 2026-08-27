@@ -1,0 +1,4 @@
+-- AlterEnum
+ALTER TYPE "PaymentMethod" ADD VALUE 'REMITLY';
+ALTER TYPE "PaymentMethod" ADD VALUE 'WESTERN_UNION';
+ALTER TYPE "PaymentMethod" ADD VALUE 'MONEYGRAM';

@@ -22,18 +22,33 @@ export interface ManualPaymentInstructions {
   pagoMovil: { telefono: string; cedula: string; banco: string };
   zelle: { correo: string; nombre: string };
   binance: { id: string; correo: string };
+  remitly: { nombre: string; pais: string; telefono: string };
+  westernUnion: { nombre: string; pais: string; telefono: string };
+  moneygram: { nombre: string; pais: string; telefono: string };
 }
 
 const DEFAULT_MANUAL_PAYMENT_INSTRUCTIONS: ManualPaymentInstructions = {
   pagoMovil: { telefono: "", cedula: "", banco: "" },
   zelle: { correo: "", nombre: "" },
   binance: { id: "", correo: "" },
+  remitly: { nombre: "", pais: "", telefono: "" },
+  westernUnion: { nombre: "", pais: "", telefono: "" },
+  moneygram: { nombre: "", pais: "", telefono: "" },
 };
 
-/** Datos de contacto para Pago Móvil/Zelle/Binance (setting `manual_payment_instructions`, JSON), editable en /admin/configuracion. */
+/** Datos de contacto para pagos manuales (setting `manual_payment_instructions`, JSON), editable en /admin/configuracion. */
 export async function getManualPaymentInstructions(): Promise<ManualPaymentInstructions> {
-  return getSetting<ManualPaymentInstructions>(
-    "manual_payment_instructions",
-    DEFAULT_MANUAL_PAYMENT_INSTRUCTIONS,
-  );
+  const stored = await getSetting<Partial<ManualPaymentInstructions>>("manual_payment_instructions", {});
+  // Merge superficial con los valores por defecto -- si el admin guardó esta
+  // configuración antes de que existieran los métodos nuevos (Remitly/
+  // Western Union/MoneyGram), esas claves faltantes no deben romper la
+  // pantalla, solo mostrarse vacías hasta que el admin las complete.
+  return {
+    pagoMovil: { ...DEFAULT_MANUAL_PAYMENT_INSTRUCTIONS.pagoMovil, ...stored.pagoMovil },
+    zelle: { ...DEFAULT_MANUAL_PAYMENT_INSTRUCTIONS.zelle, ...stored.zelle },
+    binance: { ...DEFAULT_MANUAL_PAYMENT_INSTRUCTIONS.binance, ...stored.binance },
+    remitly: { ...DEFAULT_MANUAL_PAYMENT_INSTRUCTIONS.remitly, ...stored.remitly },
+    westernUnion: { ...DEFAULT_MANUAL_PAYMENT_INSTRUCTIONS.westernUnion, ...stored.westernUnion },
+    moneygram: { ...DEFAULT_MANUAL_PAYMENT_INSTRUCTIONS.moneygram, ...stored.moneygram },
+  };
 }

@@ -4,7 +4,7 @@ import { getBookingAdminById } from "@/server/admin/bookings";
 import { changeBookingStatusFormAction } from "@/app/admin/reservas/[id]/actions";
 import { minutesInBusinessDay, formatMinutes, businessDateString } from "@/lib/timezone";
 import { fullDateLabel } from "@/lib/date-labels";
-import { BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL } from "@/lib/booking-labels";
+import { BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL, PAYMENT_METHOD_LABEL } from "@/lib/booking-labels";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { AdminNoteForm } from "@/components/admin/AdminNoteForm";
 import { intakeFieldsFor } from "@/lib/service-intake";
@@ -119,7 +119,7 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
       {booking.manualPaymentProofUrl ? (
         <GlassCard className="flex flex-col gap-3">
           <span className="eyebrow">
-            Comprobante — {booking.paymentMethod === "PAGO_MOVIL" ? "Pago Móvil" : booking.paymentMethod === "ZELLE" ? "Zelle" : "Binance"}
+            Comprobante — {booking.paymentMethod ? PAYMENT_METHOD_LABEL[booking.paymentMethod] : "Método desconocido"}
           </span>
           <p className="mb-0 text-sm text-bone-dim">
             Referencia: <span className="text-bone">{booking.manualPaymentReference}</span>

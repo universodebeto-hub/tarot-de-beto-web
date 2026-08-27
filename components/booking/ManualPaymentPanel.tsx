@@ -1,16 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { ManualPaymentInstructions } from "@/server/settings";
+import { PAYMENT_METHOD_LABEL, PAYMENT_METHOD_LOGO_SLUG } from "@/lib/booking-labels";
 
-type ManualMethod = "PAGO_MOVIL" | "ZELLE" | "BINANCE";
+type ManualMethod = "PAGO_MOVIL" | "ZELLE" | "BINANCE" | "REMITLY" | "WESTERN_UNION" | "MONEYGRAM";
 
-const METHOD_LABEL: Record<ManualMethod, string> = {
-  PAGO_MOVIL: "Pago Móvil",
-  ZELLE: "Zelle",
-  BINANCE: "Binance Pay",
-};
+const MANUAL_METHODS: ManualMethod[] = ["PAGO_MOVIL", "ZELLE", "BINANCE", "REMITLY", "WESTERN_UNION", "MONEYGRAM"];
 
 interface ManualPaymentPanelProps {
   bookingId: string;
@@ -18,10 +16,12 @@ interface ManualPaymentPanelProps {
 }
 
 /**
- * Alternativa a PayPal para quienes pagan por Pago Móvil/Zelle/Binance: sin
- * pasarela, así que no hay confirmación automática — el cliente transfiere,
- * sube su comprobante, y Beto lo revisa y confirma manualmente desde el
- * panel (ver server/manual-payments.ts, app/admin/reservas/[id]/page.tsx).
+ * Alternativa a PayPal para quienes pagan por transferencia/envío de dinero:
+ * sin pasarela, así que no hay confirmación automática — el cliente
+ * transfiere, sube su comprobante, y Beto lo revisa y confirma manualmente
+ * desde el panel (ver server/manual-payments.ts, app/admin/reservas/[id]/page.tsx).
+ * Cada método se muestra como un botón cuadrado con su logo, todos del
+ * mismo tamaño — ver public/assets/payment-logos/.
  */
 export function ManualPaymentPanel({ bookingId, instructions }: ManualPaymentPanelProps) {
   const router = useRouter();
@@ -85,16 +85,28 @@ export function ManualPaymentPanel({ bookingId, instructions }: ManualPaymentPan
 
   return (
     <div className="flex flex-col gap-3">
-      <span className="eyebrow">Pagar por Pago Móvil, Zelle o Binance</span>
-      <div className="flex flex-wrap gap-2">
-        {(Object.keys(METHOD_LABEL) as ManualMethod[]).map((m) => (
+      <span className="eyebrow">Elige un método de pago</span>
+      <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+        {MANUAL_METHODS.map((m) => (
           <button
             key={m}
             type="button"
             onClick={() => setMethod(m)}
-            className={method === m ? "btn btn-gold" : "btn btn-ghost"}
+            aria-label={PAYMENT_METHOD_LABEL[m]}
+            className={`flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border p-2 transition-colors ${
+              method === m ? "border-gold bg-gold/10" : "border-white/15 bg-white/5 hover:border-white/30"
+            }`}
           >
-            {METHOD_LABEL[m]}
+            <Image
+              src={`/assets/payment-logos/${PAYMENT_METHOD_LOGO_SLUG[m]}.png`}
+              alt={PAYMENT_METHOD_LABEL[m]}
+              width={56}
+              height={56}
+              className="rounded-lg"
+            />
+            <span className="text-center font-mono text-[9.5px] uppercase leading-tight tracking-wide text-ash">
+              {PAYMENT_METHOD_LABEL[m]}
+            </span>
           </button>
         ))}
       </div>
@@ -123,13 +135,46 @@ export function ManualPaymentPanel({ bookingId, instructions }: ManualPaymentPan
                   Nombre: <span className="text-bone">{instructions.zelle.nombre}</span>
                 </li>
               </ul>
-            ) : (
+            ) : method === "BINANCE" ? (
               <ul className="mb-0 flex flex-col gap-1">
                 <li>
                   Binance Pay ID: <span className="text-bone">{instructions.binance.id}</span>
                 </li>
                 <li>
                   Correo: <span className="text-bone">{instructions.binance.correo}</span>
+                </li>
+              </ul>
+            ) : (
+              <ul className="mb-0 flex flex-col gap-1">
+                <li>
+                  Nombre del destinatario:{" "}
+                  <span className="text-bone">
+                    {method === "REMITLY"
+                      ? instructions.remitly.nombre
+                      : method === "WESTERN_UNION"
+                        ? instructions.westernUnion.nombre
+                        : instructions.moneygram.nombre}
+                  </span>
+                </li>
+                <li>
+                  País:{" "}
+                  <span className="text-bone">
+                    {method === "REMITLY"
+                      ? instructions.remitly.pais
+                      : method === "WESTERN_UNION"
+                        ? instructions.westernUnion.pais
+                        : instructions.moneygram.pais}
+                  </span>
+                </li>
+                <li>
+                  Teléfono:{" "}
+                  <span className="text-bone">
+                    {method === "REMITLY"
+                      ? instructions.remitly.telefono
+                      : method === "WESTERN_UNION"
+                        ? instructions.westernUnion.telefono
+                        : instructions.moneygram.telefono}
+                  </span>
                 </li>
               </ul>
             )}

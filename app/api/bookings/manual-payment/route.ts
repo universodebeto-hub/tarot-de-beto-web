@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { submitManualPaymentProof } from "@/server/manual-payments";
 import type { PaymentMethod } from "@prisma/client";
 
-const VALID_METHODS: PaymentMethod[] = ["PAGO_MOVIL", "ZELLE", "BINANCE"];
+const VALID_METHODS: PaymentMethod[] = ["PAGO_MOVIL", "ZELLE", "BINANCE", "REMITLY", "WESTERN_UNION", "MONEYGRAM"];
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
