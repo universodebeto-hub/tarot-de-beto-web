@@ -34,28 +34,29 @@ export function Navbar({ whatsappNumber, userFirstName, accountHref = "/dashboar
         <Link
           href="/"
           aria-label="Ir al inicio — Tarot de Beto"
-          className="flex shrink-0 items-center gap-2.5 rounded-full border border-gold/35 bg-gold/[0.14] py-2.5 pl-3 pr-6 shadow-[0_0_24px_rgba(232,163,61,0.18)] transition-colors hover:bg-gold/[0.18]"
+          className="group flex shrink-0 items-center gap-3"
           onClick={() => setOpen(false)}
         >
-          <span className="relative flex h-[52px] w-[52px] shrink-0 items-center justify-center">
+          <span className="relative flex h-[58px] w-[58px] shrink-0 items-center justify-center">
             <span
-              className="absolute -inset-1 rounded-full bg-[radial-gradient(circle,rgba(232,163,61,0.4)_0%,rgba(232,163,61,0)_72%)]"
+              className="absolute -inset-2 rounded-full bg-[radial-gradient(circle,rgba(232,163,61,0.45)_0%,rgba(232,163,61,0)_72%)] transition-opacity group-hover:opacity-80"
               aria-hidden="true"
             />
             <Image
               src="/assets/logo/icon-512.png"
               alt=""
-              width={46}
-              height={46}
-              className="relative drop-shadow-[0_0_8px_rgba(232,163,61,0.9)]"
+              width={52}
+              height={52}
+              className="relative drop-shadow-[0_0_10px_rgba(232,163,61,0.9)]"
               priority
             />
           </span>
           <span className="flex flex-col items-start leading-none">
-            <span className="font-mono text-[9px] uppercase tracking-[0.35em] text-ash">Tarot de</span>
-            <span className="font-display text-[26px] font-semibold text-bone">
-              Be<span className="text-gold-soft">to</span>
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.55em] text-ash">Tarot de</span>
+            <span className="bg-gradient-to-br from-gold-soft via-gold to-ember bg-clip-text font-display text-[42px] font-semibold tracking-wide text-transparent drop-shadow-[0_0_22px_rgba(232,163,61,0.35)]">
+              Beto
             </span>
+            <span className="mt-1 h-px w-full bg-gradient-to-r from-gold/70 via-gold/25 to-transparent" aria-hidden="true" />
           </span>
         </Link>
 
