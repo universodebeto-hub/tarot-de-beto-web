@@ -16,10 +16,36 @@ interface ConsultationFormProps {
 
 /** Orden fijo de categorías en el selector -- no depende del orden en que llegan los servicios (ver prisma/seed.ts). */
 const CATEGORY_ORDER = ["Lecturas de Tarot", "Rituales Energéticos", "Otros"];
+const CATEGORY_NUMERAL = ["I", "II", "III"];
 
 function categoryRank(category: string): number {
   const i = CATEGORY_ORDER.indexOf(category);
   return i === -1 ? CATEGORY_ORDER.length : i;
+}
+
+function CategoryIcon({ category }: { category: string }) {
+  const common = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.4 } as const;
+  if (category === "Lecturas de Tarot") {
+    return (
+      <svg {...common} className="h-4 w-4">
+        <rect x="5" y="3" width="9" height="14" rx="1.5" transform="rotate(-8 9.5 10)" />
+        <rect x="11" y="6" width="9" height="14" rx="1.5" transform="rotate(8 15.5 13)" />
+      </svg>
+    );
+  }
+  if (category === "Rituales Energéticos") {
+    return (
+      <svg {...common} className="h-4 w-4">
+        <path d="M12 3c2 3-1 4-1 6.5a3 3 0 1 0 6 0c0-1-.5-1.8-1-2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M12 21c-4 0-6-2.4-6-5.5C6 12 9 10 12 8c3 2 6 4 6 7.5 0 3.1-2 5.5-6 5.5Z" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...common} className="h-4 w-4">
+      <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" strokeLinecap="round" />
+    </svg>
+  );
 }
 
 /**
@@ -95,9 +121,14 @@ export function ConsultationForm({ tarotistaId, services, isLoggedIn }: Consulta
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3">
-        <span className="eyebrow">Elige tu servicio</span>
-        {groups.map(([category, items]) => {
+      <div className="flex flex-col gap-4">
+        <div>
+          <span className="eyebrow">Reserva tu momento</span>
+          <h3 className="mt-1.5 mb-0 font-display text-[22px] font-medium text-bone">
+            Elige el servicio <em className="italic text-gold-soft">que buscás</em>
+          </h3>
+        </div>
+        {groups.map(([category, items], idx) => {
           const isOpen = openCategory === category;
           const hasSelection = items.some((s) => s.id === serviceId);
           const minPrice = Math.min(...items.map((s) => s.price));
@@ -113,11 +144,20 @@ export function ConsultationForm({ tarotistaId, services, isLoggedIn }: Consulta
                 onClick={() => setOpenCategory(isOpen ? null : category)}
                 className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left"
               >
-                <span className="flex items-center gap-2.5">
+                <span className="flex items-center gap-3">
                   <span
-                    className={`h-2 w-2 shrink-0 rounded-full ${hasSelection ? "bg-gold" : "bg-white/20"}`}
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border font-display text-[13px] transition-colors ${
+                      hasSelection
+                        ? "border-gold/60 bg-gold/15 text-gold-soft"
+                        : "border-white/15 text-ash"
+                    }`}
                     aria-hidden="true"
-                  />
+                  >
+                    {CATEGORY_NUMERAL[idx] ?? idx + 1}
+                  </span>
+                  <span className={`shrink-0 ${hasSelection ? "text-gold-soft" : "text-ash"}`} aria-hidden="true">
+                    <CategoryIcon category={category} />
+                  </span>
                   <span>
                     <span className="block font-mono text-[12px] uppercase tracking-[0.1em] text-bone">
                       {category}
