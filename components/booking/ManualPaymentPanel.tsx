@@ -5,14 +5,19 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { ManualPaymentInstructions } from "@/server/settings";
 import { PAYMENT_METHOD_LABEL, PAYMENT_METHOD_LOGO_SLUG } from "@/lib/booking-labels";
+import { PayPalButton } from "@/components/booking/PayPalButton";
 
 type ManualMethod = "PAGO_MOVIL" | "ZELLE" | "BINANCE" | "REMITLY" | "WESTERN_UNION" | "MONEYGRAM";
+/** "PAYPAL" solo existe acá para la selección visual -- nunca se manda a /api/bookings/manual-payment, dispara el checkout automático de PayPalButton. */
+type PickableMethod = ManualMethod | "PAYPAL";
 
 const MANUAL_METHODS: ManualMethod[] = ["PAGO_MOVIL", "ZELLE", "BINANCE", "REMITLY", "WESTERN_UNION", "MONEYGRAM"];
 
 interface ManualPaymentPanelProps {
   bookingId: string;
   instructions: ManualPaymentInstructions;
+  /** Si viene configurado, PayPal aparece como séptima opción en la misma grilla. */
+  paypal?: { clientId: string; currency: string } | null;
 }
 
 /**
@@ -23,9 +28,9 @@ interface ManualPaymentPanelProps {
  * Cada método se muestra como un botón cuadrado con su logo, todos del
  * mismo tamaño — ver public/assets/payment-logos/.
  */
-export function ManualPaymentPanel({ bookingId, instructions }: ManualPaymentPanelProps) {
+export function ManualPaymentPanel({ bookingId, instructions, paypal }: ManualPaymentPanelProps) {
   const router = useRouter();
-  const [method, setMethod] = useState<ManualMethod | null>(null);
+  const [method, setMethod] = useState<PickableMethod | null>(null);
   const [reference, setReference] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -34,7 +39,7 @@ export function ManualPaymentPanel({ bookingId, instructions }: ManualPaymentPan
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!method) return;
+    if (!method || method === "PAYPAL") return;
     if (!reference.trim()) {
       setError("Ingresa el número de referencia de tu pago.");
       return;
@@ -87,7 +92,7 @@ export function ManualPaymentPanel({ bookingId, instructions }: ManualPaymentPan
     <div className="flex flex-col gap-3">
       <span className="eyebrow">Elige un método de pago</span>
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-        {MANUAL_METHODS.map((m) => (
+        {(paypal ? [...MANUAL_METHODS, "PAYPAL" as const] : MANUAL_METHODS).map((m) => (
           <button
             key={m}
             type="button"
@@ -111,7 +116,13 @@ export function ManualPaymentPanel({ bookingId, instructions }: ManualPaymentPan
         ))}
       </div>
 
-      {method ? (
+      {method === "PAYPAL" && paypal ? (
+        <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <PayPalButton clientId={paypal.clientId} currency={paypal.currency} bookingId={bookingId} />
+        </div>
+      ) : null}
+
+      {method && method !== "PAYPAL" ? (
         <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
           <div className="text-sm text-bone-dim">
             {method === "PAGO_MOVIL" ? (

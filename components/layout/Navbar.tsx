@@ -37,17 +37,17 @@ export function Navbar({ whatsappNumber, userFirstName, accountHref = "/dashboar
           className="group flex shrink-0 items-center gap-3"
           onClick={() => setOpen(false)}
         >
-          <span className="relative flex h-[58px] w-[58px] shrink-0 items-center justify-center">
+          <span className="relative flex h-[64px] w-[64px] shrink-0 items-center justify-center">
             <span
               className="absolute -inset-2 rounded-full bg-[radial-gradient(circle,rgba(232,163,61,0.45)_0%,rgba(232,163,61,0)_72%)] transition-opacity group-hover:opacity-80"
               aria-hidden="true"
             />
             <Image
-              src="/assets/logo/icon-512.png"
+              src="/assets/logo/emblem.png"
               alt=""
-              width={52}
-              height={52}
-              className="relative drop-shadow-[0_0_10px_rgba(232,163,61,0.9)]"
+              width={64}
+              height={64}
+              className="relative rounded-[14px] drop-shadow-[0_0_14px_rgba(232,163,61,0.55)]"
               priority
             />
           </span>

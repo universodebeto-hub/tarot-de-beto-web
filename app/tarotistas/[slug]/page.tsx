@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { getTarotistaBySlug } from "@/server/tarotistas";
 import { getServices } from "@/server/services";
 import { getCurrentUser } from "@/lib/auth/session";
-import { isReportOnlyService } from "@/lib/service-fulfillment";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { ConsultationForm } from "@/components/tarotistas/ConsultationForm";
 import { AttentionRequestForm } from "@/components/tarotistas/AttentionRequestForm";
@@ -53,7 +52,6 @@ export default async function TarotistaProfilePage({ params }: TarotistaPageProp
   ]);
   if (!tarotista || !tarotista.active) notFound();
 
-  const eligibleServices = services.filter((s) => !isReportOnlyService(s.slug));
   const isAvailable = tarotista.status === "DISPONIBLE";
 
   return (
@@ -100,7 +98,7 @@ export default async function TarotistaProfilePage({ params }: TarotistaPageProp
               <span className="eyebrow mb-4">Consulta ahora</span>
               <ConsultationForm
                 tarotistaId={tarotista.id}
-                services={eligibleServices}
+                services={services}
                 isLoggedIn={Boolean(user)}
               />
             </>

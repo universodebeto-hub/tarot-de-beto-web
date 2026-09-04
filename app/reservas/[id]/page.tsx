@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { getBookingById } from "@/server/bookings";
 import { minutesInBusinessDay, formatMinutes, businessDateString } from "@/lib/timezone";
 import { fullDateLabel } from "@/lib/date-labels";
@@ -10,7 +9,6 @@ import { siteConfig, buildWhatsAppLink } from "@/config/site";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { PendingPaymentPanel } from "@/components/booking/PendingPaymentPanel";
-import { PayPalButton } from "@/components/booking/PayPalButton";
 import { ManualPaymentPanel } from "@/components/booking/ManualPaymentPanel";
 import { isReportOnlyService, REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
 import { getManualPaymentInstructions } from "@/server/settings";
@@ -130,21 +128,16 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
 
             {isPending ? (
               <div className="flex flex-col gap-5">
-                {process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ? (
-                  <div>
-                    <span className="eyebrow mb-3 flex items-center gap-2">
-                      <Image src="/assets/payment-logos/paypal.png" alt="" width={24} height={24} className="rounded" />
-                      Pagar con PayPal
-                    </span>
-                    <PayPalButton
-                      clientId={process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}
-                      currency={booking.service.currency}
-                      bookingId={booking.id}
-                    />
-                  </div>
-                ) : null}
                 {manualPaymentInstructions ? (
-                  <ManualPaymentPanel bookingId={booking.id} instructions={manualPaymentInstructions} />
+                  <ManualPaymentPanel
+                    bookingId={booking.id}
+                    instructions={manualPaymentInstructions}
+                    paypal={
+                      process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID
+                        ? { clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID, currency: booking.service.currency }
+                        : null
+                    }
+                  />
                 ) : null}
                 <PendingPaymentPanel
                   paymentDeadline={booking.paymentDeadline.toISOString()}

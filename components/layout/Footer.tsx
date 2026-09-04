@@ -48,16 +48,16 @@ export function Footer() {
           <div>
             <div className="flex items-center gap-2.5">
               <Image
-                src="/assets/logo/icon-512.png"
+                src="/assets/logo/emblem.png"
                 alt=""
-                width={30}
-                height={30}
-                className="shrink-0 drop-shadow-[0_0_10px_rgba(232,163,61,0.5)]"
+                width={38}
+                height={38}
+                className="shrink-0 rounded-[9px] drop-shadow-[0_0_10px_rgba(232,163,61,0.5)]"
               />
               <span className="flex flex-col items-start leading-none">
                 <span className="font-mono text-[7.5px] uppercase tracking-[0.3em] text-ash">Tarot de</span>
-                <span className="font-display text-lg font-semibold text-bone">
-                  Be<span className="text-gold-soft">to</span>
+                <span className="bg-gradient-to-br from-gold-soft via-gold to-ember bg-clip-text font-display text-xl font-semibold text-transparent">
+                  Beto
                 </span>
               </span>
             </div>
