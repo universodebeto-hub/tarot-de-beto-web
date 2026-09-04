@@ -14,6 +14,14 @@ interface ConsultationFormProps {
   isLoggedIn: boolean;
 }
 
+/** Orden fijo de categorías en el selector -- no depende del orden en que llegan los servicios (ver prisma/seed.ts). */
+const CATEGORY_ORDER = ["Lecturas de Tarot", "Rituales Energéticos", "Otros"];
+
+function categoryRank(category: string): number {
+  const i = CATEGORY_ORDER.indexOf(category);
+  return i === -1 ? CATEGORY_ORDER.length : i;
+}
+
 /**
  * Fase 6-7: "duración -> pago -> consulta habilitada", sin fecha/hora — el
  * servicio elegido ya trae su propia duración fija del catálogo. Agrupado
@@ -37,13 +45,13 @@ export function ConsultationForm({ tarotistaId, services, isLoggedIn }: Consulta
     for (const list of byCategory.values()) {
       list.sort((a, b) => a.price - b.price);
     }
-    return Array.from(byCategory.entries());
+    return Array.from(byCategory.entries()).sort(([a], [b]) => categoryRank(a) - categoryRank(b));
   }, [services]);
 
-  const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
+  const [serviceId, setServiceId] = useState("");
+  const [openCategory, setOpenCategory] = useState<string | null>(groups[0]?.[0] ?? null);
   const selected = services.find((s) => s.id === serviceId) ?? null;
   const isReport = selected ? isReportOnlyService(selected.slug) : false;
-  const intakeFields = selected ? intakeFieldsFor(selected.slug) : [];
 
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
@@ -87,60 +95,108 @@ export function ConsultationForm({ tarotistaId, services, isLoggedIn }: Consulta
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         <span className="eyebrow">Elige tu servicio</span>
-        {groups.map(([category, items]) => (
-          <div key={category} className="flex flex-col gap-2">
-            <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-gold-soft">{category}</span>
-            <div className="flex flex-col gap-2">
-              {items.map((s) => (
-                <label
-                  key={s.id}
-                  className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm transition-colors
-                    ${serviceId === s.id ? "border-gold/40 bg-gold/[0.08]" : "border-white/10 bg-white/[0.02] hover:border-gold/20"}`}
-                >
-                  <span className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name="serviceId"
-                      value={s.id}
-                      checked={serviceId === s.id}
-                      onChange={() => setServiceId(s.id)}
-                      className="accent-gold"
-                    />
-                    <span>
-                      <span className="block text-bone">{s.name}</span>
-                      <span className="block text-xs text-ash">
-                        {isReportOnlyService(s.slug) ? "Informe" : `${s.durationMinutes} min`}
-                      </span>
+        {groups.map(([category, items]) => {
+          const isOpen = openCategory === category;
+          const hasSelection = items.some((s) => s.id === serviceId);
+          const minPrice = Math.min(...items.map((s) => s.price));
+          return (
+            <div
+              key={category}
+              className={`overflow-hidden rounded-xl border transition-colors ${
+                isOpen || hasSelection ? "border-gold/40 bg-gold/[0.04]" : "border-white/10 bg-white/[0.02]"
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => setOpenCategory(isOpen ? null : category)}
+                className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left"
+              >
+                <span className="flex items-center gap-2.5">
+                  <span
+                    className={`h-2 w-2 shrink-0 rounded-full ${hasSelection ? "bg-gold" : "bg-white/20"}`}
+                    aria-hidden="true"
+                  />
+                  <span>
+                    <span className="block font-mono text-[12px] uppercase tracking-[0.1em] text-bone">
+                      {category}
+                    </span>
+                    <span className="block text-xs text-ash">
+                      {items.length} {items.length === 1 ? "opción" : "opciones"} · desde ${minPrice.toFixed(2)}
                     </span>
                   </span>
-                  <span className="font-mono text-gold-soft">
-                    ${s.price.toFixed(2)} {s.currency}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+                </span>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.8}
+                  className={`h-4 w-4 shrink-0 text-gold-soft transition-transform ${isOpen ? "rotate-180" : ""}`}
+                >
+                  <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
 
-      {intakeFields.length > 0 ? (
-        <div className="flex flex-col gap-3">
-          <span className="eyebrow">Datos para el informe</span>
-          {intakeFields.map((f) => (
-            <input
-              key={f.key}
-              type={f.type}
-              required
-              placeholder={f.label}
-              value={intakeData[f.key] ?? ""}
-              onChange={(e) => setIntakeValue(f.key, e.target.value)}
-              className="rounded-lg border border-white/15 bg-obsidian/60 px-3 py-2 text-sm text-bone"
-            />
-          ))}
-        </div>
-      ) : null}
+              {isOpen ? (
+                <div className="flex flex-col gap-2 px-3 pb-3">
+                  {items.map((s) => {
+                    const sIsSelected = serviceId === s.id;
+                    const sFields = sIsSelected ? intakeFieldsFor(s.slug) : [];
+                    return (
+                      <div key={s.id} className="flex flex-col gap-2">
+                        <label
+                          className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm transition-colors
+                            ${sIsSelected ? "border-gold/50 bg-gold/[0.1]" : "border-white/10 bg-obsidian/40 hover:border-gold/25"}`}
+                        >
+                          <span className="flex items-center gap-3">
+                            <input
+                              type="radio"
+                              name="serviceId"
+                              value={s.id}
+                              checked={sIsSelected}
+                              onChange={() => setServiceId(s.id)}
+                              className="accent-gold"
+                            />
+                            <span>
+                              <span className="block text-bone">{s.name}</span>
+                              <span className="block text-xs text-ash">
+                                {isReportOnlyService(s.slug) ? "Informe" : `${s.durationMinutes} min`}
+                              </span>
+                            </span>
+                          </span>
+                          <span className="font-mono text-gold-soft">
+                            ${s.price.toFixed(2)} {s.currency}
+                          </span>
+                        </label>
+
+                        {sFields.length > 0 ? (
+                          <div className="flex flex-col gap-2 rounded-xl border border-gold/20 bg-obsidian/40 p-3">
+                            <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-gold-soft">
+                              Datos para el informe
+                            </span>
+                            {sFields.map((f) => (
+                              <input
+                                key={f.key}
+                                type={f.type}
+                                required
+                                placeholder={f.label}
+                                value={intakeData[f.key] ?? ""}
+                                onChange={(e) => setIntakeValue(f.key, e.target.value)}
+                                className="rounded-lg border border-white/15 bg-obsidian/60 px-3 py-2 text-sm text-bone"
+                              />
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
 
       {!isLoggedIn ? (
         <div className="flex flex-col gap-3">
@@ -171,7 +227,7 @@ export function ConsultationForm({ tarotistaId, services, isLoggedIn }: Consulta
         </div>
       ) : null}
 
-      <button type="submit" disabled={submitting} className="btn btn-gold self-start disabled:opacity-60">
+      <button type="submit" disabled={submitting || !serviceId} className="btn btn-gold self-start disabled:opacity-60">
         {submitting ? "Iniciando..." : "Continuar al pago"}
       </button>
       {error ? <p className="mb-0 text-sm text-ember">{error}</p> : null}
