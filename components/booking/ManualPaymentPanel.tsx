@@ -98,17 +98,21 @@ export function ManualPaymentPanel({ bookingId, instructions, paypal }: ManualPa
             type="button"
             onClick={() => setMethod(m)}
             aria-label={PAYMENT_METHOD_LABEL[m]}
-            className={`flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border p-2 transition-colors ${
-              method === m ? "border-gold bg-gold/10" : "border-white/15 bg-white/5 hover:border-white/30"
-            }`}
+            className="flex flex-col items-center gap-1.5"
           >
-            <Image
-              src={`/assets/payment-logos/${PAYMENT_METHOD_LOGO_SLUG[m]}.png`}
-              alt={PAYMENT_METHOD_LABEL[m]}
-              width={56}
-              height={56}
-              className="rounded-lg"
-            />
+            <span
+              className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl transition-all ${
+                method === m ? "ring-2 ring-gold ring-offset-2 ring-offset-obsidian" : "hover:brightness-110"
+              }`}
+            >
+              <Image
+                src={`/assets/payment-logos/${PAYMENT_METHOD_LOGO_SLUG[m]}.png`}
+                alt={PAYMENT_METHOD_LABEL[m]}
+                fill
+                sizes="80px"
+                className="object-cover"
+              />
+            </span>
             <span className="text-center font-mono text-[9.5px] uppercase leading-tight tracking-wide text-ash">
               {PAYMENT_METHOD_LABEL[m]}
             </span>
