@@ -3,6 +3,7 @@ import type { Booking } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
+import type { CurrentUser } from "@/lib/auth/session";
 import { getServiceById } from "@/server/services";
 import { expireStaleBookings } from "@/server/availability";
 import { getSetting } from "@/server/settings";
@@ -50,7 +51,10 @@ export type CreateReportRequestInput = z.infer<typeof createReportRequestSchema>
  * guardan como el mismo instante exacto únicamente para satisfacer el
  * NOT NULL del modelo.
  */
-export async function createReportRequest(input: CreateReportRequestInput): Promise<CreateBookingResult> {
+export async function createReportRequest(
+  input: CreateReportRequestInput,
+  loggedInUser?: CurrentUser | null,
+): Promise<CreateBookingResult> {
   const parsed = createReportRequestSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
@@ -68,7 +72,7 @@ export async function createReportRequest(input: CreateReportRequestInput): Prom
     return { error: "Faltan datos obligatorios para este servicio." };
   }
 
-  const currentUser = await getCurrentUser();
+  const currentUser = loggedInUser === undefined ? await getCurrentUser() : loggedInUser;
   let userId: string | null = null;
   if (currentUser) {
     userId = currentUser.id;
