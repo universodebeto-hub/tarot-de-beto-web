@@ -95,7 +95,18 @@ export default async function TarotistaProfilePage({ params }: TarotistaPageProp
         <GlassCard>
           {isAvailable ? (
             <>
-              <span className="eyebrow mb-4">Consulta ahora</span>
+              <div className="mb-5 flex items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-gold/30 bg-gold/[0.08]">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.4} className="h-5 w-5 text-gold-soft">
+                    <circle cx="12" cy="12" r="8" />
+                    <path d="M12 8v4l2.5 2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+                <div>
+                  <span className="eyebrow mb-0">Consulta ahora</span>
+                  <p className="mb-0 text-xs text-ash">Se habilita apenas confirmes el pago</p>
+                </div>
+              </div>
               <ConsultationForm
                 tarotistaId={tarotista.id}
                 services={services}

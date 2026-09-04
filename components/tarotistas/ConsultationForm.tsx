@@ -122,12 +122,9 @@ export function ConsultationForm({ tarotistaId, services, isLoggedIn }: Consulta
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-4">
-        <div>
-          <span className="eyebrow">Reserva tu momento</span>
-          <h3 className="mt-1.5 mb-0 font-display text-[22px] font-medium text-bone">
-            Elige el servicio <em className="italic text-gold-soft">que buscás</em>
-          </h3>
-        </div>
+        <h3 className="mb-0 font-display text-[24px] font-medium text-bone">
+          Elige el servicio <em className="italic text-gold-soft">que buscás</em>
+        </h3>
         {groups.map(([category, items], idx) => {
           const isOpen = openCategory === category;
           const hasSelection = items.some((s) => s.id === serviceId);
