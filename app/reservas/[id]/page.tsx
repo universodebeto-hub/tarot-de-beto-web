@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getBookingById } from "@/server/bookings";
+import { getCurrentUser } from "@/lib/auth/session";
 import { minutesInBusinessDay, formatMinutes, businessDateString } from "@/lib/timezone";
 import { fullDateLabel } from "@/lib/date-labels";
 import { BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL } from "@/lib/booking-labels";
@@ -35,6 +36,9 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
   const isPending = booking.status === "PENDING_PAYMENT";
   const isExpired = booking.status === "EXPIRED";
   const manualPaymentInstructions = isPending ? await getManualPaymentInstructions() : null;
+  /** Esta misma página la puede ver el cliente o el tarotista (ej. desde /panel-tarotista) -- el chat necesita saber cuál de los dos es quien mira, para alinear sus propios mensajes a la derecha. */
+  const viewer = await getCurrentUser();
+  const viewerRole = viewer && booking.tarotista?.userId === viewer.id ? "TAROTISTA" : "CLIENT";
 
   return (
     <section className="py-[88px]">
@@ -200,7 +204,7 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
                     </Button>
                   ) : null}
                 </div>
-                <ChatPanel bookingId={booking.id} viewerRole="CLIENT" />
+                <ChatPanel bookingId={booking.id} viewerRole={viewerRole} />
               </div>
             ) : (
               <div className="flex flex-wrap gap-3">

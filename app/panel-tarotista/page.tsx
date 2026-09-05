@@ -124,9 +124,14 @@ export default async function PanelTarotistaPage() {
                       {c.service.name} · #{c.bookingNumber}
                     </p>
                   </div>
-                  <Link href={`/reservas/${c.id}/llamada`} className="btn btn-gold">
-                    Unirse a la llamada
-                  </Link>
+                  <div className="flex gap-2">
+                    <Link href={`/reservas/${c.id}`} className="btn btn-ghost">
+                      Abrir chat
+                    </Link>
+                    <Link href={`/reservas/${c.id}/llamada`} className="btn btn-gold">
+                      Unirse a la llamada
+                    </Link>
+                  </div>
                 </GlassCard>
               ))}
             </div>
