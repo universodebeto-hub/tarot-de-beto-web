@@ -139,6 +139,46 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
         </GlassCard>
       ) : null}
 
+      {isConsultation ? (
+        <GlassCard className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="eyebrow">Llamadas</span>
+            <span className="text-xs text-ash">
+              Pagado: <span className="text-bone">{booking.service.durationMinutes} min</span> · Consumido:{" "}
+              <span className="text-bone">
+                {Math.round(
+                  booking.callLogs.reduce(
+                    (sum, log) =>
+                      sum + (log.endedAt ? Math.max(0, (log.endedAt.getTime() - log.startedAt.getTime()) / 60000) : 0),
+                    0,
+                  ),
+                )}{" "}
+                min
+              </span>
+            </span>
+          </div>
+          {booking.callLogs.length === 0 ? (
+            <p className="mb-0 text-sm text-ash">Todavía no hubo ninguna llamada en esta consulta.</p>
+          ) : (
+            <div className="flex flex-col gap-2 text-sm">
+              {booking.callLogs.map((log) => {
+                const durationMinutes = log.endedAt
+                  ? Math.round((log.endedAt.getTime() - log.startedAt.getTime()) / 60000)
+                  : null;
+                return (
+                  <div key={log.id} className="flex items-center justify-between border-b border-white/5 pb-2">
+                    <span className="text-bone-dim">{log.startedAt.toLocaleString("es")}</span>
+                    <span className="text-bone-dim">
+                      {durationMinutes !== null ? `${durationMinutes} min` : "En curso / sin cerrar"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </GlassCard>
+      ) : null}
+
       {booking.transactions.length > 0 ? (
         <GlassCard>
           <span className="eyebrow mb-3">Transacciones PayPal</span>

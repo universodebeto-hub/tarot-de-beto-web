@@ -51,7 +51,13 @@ export async function listBookingsAdmin(filters: BookingFilters) {
 export async function getBookingAdminById(id: string) {
   return prisma.booking.findUnique({
     where: { id },
-    include: { service: true, user: true, transactions: true, tarotista: true },
+    include: {
+      service: true,
+      user: true,
+      transactions: true,
+      tarotista: true,
+      callLogs: { orderBy: { startedAt: "desc" } },
+    },
   });
 }
 

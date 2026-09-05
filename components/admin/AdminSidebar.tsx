@@ -4,6 +4,7 @@ const LINKS = [
   { href: "/admin", label: "Resumen" },
   { href: "/admin/reservas", label: "Reservas" },
   { href: "/admin/clientes", label: "Clientes" },
+  { href: "/admin/consumo", label: "Consumo de minutos" },
   { href: "/admin/servicios", label: "Servicios" },
   { href: "/admin/tarotistas", label: "Tarotistas" },
   { href: "/admin/testimonios", label: "Testimonios" },

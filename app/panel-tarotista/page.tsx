@@ -100,8 +100,13 @@ export default async function PanelTarotistaPage() {
           })}
         </div>
 
-        <div className="mt-10">
-          <span className="eyebrow mb-3">Consultas confirmadas</span>
+        <div className="mt-10 flex items-center justify-between">
+          <span className="eyebrow mb-0">Consultas confirmadas</span>
+          <Link href="/panel-tarotista/consumo" className="text-xs text-gold-soft hover:text-gold">
+            Ver mi consumo de minutos →
+          </Link>
+        </div>
+        <div className="mt-3">
           {consultations.length === 0 ? (
             <p className="text-sm text-bone-dim">No tienes consultas confirmadas por ahora.</p>
           ) : (
