@@ -1,72 +1,53 @@
 import { NextResponse } from "next/server";
-import { issueSignedToken, presignUrl } from "@vercel/blob";
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
 const MAX_BYTES = 20 * 1024 * 1024;
-const ALLOWED_TYPES: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-};
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 /**
- * Devuelve una URL firmada para que el cliente (web o app) suba la captura
- * del comprobante DIRECTO a Vercel Blob con un PUT simple, sin pasar el
- * archivo por esta función -- las funciones serverless de Vercel cortan el
- * body de la petición en ~4.5 MB, algo que antes rechazaba comprobantes de
- * cámara pesados con un error genérico (ver historial de este archivo).
- * El archivo nunca se comprime -- solo se valida tipo/tamaño (hasta 20 MB)
- * y que la reserva exista y siga PENDING_PAYMENT, igual que antes.
+ * Autoriza la subida DIRECTA del comprobante de un pago manual a Vercel
+ * Blob -- el archivo nunca pasa por esta función, así que no choca con el
+ * límite de ~4.5 MB de body que tienen las funciones serverless de Vercel
+ * (antes rechazaba fotos de cámara pesadas con un error genérico). La
+ * imagen nunca se comprime, solo se valida tipo/tamaño (hasta 20 MB) y que
+ * la reserva exista y siga PENDING_PAYMENT, igual que antes.
  *
- * `@vercel/blob/client` (el helper de subida directa "de fábrica") no es
- * compatible con el motor de la app móvil (depende de `undici`/`crypto` de
- * Node), así que se usa el mismo mecanismo pero de la forma más portable:
- * este endpoint arma la URL firmada con el SDK completo (que sí corre acá,
- * en Node.js) y el cliente solo hace un `fetch` con PUT -- funciona igual
- * en el navegador y en React Native.
+ * Se usa `handleUpload`/`upload()` (el mecanismo "de fábrica" del SDK) en
+ * vez de `issueSignedToken`/`presignUrl` -- ese segundo mecanismo solo
+ * puede emitir blobs PRIVADOS (no tiene forma de pedir acceso público),
+ * lo que rompería la vista de comprobante en el panel admin.
  */
-export async function POST(request: Request) {
-  const body = await request.json().catch(() => null);
-  const bookingId = String(body?.bookingId ?? "");
-  const contentType = String(body?.contentType ?? "");
-  const ext = ALLOWED_TYPES[contentType];
-
-  if (!bookingId || !ext) {
-    return NextResponse.json({ error: "Falta el archivo o la reserva." }, { status: 400 });
-  }
-
-  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
-  if (!booking || booking.status !== "PENDING_PAYMENT") {
-    return NextResponse.json({ error: "Reserva no encontrada o ya no está pendiente de pago." }, { status: 404 });
-  }
-
-  const pathname = `comprobantes/${bookingId}-${Date.now()}.${ext}`;
-  const allowedContentTypes = Object.keys(ALLOWED_TYPES);
+export async function POST(request: Request): Promise<NextResponse> {
+  const body = (await request.json()) as HandleUploadBody;
 
   try {
-    const signedToken = await issueSignedToken({
-      pathname,
-      operations: ["put"],
-      validUntil: Date.now() + 10 * 60_000,
-      allowedContentTypes,
-      maximumSizeInBytes: MAX_BYTES,
+    const jsonResponse = await handleUpload({
+      body,
+      request,
+      onBeforeGenerateToken: async (_pathname, clientPayload) => {
+        const bookingId = clientPayload ? String(JSON.parse(clientPayload).bookingId ?? "") : "";
+        if (!bookingId) throw new Error("Falta la reserva.");
+
+        const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+        if (!booking || booking.status !== "PENDING_PAYMENT") {
+          throw new Error("Reserva no encontrada o ya no está pendiente de pago.");
+        }
+
+        return {
+          allowedContentTypes: ALLOWED_TYPES,
+          maximumSizeInBytes: MAX_BYTES,
+          addRandomSuffix: true,
+        };
+      },
     });
-    const { presignedUrl } = await presignUrl(signedToken, {
-      operation: "put",
-      pathname,
-      access: "public",
-      allowedContentTypes,
-      maximumSizeInBytes: MAX_BYTES,
-      addRandomSuffix: true,
-    });
-    return NextResponse.json({ uploadUrl: presignedUrl });
+    return NextResponse.json(jsonResponse);
   } catch (err) {
-    console.error("[blob] error generando URL de subida de comprobante:", err);
-    return NextResponse.json(
-      { error: "La subida de comprobantes todavía no está configurada en este entorno." },
-      { status: 503 },
-    );
+    console.error("[blob] error autorizando subida de comprobante:", err);
+    return NextResponse.json({ error: err instanceof Error ? err.message : "No se pudo subir el comprobante." }, {
+      status: 400,
+    });
   }
 }

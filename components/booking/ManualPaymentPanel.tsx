@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { upload } from "@vercel/blob/client";
 import type { ManualPaymentInstructions } from "@/server/settings";
 import { PAYMENT_METHOD_LABEL, PAYMENT_METHOD_LOGO_SLUG } from "@/lib/booking-labels";
 import { PayPalButton } from "@/components/booking/PayPalButton";
@@ -60,28 +61,19 @@ export function ManualPaymentPanel({ bookingId, instructions, paypal }: ManualPa
     setSubmitting(true);
     setError(null);
     try {
-      const urlRes = await fetch("/api/uploads/payment-proof", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookingId, contentType: file.type }),
-      });
-      const urlData = await urlRes.json();
-      if (!urlRes.ok || !urlData.uploadUrl) {
-        setError(urlData.error ?? "No se pudo iniciar la subida del comprobante.");
+      const ext = file.name.split(".").pop() || "jpg";
+      let blobUrl: string;
+      try {
+        const blob = await upload(`comprobantes/${bookingId}-${Date.now()}.${ext}`, file, {
+          access: "public",
+          handleUploadUrl: "/api/uploads/payment-proof",
+          clientPayload: JSON.stringify({ bookingId }),
+        });
+        blobUrl = blob.url;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "No se pudo subir el comprobante.");
         return;
       }
-
-      const putRes = await fetch(urlData.uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      const putData = await putRes.json().catch(() => null);
-      if (!putRes.ok || !putData?.url) {
-        setError("No se pudo subir el comprobante -- revisa tu conexión e intenta de nuevo.");
-        return;
-      }
-      const blobUrl = putData.url as string;
 
       const submitRes = await fetch("/api/bookings/manual-payment", {
         method: "POST",
