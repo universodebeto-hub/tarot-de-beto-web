@@ -3,11 +3,26 @@ import { revalidatePath } from "next/cache";
 import { listSettingsAdmin, upsertSettingAdmin } from "@/server/admin/settings";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { SettingRow } from "@/components/admin/SettingRow";
+import { NewSettingForm } from "@/components/admin/NewSettingForm";
 
 export const metadata: Metadata = { title: "Panel — Configuración", robots: { index: false } };
 
 async function saveAction(key: string, prev: { error?: string; success?: boolean }, formData: FormData) {
   "use server";
+  const result = await upsertSettingAdmin(key, prev, formData);
+  if (result.success) {
+    revalidatePath("/admin/configuracion");
+    revalidatePath("/faq");
+    revalidatePath("/");
+  }
+  return result;
+}
+
+/** Igual que saveAction, pero la clave viene del propio formulario en vez de estar fija -- para crear una fila que todavía no existe. */
+async function createAction(prev: { error?: string; success?: boolean }, formData: FormData) {
+  "use server";
+  const key = String(formData.get("key") ?? "").trim();
+  if (!key) return { error: "Falta la clave." };
   const result = await upsertSettingAdmin(key, prev, formData);
   if (result.success) {
     revalidatePath("/admin/configuracion");
@@ -35,6 +50,8 @@ export default async function AdminSettingsPage() {
       {settings.map((s) => (
         <SettingRow key={s.key} settingKey={s.key} value={s.value} action={saveAction.bind(null, s.key)} />
       ))}
+
+      <NewSettingForm action={createAction} />
     </div>
   );
 }
