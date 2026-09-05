@@ -69,5 +69,43 @@ export async function getInternalCallAccess(
   const otherPartyName = isAdmin ? tarotista.name : "Administración";
 
   const token = await createCallToken(roomName, identity, user.firstName);
+
+  await prisma.callLog.create({ data: { bookingId: null, roomName } });
+
   return { token, url: process.env.NEXT_PUBLIC_LIVEKIT_URL, roomName, otherPartyName };
+}
+
+export interface EndInternalCallResult {
+  success?: boolean;
+  error?: string;
+}
+
+/** Igual que endCall (server/calls.ts) pero para la sala fija internal-<tarotistaId>, sin bookingId. */
+export async function endInternalCall(
+  tarotistaId: string,
+  currentUser?: CurrentUser | null,
+): Promise<EndInternalCallResult> {
+  const user = currentUser === undefined ? await getCurrentUser() : currentUser;
+  if (!user) return { error: "Necesitas iniciar sesión." };
+
+  const tarotista = await prisma.tarotista.findUnique({ where: { id: tarotistaId } });
+  if (!tarotista) return { error: "Tarotista no encontrado." };
+
+  const isAdmin = user.role === "ADMIN";
+  const isThisTarotista = tarotista.userId === user.id;
+  if (!isAdmin && !isThisTarotista) return { error: "No tienes acceso a esta llamada." };
+
+  const roomName = `internal-${tarotistaId}`;
+  const openLog = await prisma.callLog.findFirst({
+    where: { roomName, endedAt: null },
+    orderBy: { startedAt: "desc" },
+  });
+  if (openLog) {
+    await prisma.callLog.update({
+      where: { id: openLog.id },
+      data: { endedAt: new Date(), status: "COMPLETED" },
+    });
+  }
+
+  return { success: true };
 }

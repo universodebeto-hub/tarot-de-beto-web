@@ -7,11 +7,19 @@ import type { ManualPaymentInstructions } from "@/server/settings";
 import { PAYMENT_METHOD_LABEL, PAYMENT_METHOD_LOGO_SLUG } from "@/lib/booking-labels";
 import { PayPalButton } from "@/components/booking/PayPalButton";
 
-type ManualMethod = "PAGO_MOVIL" | "ZELLE" | "BINANCE" | "REMITLY" | "WESTERN_UNION" | "MONEYGRAM";
+type ManualMethod = "PAGO_MOVIL" | "ZELLE" | "BINANCE" | "REMITLY" | "WESTERN_UNION" | "MONEYGRAM" | "BANCOLOMBIA";
 /** "PAYPAL" solo existe acá para la selección visual -- nunca se manda a /api/bookings/manual-payment, dispara el checkout automático de PayPalButton. */
 type PickableMethod = ManualMethod | "PAYPAL";
 
-const MANUAL_METHODS: ManualMethod[] = ["PAGO_MOVIL", "ZELLE", "BINANCE", "REMITLY", "WESTERN_UNION", "MONEYGRAM"];
+const MANUAL_METHODS: ManualMethod[] = [
+  "PAGO_MOVIL",
+  "ZELLE",
+  "BINANCE",
+  "REMITLY",
+  "WESTERN_UNION",
+  "MONEYGRAM",
+  "BANCOLOMBIA",
+];
 
 interface ManualPaymentPanelProps {
   bookingId: string;
@@ -157,6 +165,21 @@ export function ManualPaymentPanel({ bookingId, instructions, paypal }: ManualPa
                 </li>
                 <li>
                   Correo: <span className="text-bone">{instructions.binance.correo}</span>
+                </li>
+              </ul>
+            ) : method === "BANCOLOMBIA" ? (
+              <ul className="mb-0 flex flex-col gap-1">
+                <li>
+                  Tipo de cuenta: <span className="text-bone">{instructions.bancolombia.tipoCuenta}</span>
+                </li>
+                <li>
+                  Número de cuenta: <span className="text-bone">{instructions.bancolombia.numeroCuenta}</span>
+                </li>
+                <li>
+                  Titular: <span className="text-bone">{instructions.bancolombia.titular}</span>
+                </li>
+                <li>
+                  Cédula/NIT: <span className="text-bone">{instructions.bancolombia.cedulaONit}</span>
                 </li>
               </ul>
             ) : (

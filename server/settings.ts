@@ -25,6 +25,8 @@ export interface ManualPaymentInstructions {
   remitly: { nombre: string; pais: string; telefono: string };
   westernUnion: { nombre: string; pais: string; telefono: string };
   moneygram: { nombre: string; pais: string; telefono: string };
+  /** Cuenta de ahorros (no cuenta empresarial) -- ver server/manual-payments.ts. */
+  bancolombia: { tipoCuenta: string; numeroCuenta: string; titular: string; cedulaONit: string };
 }
 
 const DEFAULT_MANUAL_PAYMENT_INSTRUCTIONS: ManualPaymentInstructions = {
@@ -34,6 +36,7 @@ const DEFAULT_MANUAL_PAYMENT_INSTRUCTIONS: ManualPaymentInstructions = {
   remitly: { nombre: "", pais: "", telefono: "" },
   westernUnion: { nombre: "", pais: "", telefono: "" },
   moneygram: { nombre: "", pais: "", telefono: "" },
+  bancolombia: { tipoCuenta: "Ahorros", numeroCuenta: "", titular: "", cedulaONit: "" },
 };
 
 /** Datos de contacto para pagos manuales (setting `manual_payment_instructions`, JSON), editable en /admin/configuracion. */
@@ -50,5 +53,6 @@ export async function getManualPaymentInstructions(): Promise<ManualPaymentInstr
     remitly: { ...DEFAULT_MANUAL_PAYMENT_INSTRUCTIONS.remitly, ...stored.remitly },
     westernUnion: { ...DEFAULT_MANUAL_PAYMENT_INSTRUCTIONS.westernUnion, ...stored.westernUnion },
     moneygram: { ...DEFAULT_MANUAL_PAYMENT_INSTRUCTIONS.moneygram, ...stored.moneygram },
+    bancolombia: { ...DEFAULT_MANUAL_PAYMENT_INSTRUCTIONS.bancolombia, ...stored.bancolombia },
   };
 }

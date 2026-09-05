@@ -4,9 +4,12 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { sendPushToTarotista } from "@/server/push-notifications";
 import { sendExpoPushToUser } from "@/server/expo-push";
 import type { CurrentUser } from "@/lib/auth/session";
-import type { MessageSenderRole } from "@prisma/client";
+import type { MessageSenderRole, Prisma } from "@prisma/client";
+
+type ChatBooking = Prisma.BookingGetPayload<{ include: { tarotista: true } }>;
 
 const MAX_MESSAGE_LENGTH = 2000;
+const MAX_AUDIO_DURATION_SECONDS = 300;
 
 /**
  * Chat de una consulta (Módulo B de la app) — habilitado SOLO cuando la
@@ -43,7 +46,16 @@ async function resolveChatAccess(bookingId: string, currentUser?: CurrentUser | 
 }
 
 export interface GetMessagesResult {
-  messages?: { id: string; senderRole: MessageSenderRole; senderName: string; text: string; createdAt: Date }[];
+  messages?: {
+    id: string;
+    senderRole: MessageSenderRole;
+    senderName: string;
+    type: "TEXT" | "AUDIO";
+    text: string | null;
+    audioUrl: string | null;
+    audioDurationSeconds: number | null;
+    createdAt: Date;
+  }[];
   error?: string;
 }
 
@@ -71,6 +83,36 @@ export interface SendMessageResult {
   error?: string;
 }
 
+/** Notifica a la otra parte de la conversación -- misma lógica para mensajes de texto y de audio. */
+async function notifyNewMessage(
+  booking: ChatBooking,
+  role: MessageSenderRole,
+  senderName: string,
+  preview: string,
+  bookingId: string,
+) {
+  if (role === "CLIENT" && booking.tarotistaId) {
+    await sendPushToTarotista(booking.tarotistaId, {
+      title: `Nuevo mensaje de ${senderName}`,
+      body: preview,
+      url: "/panel-tarotista",
+    }).catch((err) => console.error("[push] new_message:", err));
+    if (booking.tarotista?.userId) {
+      await sendExpoPushToUser(booking.tarotista.userId, {
+        title: `Nuevo mensaje de ${senderName}`,
+        body: preview,
+        data: { type: "new_message", bookingId, viewerRole: "TAROTISTA" },
+      }).catch((err) => console.error("[expo-push] new_message:", err));
+    }
+  } else if (role === "TAROTISTA" && booking.userId) {
+    await sendExpoPushToUser(booking.userId, {
+      title: `Nuevo mensaje de ${senderName}`,
+      body: preview,
+      data: { type: "new_message", bookingId, viewerRole: "CLIENT" },
+    }).catch((err) => console.error("[expo-push] new_message:", err));
+  }
+}
+
 export async function sendMessage(
   bookingId: string,
   text: string,
@@ -87,29 +129,52 @@ export async function sendMessage(
   const senderName = role === "CLIENT" ? user.firstName : booking.tarotista!.name;
 
   await prisma.message.create({
-    data: { bookingId, senderRole: role, senderName, text: trimmed },
+    data: { bookingId, senderRole: role, senderName, type: "TEXT", text: trimmed },
   });
 
-  if (role === "CLIENT" && booking.tarotistaId) {
-    await sendPushToTarotista(booking.tarotistaId, {
-      title: `Nuevo mensaje de ${senderName}`,
-      body: trimmed.slice(0, 120),
-      url: "/panel-tarotista",
-    }).catch((err) => console.error("[push] new_message:", err));
-    if (booking.tarotista?.userId) {
-      await sendExpoPushToUser(booking.tarotista.userId, {
-        title: `Nuevo mensaje de ${senderName}`,
-        body: trimmed.slice(0, 120),
-        data: { type: "new_message", bookingId, viewerRole: "TAROTISTA" },
-      }).catch((err) => console.error("[expo-push] new_message:", err));
-    }
-  } else if (role === "TAROTISTA" && booking.userId) {
-    await sendExpoPushToUser(booking.userId, {
-      title: `Nuevo mensaje de ${senderName}`,
-      body: trimmed.slice(0, 120),
-      data: { type: "new_message", bookingId, viewerRole: "CLIENT" },
-    }).catch((err) => console.error("[expo-push] new_message:", err));
+  await notifyNewMessage(booking, role, senderName, trimmed.slice(0, 120), bookingId);
+
+  return { success: true };
+}
+
+/**
+ * Nota de voz: mismo acceso/gating que sendMessage (resolveChatAccess); el
+ * archivo ya fue subido a Vercel Blob por el caller (ver
+ * app/api/uploads/voice-message/route.ts) -- acá solo se registra el
+ * mensaje y se notifica, igual que un mensaje de texto.
+ */
+export async function sendAudioMessage(
+  bookingId: string,
+  audioUrl: string,
+  audioDurationSeconds: number,
+  currentUser?: CurrentUser | null,
+): Promise<SendMessageResult> {
+  if (!audioUrl.trim()) return { error: "Falta el audio." };
+  if (!Number.isFinite(audioDurationSeconds) || audioDurationSeconds <= 0) {
+    return { error: "Duración de audio inválida." };
   }
+  if (audioDurationSeconds > MAX_AUDIO_DURATION_SECONDS) {
+    return { error: "La nota de voz es demasiado larga." };
+  }
+
+  const access = await resolveChatAccess(bookingId, currentUser);
+  if ("error" in access) return { error: access.error };
+  const { booking, role, user } = access;
+
+  const senderName = role === "CLIENT" ? user.firstName : booking.tarotista!.name;
+
+  await prisma.message.create({
+    data: {
+      bookingId,
+      senderRole: role,
+      senderName,
+      type: "AUDIO",
+      audioUrl: audioUrl.trim(),
+      audioDurationSeconds: Math.round(audioDurationSeconds),
+    },
+  });
+
+  await notifyNewMessage(booking, role, senderName, "🎤 Nota de voz", bookingId);
 
   return { success: true };
 }

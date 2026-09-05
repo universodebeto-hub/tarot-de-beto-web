@@ -25,6 +25,7 @@ export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
   REMITLY: "Remitly",
   WESTERN_UNION: "Western Union",
   MONEYGRAM: "MoneyGram",
+  BANCOLOMBIA: "Bancolombia",
 };
 
 /** Nombre del archivo en public/assets/payment-logos/<slug>.png para cada método. */
@@ -36,4 +37,5 @@ export const PAYMENT_METHOD_LOGO_SLUG: Record<PaymentMethod, string> = {
   REMITLY: "remitly",
   WESTERN_UNION: "western-union",
   MONEYGRAM: "moneygram",
+  BANCOLOMBIA: "bancolombia",
 };

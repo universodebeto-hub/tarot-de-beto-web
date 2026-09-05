@@ -57,5 +57,44 @@ export async function getCallAccess(
   const otherPartyName = isClient ? booking.tarotista.name : clientName;
 
   const token = await createCallToken(bookingId, identity, name);
+
+  await prisma.callLog.create({ data: { bookingId, roomName: bookingId } });
+
   return { token, url: process.env.NEXT_PUBLIC_LIVEKIT_URL, roomName: bookingId, otherPartyName };
+}
+
+export interface EndCallResult {
+  success?: boolean;
+  error?: string;
+}
+
+/**
+ * Cierra el CallLog más reciente sin terminar de esta reserva -- llamado
+ * por el cliente web/móvil al colgar o desconectarse (ver CallRoom.tsx /
+ * CallScreen.tsx). No toca getCallAccess ni la lógica de habilitación;
+ * solo deja constancia de que la llamada terminó.
+ */
+export async function endCall(bookingId: string, currentUser?: CurrentUser | null): Promise<EndCallResult> {
+  const user = currentUser === undefined ? await getCurrentUser() : currentUser;
+  if (!user) return { error: "Necesitas iniciar sesión." };
+
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId }, include: { tarotista: true } });
+  if (!booking) return { error: "Reserva no encontrada." };
+
+  const isClient = booking.userId === user.id;
+  const isTarotista = booking.tarotista?.userId === user.id;
+  if (!isClient && !isTarotista) return { error: "No tienes acceso a esta llamada." };
+
+  const openLog = await prisma.callLog.findFirst({
+    where: { bookingId, endedAt: null },
+    orderBy: { startedAt: "desc" },
+  });
+  if (openLog) {
+    await prisma.callLog.update({
+      where: { id: openLog.id },
+      data: { endedAt: new Date(), status: "COMPLETED" },
+    });
+  }
+
+  return { success: true };
 }

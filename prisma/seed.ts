@@ -336,6 +336,12 @@ async function main() {
         pagoMovil: { telefono: "0000-0000000", cedula: "V-00000000", banco: "Banco pendiente de configurar" },
         zelle: { correo: "pendiente@configurar.com", nombre: "Nombre pendiente de configurar" },
         binance: { id: "000000000", correo: "pendiente@configurar.com" },
+        bancolombia: {
+          tipoCuenta: "Ahorros",
+          numeroCuenta: "000-000000-00",
+          titular: "Nombre pendiente de configurar",
+          cedulaONit: "0000000000",
+        },
       }),
     },
   });

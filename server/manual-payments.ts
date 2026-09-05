@@ -4,7 +4,15 @@ import { expireStaleBookings } from "@/server/availability";
 import { sendExpoPushToUser } from "@/server/expo-push";
 import type { PaymentMethod } from "@prisma/client";
 
-const MANUAL_METHODS: PaymentMethod[] = ["PAGO_MOVIL", "ZELLE", "BINANCE", "REMITLY", "WESTERN_UNION", "MONEYGRAM"];
+const MANUAL_METHODS: PaymentMethod[] = [
+  "PAGO_MOVIL",
+  "ZELLE",
+  "BINANCE",
+  "REMITLY",
+  "WESTERN_UNION",
+  "MONEYGRAM",
+  "BANCOLOMBIA",
+];
 
 export interface ManualPaymentResult {
   success?: boolean;

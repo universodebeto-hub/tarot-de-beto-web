@@ -10,6 +10,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { PendingPaymentPanel } from "@/components/booking/PendingPaymentPanel";
 import { ManualPaymentPanel } from "@/components/booking/ManualPaymentPanel";
+import { ChatPanel } from "@/components/chat/ChatPanel";
 import { isReportOnlyService, REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
 import { getManualPaymentInstructions } from "@/server/settings";
 
@@ -199,6 +200,7 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
                     </Button>
                   ) : null}
                 </div>
+                <ChatPanel bookingId={booking.id} viewerRole="CLIENT" />
               </div>
             ) : (
               <div className="flex flex-wrap gap-3">

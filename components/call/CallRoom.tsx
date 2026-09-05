@@ -96,6 +96,8 @@ export function CallRoom({ bookingId }: CallRoomProps) {
     return () => {
       cancelled = true;
       room.disconnect();
+      // keepalive: el fetch debe salir aunque el componente ya se esté desmontando (navegación fuera de la página).
+      fetch(`/api/calls/${bookingId}/end`, { method: "POST", keepalive: true }).catch(() => {});
     };
   }, [bookingId]);
 
@@ -110,6 +112,7 @@ export function CallRoom({ bookingId }: CallRoomProps) {
   function hangUp() {
     roomRef.current?.disconnect();
     setState("ended");
+    fetch(`/api/calls/${bookingId}/end`, { method: "POST", keepalive: true }).catch(() => {});
   }
 
   return (

@@ -296,6 +296,10 @@ enum PaymentMethod {
   REMITLY
   WESTERN_UNION
   MONEYGRAM
+  /// Igual que los otros métodos manuales (confirmación humana, no
+  /// automática) -- se descartó un agregador (Wompi) porque exige cuenta
+  /// empresarial y la cuenta de Beto es de ahorros.
+  BANCOLOMBIA
 }
 
 /// Reserva de una consulta. `startsAt`/`endsAt` son instantes UTC absolutos
@@ -363,6 +367,7 @@ model Booking {
 
   transactions PaypalTransaction[]
   messages     Message[]
+  callLogs     CallLog[]
 
   @@index([userId])
   @@index([serviceId, startsAt])
@@ -375,23 +380,58 @@ enum MessageSenderRole {
   TAROTISTA
 }
 
-/// Chat de una consulta (app móvil) — un hilo por reserva, solo utilizable
-/// mientras la reserva esté CONFIRMED + PAID (ver server/messages.ts,
-/// mismo criterio de habilitación que las llamadas de audio). `senderName`
-/// queda guardado en el momento del envío (no se recalcula desde User/
-/// Tarotista) para que el historial no cambie si alguien edita su nombre
-/// después.
+enum MessageType {
+  TEXT
+  AUDIO
+}
+
+/// Chat de una consulta (app móvil + web) — un hilo por reserva, solo
+/// utilizable mientras la reserva esté CONFIRMED + PAID (ver
+/// server/messages.ts, mismo criterio de habilitación que las llamadas de
+/// audio). `senderName` queda guardado en el momento del envío (no se
+/// recalcula desde User/Tarotista) para que el historial no cambie si
+/// alguien edita su nombre después. `type` distingue mensajes de texto de
+/// notas de voz: en AUDIO, `text` queda null y se usan `audioUrl`/
+/// `audioDurationSeconds` (archivo en Vercel Blob, mismo mecanismo que los
+/// comprobantes de pago).
 model Message {
-  id         String            @id @default(cuid())
-  bookingId  String
-  booking    Booking           @relation(fields: [bookingId], references: [id])
-  senderRole MessageSenderRole
-  senderName String
-  text       String
-  readAt     DateTime?
-  createdAt  DateTime          @default(now())
+  id                   String            @id @default(cuid())
+  bookingId            String
+  booking              Booking           @relation(fields: [bookingId], references: [id])
+  senderRole           MessageSenderRole
+  senderName           String
+  type                 MessageType       @default(TEXT)
+  text                 String?
+  audioUrl             String?
+  audioDurationSeconds Int?
+  readAt               DateTime?
+  createdAt            DateTime          @default(now())
 
   @@index([bookingId, createdAt])
+}
+
+enum CallLogStatus {
+  STARTED
+  COMPLETED
+  MISSED
+  REJECTED
+}
+
+/// Registro de cada llamada de voz (LiveKit) iniciada -- ni la lógica de
+/// acceso (server/calls.ts::getCallAccess) ni la de conexión cambian, esto
+/// solo deja constancia de inicio/fin. `bookingId` es null para llamadas
+/// internas admin↔tarotista (server/internal-calls.ts, room fijo
+/// `internal-<tarotistaId>`, sin relación con una reserva).
+model CallLog {
+  id        String        @id @default(cuid())
+  bookingId String?
+  booking   Booking?      @relation(fields: [bookingId], references: [id])
+  roomName  String
+  startedAt DateTime      @default(now())
+  endedAt   DateTime?
+  status    CallLogStatus @default(STARTED)
+
+  @@index([bookingId])
 }
 
 /// Registro de auditoría de cada orden PayPal asociada a una reserva.
