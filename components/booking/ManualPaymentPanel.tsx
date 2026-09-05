@@ -60,20 +60,33 @@ export function ManualPaymentPanel({ bookingId, instructions, paypal }: ManualPa
     setSubmitting(true);
     setError(null);
     try {
-      const uploadForm = new FormData();
-      uploadForm.set("bookingId", bookingId);
-      uploadForm.set("file", file);
-      const uploadRes = await fetch("/api/uploads/payment-proof", { method: "POST", body: uploadForm });
-      const uploadData = await uploadRes.json();
-      if (!uploadRes.ok || !uploadData.url) {
-        setError(uploadData.error ?? "No se pudo subir el comprobante.");
+      const urlRes = await fetch("/api/uploads/payment-proof", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId, contentType: file.type }),
+      });
+      const urlData = await urlRes.json();
+      if (!urlRes.ok || !urlData.uploadUrl) {
+        setError(urlData.error ?? "No se pudo iniciar la subida del comprobante.");
         return;
       }
+
+      const putRes = await fetch(urlData.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      const putData = await putRes.json().catch(() => null);
+      if (!putRes.ok || !putData?.url) {
+        setError("No se pudo subir el comprobante -- revisa tu conexión e intenta de nuevo.");
+        return;
+      }
+      const blobUrl = putData.url as string;
 
       const submitRes = await fetch("/api/bookings/manual-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookingId, method, reference, proofUrl: uploadData.url }),
+        body: JSON.stringify({ bookingId, method, reference, proofUrl: blobUrl }),
       });
       const submitData = await submitRes.json();
       if (!submitRes.ok || !submitData.success) {
