@@ -22,9 +22,11 @@ interface NavbarProps {
   userFirstName?: string | null;
   /** "/panel-tarotista" si la cuenta logueada es un tarotista, "/dashboard" en caso contrario. */
   accountHref?: string;
+  /** true si la cuenta logueada es ADMIN -- agrega el atajo "Panel administrativo" al menú. */
+  isAdmin?: boolean;
 }
 
-export function Navbar({ whatsappNumber, userFirstName, accountHref = "/dashboard" }: NavbarProps) {
+export function Navbar({ whatsappNumber, userFirstName, accountHref = "/dashboard", isAdmin = false }: NavbarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -101,7 +103,12 @@ export function Navbar({ whatsappNumber, userFirstName, accountHref = "/dashboar
 
           <div className="mt-2 flex flex-col gap-2 lg:mt-0 lg:ml-2 lg:flex-row lg:items-center">
             {userFirstName ? (
-              <AccountMenu userFirstName={userFirstName} accountHref={accountHref} onNavigate={() => setOpen(false)} />
+              <AccountMenu
+                userFirstName={userFirstName}
+                accountHref={accountHref}
+                isAdmin={isAdmin}
+                onNavigate={() => setOpen(false)}
+              />
             ) : (
               <Link
                 href="/login"
@@ -138,11 +145,12 @@ export function Navbar({ whatsappNumber, userFirstName, accountHref = "/dashboar
 interface AccountMenuProps {
   userFirstName: string;
   accountHref: string;
+  isAdmin: boolean;
   onNavigate: () => void;
 }
 
 /** Un solo control compacto (avatar + nombre) que despliega "Mi cuenta" / "Cerrar sesión" -- reemplaza los dos botones sueltos que antes empujaban el menú a una segunda línea. */
-function AccountMenu({ userFirstName, accountHref, onNavigate }: AccountMenuProps) {
+function AccountMenu({ userFirstName, accountHref, isAdmin, onNavigate }: AccountMenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -205,6 +213,19 @@ function AccountMenu({ userFirstName, accountHref, onNavigate }: AccountMenuProp
           >
             Mi cuenta
           </Link>
+          {isAdmin ? (
+            <Link
+              href="/admin"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onNavigate();
+              }}
+              className="block px-4 py-3 font-mono text-[12px] uppercase tracking-[0.1em] text-bone-dim transition-colors hover:bg-gold/8 hover:text-gold-soft"
+            >
+              Panel administrativo
+            </Link>
+          ) : null}
           <div className="h-px bg-white/10" />
           <form action={logoutUser}>
             <button

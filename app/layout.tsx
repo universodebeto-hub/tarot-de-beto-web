@@ -103,6 +103,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             whatsappNumber={siteConfig.contact.whatsappNumber}
             userFirstName={user?.firstName}
             accountHref={ownTarotista ? "/panel-tarotista" : "/dashboard"}
+            isAdmin={user?.role === "ADMIN"}
           />
           <main className="relative z-10 flex-1">{children}</main>
           <Footer />
