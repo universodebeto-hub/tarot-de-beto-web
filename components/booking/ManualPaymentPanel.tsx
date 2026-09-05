@@ -236,9 +236,10 @@ export function ManualPaymentPanel({ bookingId, instructions, paypal }: ManualPa
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                className="text-sm text-bone-dim"
+                className="rounded-lg border border-white/15 bg-obsidian/60 px-3 py-2 text-sm text-bone file:mr-3 file:rounded-md file:border-0 file:bg-gold file:px-3 file:py-1.5 file:font-mono file:text-xs file:font-semibold file:uppercase file:tracking-wide file:text-obsidian"
                 required
               />
+              {file ? <span className="text-xs text-bone-dim">{file.name}</span> : null}
             </label>
             <button type="submit" disabled={submitting} className="btn btn-gold self-start disabled:opacity-60">
               {submitting ? "Enviando..." : "Enviar comprobante"}
