@@ -1,5 +1,7 @@
 import "server-only";
+import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
+import { sendExpoPushToUser } from "@/server/expo-push";
 import {
   bookingReceivedEmail,
   paymentConfirmedEmail,
@@ -76,4 +78,40 @@ export async function notifyExpired(booking: NotifiableBooking): Promise<void> {
 export async function notifyPasswordReset(to: string, firstName: string, resetLink: string): Promise<void> {
   const { subject, html, text } = passwordResetEmail(firstName, resetLink);
   await sendEmail({ to, subject, html, text });
+}
+
+/**
+ * Avisa a TODOS los admins (push + correo) de algo que necesita su revisión
+ * manual (comprobante de pago manual, solicitud de crédito) -- el push por
+ * sí solo no era suficiente para que Beto se enterara (requiere que el
+ * dispositivo tenga un token de Expo Push registrado, y las notificaciones
+ * push de Android además necesitan credenciales de Firebase/FCM subidas al
+ * proyecto de EAS, que todavía no existen). El correo es el canal de
+ * respaldo confiable mientras eso no esté resuelto.
+ */
+export async function notifyAdminsPendingApproval(input: {
+  title: string;
+  body: string;
+  bookingId: string;
+  pushType: string;
+}): Promise<void> {
+  const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true, email: true } });
+
+  await Promise.all(
+    admins.map((admin) =>
+      Promise.all([
+        sendExpoPushToUser(admin.id, {
+          title: input.title,
+          body: input.body,
+          data: { type: input.pushType, bookingId: input.bookingId },
+        }).catch((err) => console.error(`[expo-push] ${input.pushType}:`, err)),
+        sendEmail({
+          to: admin.email,
+          subject: input.title,
+          text: input.body,
+          html: `<p>${input.body}</p>`,
+        }).catch((err) => console.error(`[email] ${input.pushType}:`, err)),
+      ]),
+    ),
+  );
 }

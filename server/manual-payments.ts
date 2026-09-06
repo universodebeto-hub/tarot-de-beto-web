@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { expireStaleBookings } from "@/server/availability";
-import { sendExpoPushToUser } from "@/server/expo-push";
+import { notifyAdminsPendingApproval } from "@/server/notifications/send";
 import type { PaymentMethod } from "@prisma/client";
 
 const MANUAL_METHODS: PaymentMethod[] = [
@@ -54,16 +54,12 @@ export async function submitManualPaymentProof(
     },
   });
 
-  const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
-  await Promise.all(
-    admins.map((admin) =>
-      sendExpoPushToUser(admin.id, {
-        title: "Nuevo comprobante de pago",
-        body: `Reserva #${booking.bookingNumber} — ${method} — esperando revisión.`,
-        data: { type: "manual_payment_pending", bookingId },
-      }).catch((err) => console.error("[expo-push] manual_payment_pending:", err)),
-    ),
-  );
+  await notifyAdminsPendingApproval({
+    title: "Nuevo comprobante de pago",
+    body: `Reserva #${booking.bookingNumber} — ${method} — esperando revisión.`,
+    bookingId,
+    pushType: "manual_payment_pending",
+  });
 
   return { success: true };
 }

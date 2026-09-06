@@ -2,7 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { expireStaleBookings } from "@/server/availability";
-import { sendExpoPushToUser } from "@/server/expo-push";
+import { notifyAdminsPendingApproval } from "@/server/notifications/send";
 import type { CurrentUser } from "@/lib/auth/session";
 
 export interface CreditRequestResult {
@@ -49,16 +49,12 @@ export async function requestCreditBooking(
     },
   });
 
-  const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
-  await Promise.all(
-    admins.map((admin) =>
-      sendExpoPushToUser(admin.id, {
-        title: "Solicitud de consulta a crédito",
-        body: `Reserva #${booking.bookingNumber} — ${user.firstName} pidió pagar a crédito.`,
-        data: { type: "credit_request_pending", bookingId },
-      }).catch((err) => console.error("[expo-push] credit_request_pending:", err)),
-    ),
-  );
+  await notifyAdminsPendingApproval({
+    title: "Solicitud de consulta a crédito",
+    body: `Reserva #${booking.bookingNumber} — ${user.firstName} pidió pagar a crédito.`,
+    bookingId,
+    pushType: "credit_request_pending",
+  });
 
   return { success: true };
 }
