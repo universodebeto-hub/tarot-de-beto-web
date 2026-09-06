@@ -116,6 +116,7 @@ export function RegisterForm() {
             minLength={8}
             className={inputClass}
           />
+          <p className="mb-0 mt-1 text-xs text-ash">Mínimo 8 caracteres, con al menos una letra y un número.</p>
         </div>
 
         <div>

@@ -9,6 +9,7 @@ export async function createInstantConsultationAction(
   guestName: string,
   guestEmail: string,
   guestPhone: string,
+  videoRequested: boolean,
 ): Promise<CreateConsultationResult> {
   return createInstantConsultation({
     tarotistaId,
@@ -16,6 +17,7 @@ export async function createInstantConsultationAction(
     guestName: guestName || undefined,
     guestEmail: guestEmail || undefined,
     guestPhone: guestPhone || undefined,
+    videoRequested,
   });
 }
 

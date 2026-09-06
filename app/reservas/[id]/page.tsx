@@ -14,6 +14,7 @@ import { ManualPaymentPanel } from "@/components/booking/ManualPaymentPanel";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { isReportOnlyService, REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
 import { getManualPaymentInstructions } from "@/server/settings";
+import { effectivePrice } from "@/lib/booking-price";
 
 export const metadata: Metadata = {
   title: "Tu reserva",
@@ -75,6 +76,16 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
                   Servicio
                 </span>
                 <span className="text-bone">{booking.service.name}</span>
+              </div>
+              <div>
+                <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">Precio</span>
+                <span className="text-bone">
+                  ${effectivePrice(Number(booking.service.price), booking.videoRequested).toFixed(2)}{" "}
+                  {booking.service.currency}
+                </span>
+                {booking.videoRequested ? (
+                  <span className="block text-xs text-gold-soft">Incluye videollamada (+20%)</span>
+                ) : null}
               </div>
               {isReport ? (
                 <div>

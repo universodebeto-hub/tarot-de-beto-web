@@ -9,6 +9,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { AdminNoteForm } from "@/components/admin/AdminNoteForm";
 import { intakeFieldsFor } from "@/lib/service-intake";
 import { isReportOnlyService, REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
+import { effectivePrice } from "@/lib/booking-price";
 import type { BookingStatus } from "@prisma/client";
 
 export const metadata: Metadata = { title: "Panel — Detalle de reserva", robots: { index: false } };
@@ -67,8 +68,9 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
             <span className="text-bone">{booking.service.name}</span>
             <p className="mb-0 text-xs text-ash">
               {isReport ? "Informe" : `${booking.service.durationMinutes} min`} · $
-              {Number(booking.service.price).toFixed(2)}
+              {effectivePrice(Number(booking.service.price), booking.videoRequested).toFixed(2)}
             </p>
+            {booking.videoRequested ? <p className="mb-0 text-xs text-gold-soft">Con videollamada (+20%)</p> : null}
           </div>
           <div>
             <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">

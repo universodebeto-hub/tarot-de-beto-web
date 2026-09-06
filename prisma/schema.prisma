@@ -374,6 +374,13 @@ model Booking {
   /// status === CONFIRMED && paymentStatus === PAID, sin cambios). Se marca
   /// aparte, después, con server/credit.ts::setCreditPaid().
   creditPaid      Boolean       @default(false)
+  /// true si el cliente pidió expresamente videollamada al reservar
+  /// (checkbox "Quiero videollamada (+20%)") -- dispara el recargo del 20%
+  /// sobre service.price en todo lugar donde se calcula el monto a cobrar
+  /// (ver lib/booking-price.ts). Sin relación con poder prender la cámara
+  /// en cualquier llamada, que sigue siendo gratis para cualquiera -- esto
+  /// es específicamente "pedí y pagué por video desde el vamos".
+  videoRequested  Boolean       @default(false)
   notes           String?
   /// Datos adicionales que algunos servicios exigen para poder realizarse
   /// (ej. fecha/hora/lugar de nacimiento para Carta Astral) — ver

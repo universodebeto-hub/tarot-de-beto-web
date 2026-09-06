@@ -9,6 +9,8 @@ interface CallRoomProps {
   durationMinutes: number;
   /** true solo para reservas pagadas con "Créditos Beto" (ver server/credit.ts) -- a esas cuentas no se les corta la llamada por tiempo. */
   creditExempt: boolean;
+  /** true si el cliente pagó el recargo de videollamada (Booking.videoRequested) -- la cámara se prende sola al conectar en vez de esperar a que alguien toque el botón. */
+  videoRequested: boolean;
 }
 
 type CallState = "connecting" | "waiting" | "connected" | "ended" | "error";
@@ -38,7 +40,7 @@ function timerColorClass(durationMinutes: number, elapsedSeconds: number): strin
  * de emitirlo — ver server/calls.ts). Sala = bookingId, siempre 2
  * participantes esperados (cliente y tarotista).
  */
-export function CallRoom({ bookingId, durationMinutes, creditExempt }: CallRoomProps) {
+export function CallRoom({ bookingId, durationMinutes, creditExempt, videoRequested }: CallRoomProps) {
   const [state, setState] = useState<CallState>("connecting");
   const [error, setError] = useState<string | null>(null);
   const [otherPartyName, setOtherPartyName] = useState<string | null>(null);
@@ -129,6 +131,18 @@ export function CallRoom({ bookingId, durationMinutes, creditExempt }: CallRoomP
           setMicWarning("No pudimos activar tu micrófono — revisa los permisos del navegador.");
         }
       }
+
+      if (videoRequested) {
+        try {
+          await room.localParticipant.setCameraEnabled(true);
+          if (!cancelled) setCameraOn(true);
+        } catch {
+          if (!cancelled) {
+            setCameraWarning("No pudimos activar tu cámara automáticamente — revisa los permisos del navegador.");
+          }
+        }
+      }
+
       if (!cancelled) {
         setState(room.remoteParticipants.size > 0 ? "connected" : "waiting");
       }
@@ -141,7 +155,7 @@ export function CallRoom({ bookingId, durationMinutes, creditExempt }: CallRoomP
       // keepalive: el fetch debe salir aunque el componente ya se esté desmontando (navegación fuera de la página).
       fetch(`/api/calls/${bookingId}/end`, { method: "POST", keepalive: true }).catch(() => {});
     };
-  }, [bookingId]);
+  }, [bookingId, videoRequested]);
 
   useEffect(() => {
     if (state !== "connected") return;
@@ -180,23 +194,31 @@ export function CallRoom({ bookingId, durationMinutes, creditExempt }: CallRoomP
     try {
       await room.localParticipant.setCameraEnabled(next);
       setCameraOn(next);
-      if (next && localVideoRef.current) {
-        localVideoRef.current.innerHTML = "";
-        const pub = room.localParticipant.getTrackPublication(Track.Source.Camera);
-        const track = pub?.videoTrack;
-        if (track) {
-          const el = track.attach();
-          el.className = "h-full w-full rounded-xl object-cover";
-          el.muted = true;
-          localVideoRef.current.appendChild(el);
-        }
-      } else if (!next && localVideoRef.current) {
-        localVideoRef.current.innerHTML = "";
-      }
     } catch {
       setCameraWarning("No pudimos activar tu cámara — revisa los permisos del navegador.");
     }
   }
+
+  // Adjunta el video local al <div> recién montado -- separado de
+  // toggleCamera/el auto-encendido de más arriba porque el <div> (dentro de
+  // showVideoArea) todavía no existe en el DOM en el mismo tick en que se
+  // pide la cámara, solo después de que este efecto corre tras el render.
+  useEffect(() => {
+    const room = roomRef.current;
+    if (!cameraOn || !room || !localVideoRef.current) return;
+    localVideoRef.current.innerHTML = "";
+    const pub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+    const track = pub?.videoTrack;
+    if (track) {
+      const el = track.attach();
+      el.className = "h-full w-full rounded-xl object-cover";
+      el.muted = true;
+      localVideoRef.current.appendChild(el);
+    }
+    return () => {
+      if (localVideoRef.current) localVideoRef.current.innerHTML = "";
+    };
+  }, [cameraOn]);
 
   function hangUp() {
     roomRef.current?.disconnect();

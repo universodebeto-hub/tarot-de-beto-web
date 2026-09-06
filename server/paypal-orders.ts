@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { createPaypalOrder, capturePaypalOrder, getPaypalOrder, isPaypalConfigured } from "@/lib/paypal";
+import { effectivePrice } from "@/lib/booking-price";
 import { expireStaleBookings } from "@/server/availability";
 import { notifyPaymentConfirmed } from "@/server/notifications/send";
 import { sendPushToTarotista } from "@/server/push-notifications";
@@ -32,7 +33,7 @@ export async function createOrderForBooking(bookingId: string): Promise<OrderRes
     return { error: "El tiempo para pagar esta reserva expiró." };
   }
 
-  const amount = Number(booking.service.price);
+  const amount = effectivePrice(Number(booking.service.price), booking.videoRequested);
 
   const order = await createPaypalOrder({
     amount,
@@ -107,7 +108,7 @@ export async function captureOrderForBooking(orderId: string): Promise<CaptureRe
     return { error: "PayPal no confirmó el pago. Intenta de nuevo." };
   }
 
-  const expectedAmount = Number(booking.service.price).toFixed(2);
+  const expectedAmount = effectivePrice(Number(booking.service.price), booking.videoRequested).toFixed(2);
   const capturedAmount = capture.amount?.value;
   if (capturedAmount !== expectedAmount || capture.amount?.currency_code !== booking.service.currency) {
     // Discrepancia de monto: no confirmamos la reserva y dejamos rastro para revisión manual.

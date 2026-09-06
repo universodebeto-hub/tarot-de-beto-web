@@ -15,6 +15,7 @@ export async function POST(request: Request) {
       guestEmail: body?.guestEmail || undefined,
       guestPhone: body?.guestPhone || undefined,
       intakeData: body?.intakeData || undefined,
+      videoRequested: Boolean(body?.videoRequested),
     },
     user,
   );

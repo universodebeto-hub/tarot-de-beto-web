@@ -39,6 +39,7 @@ export default async function CallPage({ params }: CallPageProps) {
               bookingId={booking.id}
               durationMinutes={booking.service.durationMinutes}
               creditExempt={booking.paymentMethod === "CREDITO_BETO"}
+              videoRequested={booking.videoRequested}
             />
           ) : (
             <p className="mb-0 text-center text-sm text-bone-dim">

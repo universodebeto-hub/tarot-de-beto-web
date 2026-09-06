@@ -6,6 +6,7 @@ import { createInstantConsultationAction } from "@/app/tarotistas/[slug]/actions
 import { submitReportRequest } from "@/server/booking-actions";
 import { isReportOnlyService } from "@/lib/service-fulfillment";
 import { intakeFieldsFor } from "@/lib/service-intake";
+import { effectivePrice } from "@/lib/booking-price";
 import type { Service } from "@/types/content";
 
 interface ConsultationFormProps {
@@ -82,6 +83,7 @@ export function ConsultationForm({ tarotistaId, services, isLoggedIn }: Consulta
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
+  const [videoRequested, setVideoRequested] = useState(false);
   const [intakeData, setIntakeData] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +106,14 @@ export function ConsultationForm({ tarotistaId, services, isLoggedIn }: Consulta
             guestPhone: guestPhone || undefined,
             intakeData,
           })
-        : await createInstantConsultationAction(tarotistaId, serviceId, guestName, guestEmail, guestPhone);
+        : await createInstantConsultationAction(
+            tarotistaId,
+            serviceId,
+            guestName,
+            guestEmail,
+            guestPhone,
+            videoRequested,
+          );
       if (result.error || !result.booking) {
         setError(result.error ?? "No se pudo iniciar la solicitud.");
         return;
@@ -203,9 +212,22 @@ export function ConsultationForm({ tarotistaId, services, isLoggedIn }: Consulta
                             </span>
                           </span>
                           <span className="font-mono text-gold-soft">
-                            ${s.price.toFixed(2)} {s.currency}
+                            ${(sIsSelected ? effectivePrice(s.price, videoRequested) : s.price).toFixed(2)}{" "}
+                            {s.currency}
                           </span>
                         </label>
+
+                        {sIsSelected && !isReportOnlyService(s.slug) ? (
+                          <label className="mx-1 flex cursor-pointer items-center gap-2.5 rounded-xl border border-white/10 bg-obsidian/30 px-4 py-2.5 text-sm text-bone-dim">
+                            <input
+                              type="checkbox"
+                              checked={videoRequested}
+                              onChange={(e) => setVideoRequested(e.target.checked)}
+                              className="accent-gold"
+                            />
+                            Quiero videollamada (+20%)
+                          </label>
+                        ) : null}
 
                         {sFields.length > 0 ? (
                           <div className="flex flex-col gap-2 rounded-xl border border-gold/20 bg-obsidian/40 p-3">

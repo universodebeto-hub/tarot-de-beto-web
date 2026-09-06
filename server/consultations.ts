@@ -29,6 +29,8 @@ const createConsultationSchema = z.object({
   guestEmail: z.string().trim().toLowerCase().email("Correo inválido").optional(),
   guestPhone: z.string().trim().max(30).optional(),
   intakeData: z.record(z.string(), z.string().trim().max(200)).optional(),
+  /// Checkbox "Quiero videollamada (+20%)" -- ver lib/booking-price.ts.
+  videoRequested: z.boolean().optional().default(false),
 });
 
 export type CreateConsultationInput = z.infer<typeof createConsultationSchema>;
@@ -60,7 +62,7 @@ export async function createInstantConsultation(
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
   }
-  const { tarotistaId, serviceId, guestName, guestEmail, guestPhone, intakeData } = parsed.data;
+  const { tarotistaId, serviceId, guestName, guestEmail, guestPhone, intakeData, videoRequested } = parsed.data;
 
   const tarotista = await prisma.tarotista.findUnique({ where: { id: tarotistaId } });
   if (!tarotista || !tarotista.active) {
@@ -107,6 +109,7 @@ export async function createInstantConsultation(
       endsAt: now,
       paymentDeadline,
       intakeData: intakeData ?? undefined,
+      videoRequested,
     },
     include: { service: true, user: true },
   });

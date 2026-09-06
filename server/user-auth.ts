@@ -23,6 +23,16 @@ export interface AccountResult {
   user?: { id: string; role: Role };
 }
 
+/// Además del mínimo de 8 caracteres, exige al menos una letra y un número
+/// -- sin pedir símbolos raros para no complicarle el registro a la gente.
+/// Compartido entre registro y reseteo de contraseña, para no repetir la
+/// regex/mensaje en dos lugares.
+const passwordSchema = z
+  .string()
+  .min(8, "La contraseña debe tener al menos 8 caracteres")
+  .regex(/[a-zA-Z]/, "La contraseña debe tener al menos una letra")
+  .regex(/[0-9]/, "La contraseña debe tener al menos un número");
+
 const registerSchema = z.object({
   firstName: z.string().trim().min(1, "El nombre es obligatorio").max(80),
   lastName: z.string().trim().max(80).optional(),
@@ -39,7 +49,7 @@ const registerSchema = z.object({
   // registrarse. Obligatorio solo en el formulario web (ver
   // server/auth.ts::registerUser), sin duplicar esta lógica de negocio.
   country: z.string().trim().max(80).optional(),
-  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
+  password: passwordSchema,
 });
 
 export async function registerAccount(input: unknown, ip: string): Promise<AccountResult> {
@@ -157,7 +167,7 @@ export async function requestPasswordResetCore(input: unknown, ip: string): Prom
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1),
-  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
+  password: passwordSchema,
 });
 
 export async function resetPasswordCore(input: unknown, ip: string): Promise<PasswordResetResult> {
