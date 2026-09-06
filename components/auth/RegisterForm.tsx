@@ -5,10 +5,13 @@ import Link from "next/link";
 import { registerUser } from "@/server/auth";
 import type { AuthFormState } from "@/server/auth";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { COUNTRIES } from "@/lib/countries";
 
 const initialState: AuthFormState = {};
 
 const inputClass =
+  "w-full rounded-lg border border-white/15 bg-white/5 px-4 py-3 text-bone outline-none focus:border-gold/50";
+const selectClass =
   "w-full rounded-lg border border-white/15 bg-white/5 px-4 py-3 text-bone outline-none focus:border-gold/50";
 const labelClass = "mb-1.5 block font-mono text-[11px] uppercase tracking-wide text-ash";
 
@@ -61,14 +64,38 @@ export function RegisterForm() {
           <label htmlFor="phone" className={labelClass}>
             Teléfono / WhatsApp (opcional)
           </label>
-          <input id="phone" name="phone" type="tel" className={inputClass} />
+          <div className="flex gap-2">
+            <select
+              id="phoneDialCode"
+              name="phoneDialCode"
+              defaultValue="+57"
+              className={`${selectClass} w-[6.5rem] shrink-0`}
+              aria-label="Código de país del teléfono"
+            >
+              {COUNTRIES.map((c) => (
+                <option key={`${c.iso2}-${c.dialCode}`} value={c.dialCode} className="bg-obsidian">
+                  {c.dialCode} {c.iso2 !== "XX" ? c.iso2 : ""}
+                </option>
+              ))}
+            </select>
+            <input id="phone" name="phoneNumber" type="tel" placeholder="3001234567" className={inputClass} />
+          </div>
         </div>
 
         <div>
           <label htmlFor="country" className={labelClass}>
-            País (opcional)
+            País
           </label>
-          <input id="country" name="country" className={inputClass} />
+          <select id="country" name="country" required defaultValue="" className={selectClass}>
+            <option value="" disabled className="bg-obsidian">
+              Elige tu país
+            </option>
+            {COUNTRIES.filter((c) => c.iso2 !== "XX").map((c) => (
+              <option key={c.iso2} value={c.name} className="bg-obsidian">
+                {c.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>
@@ -78,6 +105,20 @@ export function RegisterForm() {
           <input
             id="password"
             name="password"
+            type="password"
+            required
+            minLength={8}
+            className={inputClass}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="confirmPassword" className={labelClass}>
+            Repetir contraseña
+          </label>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
             type="password"
             required
             minLength={8}

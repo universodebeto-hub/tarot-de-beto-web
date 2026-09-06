@@ -35,6 +35,9 @@ const registerSchema = z.object({
     .max(24, "El usuario debe tener como máximo 24 caracteres")
     .regex(/^[a-z0-9_.]+$/, "El usuario solo puede tener letras, números, punto y guion bajo"),
   phone: z.string().trim().max(30).optional(),
+  // Opcional acá a propósito -- la app móvil todavía no pide país al
+  // registrarse. Obligatorio solo en el formulario web (ver
+  // server/auth.ts::registerUser), sin duplicar esta lógica de negocio.
   country: z.string().trim().max(80).optional(),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
 });

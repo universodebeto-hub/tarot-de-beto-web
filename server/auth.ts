@@ -24,15 +24,30 @@ export interface AuthFormState {
 }
 
 export async function registerUser(_prev: AuthFormState, formData: FormData): Promise<AuthFormState> {
+  const password = formData.get("password");
+  const confirmPassword = formData.get("confirmPassword");
+  if (password !== confirmPassword) {
+    return { error: "Las contraseñas no coinciden." };
+  }
+
+  const phoneNumber = String(formData.get("phoneNumber") ?? "").trim();
+  const phoneDialCode = String(formData.get("phoneDialCode") ?? "").trim();
+  const phone = phoneNumber ? `${phoneDialCode} ${phoneNumber}` : undefined;
+
+  const country = String(formData.get("country") ?? "").trim();
+  if (!country) {
+    return { error: "El país es obligatorio." };
+  }
+
   const result = await registerAccount(
     {
       firstName: formData.get("firstName"),
       lastName: formData.get("lastName") || undefined,
       email: formData.get("email"),
       username: formData.get("username"),
-      phone: formData.get("phone") || undefined,
-      country: formData.get("country") || undefined,
-      password: formData.get("password"),
+      phone,
+      country: formData.get("country"),
+      password,
     },
     await clientIp(),
   );
