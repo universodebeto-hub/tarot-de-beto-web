@@ -40,10 +40,10 @@ const SECURITY_HEADERS = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  // microphone=(self): las llamadas de audio (Fase 11, /reservas/[id]/llamada)
-  // necesitan poder pedir permiso de micrófono en este origen — camera y
-  // geolocation siguen bloqueadas del todo, la app nunca las usa.
-  { key: "Permissions-Policy", value: "geolocation=(), camera=(), microphone=(self)" },
+  // microphone=(self) y camera=(self): la llamada (/reservas/[id]/llamada)
+  // ahora permite activar cámara opcionalmente (video), además del audio
+  // que ya pedía permiso. geolocation sigue bloqueada del todo.
+  { key: "Permissions-Policy", value: "geolocation=(), camera=(self), microphone=(self)" },
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
 ];
 

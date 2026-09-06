@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Room, RoomEvent, Track, type RemoteTrack } from "livekit-client";
+import { Room, RoomEvent, Track, type RemoteTrack, type RemoteTrackPublication } from "livekit-client";
 
 interface CallRoomProps {
   bookingId: string;
@@ -10,8 +10,9 @@ interface CallRoomProps {
 type CallState = "connecting" | "waiting" | "connected" | "ended" | "error";
 
 /**
- * Llamada de audio en vivo (Fase 11) — solo audio a propósito (nunca pide
- * cámara, mismo criterio que el spec original: "interfaz de audio"). Un
+ * Llamada en vivo (Fase 11) — audio siempre activo; el video es opcional,
+ * cada persona lo prende cuando quiere con el botón de cámara (algunos
+ * clientes prefieren atenderse por video, ver pedido del usuario). Un
  * token nuevo por sesión (fetch a /api/calls/[bookingId]/token, que valida
  * del lado del servidor que esta cuenta puede entrar a ESTA reserva antes
  * de emitirlo — ver server/calls.ts). Sala = bookingId, siempre 2
@@ -23,8 +24,13 @@ export function CallRoom({ bookingId }: CallRoomProps) {
   const [otherPartyName, setOtherPartyName] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
   const [micWarning, setMicWarning] = useState<string | null>(null);
+  const [cameraOn, setCameraOn] = useState(false);
+  const [cameraWarning, setCameraWarning] = useState<string | null>(null);
+  const [remoteVideoOn, setRemoteVideoOn] = useState(false);
   const roomRef = useRef<Room | null>(null);
   const audioContainerRef = useRef<HTMLDivElement>(null);
+  const remoteVideoRef = useRef<HTMLDivElement>(null);
+  const localVideoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,6 +46,19 @@ export function CallRoom({ bookingId }: CallRoomProps) {
       if (track.kind === Track.Kind.Audio && audioContainerRef.current) {
         const el = track.attach();
         audioContainerRef.current.appendChild(el);
+      }
+      if (track.kind === Track.Kind.Video && remoteVideoRef.current) {
+        remoteVideoRef.current.innerHTML = "";
+        const el = track.attach();
+        el.className = "h-full w-full rounded-xl object-cover";
+        remoteVideoRef.current.appendChild(el);
+        setRemoteVideoOn(true);
+      }
+    });
+    room.on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack, pub: RemoteTrackPublication) => {
+      if (pub.kind === Track.Kind.Video) {
+        track.detach().forEach((el) => el.remove());
+        setRemoteVideoOn(false);
       }
     });
 
@@ -109,21 +128,68 @@ export function CallRoom({ bookingId }: CallRoomProps) {
     setMuted(next);
   }
 
+  async function toggleCamera() {
+    const room = roomRef.current;
+    if (!room) return;
+    const next = !cameraOn;
+    setCameraWarning(null);
+    try {
+      await room.localParticipant.setCameraEnabled(next);
+      setCameraOn(next);
+      if (next && localVideoRef.current) {
+        localVideoRef.current.innerHTML = "";
+        const pub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+        const track = pub?.videoTrack;
+        if (track) {
+          const el = track.attach();
+          el.className = "h-full w-full rounded-xl object-cover";
+          el.muted = true;
+          localVideoRef.current.appendChild(el);
+        }
+      } else if (!next && localVideoRef.current) {
+        localVideoRef.current.innerHTML = "";
+      }
+    } catch {
+      setCameraWarning("No pudimos activar tu cámara — revisa los permisos del navegador.");
+    }
+  }
+
   function hangUp() {
     roomRef.current?.disconnect();
     setState("ended");
     fetch(`/api/calls/${bookingId}/end`, { method: "POST", keepalive: true }).catch(() => {});
   }
 
+  const showVideoArea = cameraOn || remoteVideoOn;
+
   return (
     <div className="flex flex-col items-center gap-6 text-center">
       <div ref={audioContainerRef} className="hidden" aria-hidden="true" />
 
-      <div className="flex h-24 w-24 items-center justify-center rounded-full border border-gold/25 bg-gradient-to-br from-carbon-2 to-obsidian shadow-[0_0_30px_rgba(232,163,61,0.15)]">
-        <span className="font-display text-2xl text-gold-soft">
-          {otherPartyName ? otherPartyName[0]?.toUpperCase() : "…"}
-        </span>
-      </div>
+      {showVideoArea ? (
+        <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="relative aspect-video overflow-hidden rounded-xl border border-white/10 bg-carbon-2">
+            <div ref={remoteVideoRef} className="h-full w-full" />
+            {!remoteVideoOn ? (
+              <span className="absolute inset-0 flex items-center justify-center text-xs text-bone-dim">
+                {otherPartyName ?? "La otra persona"} sin cámara
+              </span>
+            ) : null}
+          </div>
+          <div className="relative aspect-video overflow-hidden rounded-xl border border-white/10 bg-carbon-2">
+            <div ref={localVideoRef} className="h-full w-full" />
+            {!cameraOn ? (
+              <span className="absolute inset-0 flex items-center justify-center text-xs text-bone-dim">Tu cámara</span>
+            ) : null}
+          </div>
+        </div>
+      ) : (
+        <div className="flex h-24 w-24 items-center justify-center rounded-full border border-gold/25 bg-gradient-to-br from-carbon-2 to-obsidian shadow-[0_0_30px_rgba(232,163,61,0.15)]">
+          <span className="font-display text-2xl text-gold-soft">
+            {otherPartyName ? otherPartyName[0]?.toUpperCase() : "…"}
+          </span>
+        </div>
+      )}
 
       {state === "connecting" ? <p className="mb-0 text-bone-dim">Conectando...</p> : null}
       {state === "waiting" ? (
@@ -137,11 +203,15 @@ export function CallRoom({ bookingId }: CallRoomProps) {
       {state === "ended" ? <p className="mb-0 text-bone-dim">Llamada finalizada.</p> : null}
       {state === "error" ? <p className="mb-0 text-ember">{error}</p> : null}
       {micWarning ? <p className="mb-0 text-xs text-ember">{micWarning}</p> : null}
+      {cameraWarning ? <p className="mb-0 text-xs text-ember">{cameraWarning}</p> : null}
 
       {state === "connecting" || state === "waiting" || state === "connected" ? (
-        <div className="flex gap-3">
+        <div className="flex flex-wrap justify-center gap-3">
           <button type="button" onClick={toggleMute} className="btn btn-ghost">
             {muted ? "Activar micrófono" : "Silenciar"}
+          </button>
+          <button type="button" onClick={toggleCamera} className="btn btn-ghost">
+            {cameraOn ? "Apagar cámara" : "Activar cámara"}
           </button>
           <button type="button" onClick={hangUp} className="btn btn-gold">
             Colgar
