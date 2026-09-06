@@ -1,4 +1,5 @@
 import "server-only";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAdminAction } from "@/server/audit";
@@ -53,6 +54,85 @@ export async function listTarotistasAdmin() {
 
 export interface LinkResult {
   error?: string;
+}
+
+const createTarotistaSchema = z.object({
+  name: z.string().trim().min(1, "El nombre es obligatorio").max(120),
+  bio: z.string().trim().max(2000).optional(),
+  experience: z.string().trim().max(200).optional(),
+  specialties: z
+    .string()
+    .trim()
+    .max(300)
+    .optional()
+    .transform((v) => (v ? v.split(",").map((s) => s.trim()).filter(Boolean) : [])),
+});
+
+export type CreateTarotistaInput = z.infer<typeof createTarotistaSchema>;
+
+export interface CreateTarotistaResult {
+  error?: string;
+  tarotista?: { id: string; slug: string };
+}
+
+function slugifyName(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/**
+ * Crea un perfil de tarotista NUEVO desde cero (nombre, bio, experiencia,
+ * especialidades) -- hasta ahora esto solo se podía hacer editando
+ * prisma/seed.ts y desplegando. Sin cuenta vinculada ni foto: eso se hace
+ * después con linkTarotistaAccount() (la persona se registra normal y el
+ * admin la vincula) y agregando la foto a mano, mismo flujo ya usado para
+ * el resto del catálogo de imágenes del proyecto.
+ */
+export async function createTarotista(
+  input: unknown,
+  currentUser?: CurrentUser | null,
+): Promise<CreateTarotistaResult> {
+  const admin = await requireAdmin(currentUser);
+
+  const parsed = createTarotistaSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  }
+
+  const baseSlug = slugifyName(parsed.data.name);
+  if (!baseSlug) return { error: "El nombre no genera un identificador válido." };
+
+  let slug = baseSlug;
+  if (await prisma.tarotista.findUnique({ where: { slug } })) {
+    slug = `${baseSlug}-${Date.now().toString(36)}`;
+  }
+
+  const maxSort = await prisma.tarotista.aggregate({ _max: { sortOrder: true } });
+
+  const tarotista = await prisma.tarotista.create({
+    data: {
+      slug,
+      name: parsed.data.name,
+      bio: parsed.data.bio || null,
+      experience: parsed.data.experience || null,
+      specialties: parsed.data.specialties,
+      sortOrder: (maxSort._max.sortOrder ?? -1) + 1,
+    },
+  });
+  await logAdminAction({
+    adminId: admin.id,
+    action: "tarotista.created",
+    targetType: "Tarotista",
+    targetId: tarotista.id,
+    details: tarotista.name,
+  });
+
+  return { tarotista: { id: tarotista.id, slug: tarotista.slug } };
 }
 
 /**

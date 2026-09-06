@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdminFromRequest, UnauthorizedError } from "@/lib/auth/api-auth";
-import { getClientAdminById, setUserCreditApproval, updateClientInfoFromJson } from "@/server/admin/clients";
+import { getClientAdminById, setUserCreditApproval, updateClientInfoFromJson, promoteToAdmin } from "@/server/admin/clients";
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -35,6 +35,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         { firstName: body.firstName, lastName: body.lastName, email: body.email, phone: body.phone, country: body.country },
         user,
       );
+      if (result.error) return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+    if (body?.role === "ADMIN") {
+      const result = await promoteToAdmin(id, user);
       if (result.error) return NextResponse.json({ error: result.error }, { status: 400 });
     }
 

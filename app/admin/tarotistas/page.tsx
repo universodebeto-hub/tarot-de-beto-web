@@ -3,6 +3,7 @@ import { listTarotistasAdmin } from "@/server/admin/tarotistas";
 import { unlinkTarotistaAccountFormAction } from "@/app/admin/tarotistas/actions";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { LinkTarotistaForm } from "@/components/admin/LinkTarotistaForm";
+import { CreateTarotistaForm } from "@/components/admin/CreateTarotistaForm";
 import { TAROTISTA_STATUS_LABEL, TAROTISTA_STATUS_DOT_CLASS } from "@/lib/tarotista-status";
 
 export const metadata: Metadata = { title: "Panel — Tarotistas", robots: { index: false } };
@@ -24,6 +25,10 @@ export default async function AdminTarotistasPage() {
           <code className="rounded bg-white/10 px-1.5 py-0.5 text-xs">/panel-tarotista</code> y cambiar su
           propio estado. La persona debe tener una cuenta creada primero (Iniciar sesión → Crear cuenta).
         </p>
+      </GlassCard>
+
+      <GlassCard>
+        <CreateTarotistaForm />
       </GlassCard>
 
       {tarotistas.map((t) => (

@@ -7,6 +7,7 @@ import { fullDateLabel } from "@/lib/date-labels";
 import { BOOKING_STATUS_LABEL } from "@/lib/booking-labels";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EditClientInfoForm } from "@/components/admin/EditClientInfoForm";
+import { PromoteToAdminButton } from "@/components/admin/PromoteToAdminButton";
 
 export const metadata: Metadata = { title: "Panel — Cliente", robots: { index: false } };
 
@@ -35,6 +36,7 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
           phone={client.phone}
           country={client.country}
         />
+        <PromoteToAdminButton userId={client.id} name={`${client.firstName} ${client.lastName ?? ""}`.trim()} />
       </GlassCard>
 
       <GlassCard className="flex flex-col gap-3">

@@ -178,3 +178,33 @@ export async function setUserCreditApproval(
 
   return {};
 }
+
+export interface PromoteToAdminResult {
+  error?: string;
+}
+
+/**
+ * Promueve una cuenta de cliente ya registrada a administrador -- hasta
+ * ahora la única forma de tener un segundo admin era que yo editara la
+ * base de datos directamente. A propósito no hay una acción para
+ * "quitarle" el rol de admin desde acá (bajar al último admin por error
+ * dejaría el panel sin nadie que pueda entrar) -- si hace falta revertir
+ * un ascenso, es una operación manual aparte, deliberada.
+ */
+export async function promoteToAdmin(userId: string, currentUser?: CurrentUser | null): Promise<PromoteToAdminResult> {
+  const admin = await requireAdmin(currentUser);
+
+  const user = await prisma.user.findUnique({ where: { id: userId, role: "CLIENT" } });
+  if (!user) return { error: "Cliente no encontrado." };
+
+  await prisma.user.update({ where: { id: userId }, data: { role: "ADMIN" } });
+  await logAdminAction({
+    adminId: admin.id,
+    action: "client.promoted_to_admin",
+    targetType: "User",
+    targetId: userId,
+    details: user.email,
+  });
+
+  return {};
+}
