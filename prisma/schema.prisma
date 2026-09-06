@@ -95,6 +95,13 @@ model User {
   isOnline   Boolean   @default(false)
   lastSeenAt DateTime?
 
+  /// Habilitado por un ADMIN a mano, cliente por cliente (ver
+  /// server/admin/clients.ts::setUserCreditApproval) -- mientras esté en
+  /// false, "Créditos Beto" ni siquiera aparece como opción de pago para
+  /// esta cuenta. No es un límite de monto, es solo "confío en esta
+  /// persona para atenderla antes de que pague".
+  canUseCredit Boolean @default(false)
+
   passwordResets  PasswordReset[]
   bookings        Booking[]
   auditLogs       AuditLog[]
@@ -300,6 +307,13 @@ enum PaymentMethod {
   /// automática) -- se descartó un agregador (Wompi) porque exige cuenta
   /// empresarial y la cuenta de Beto es de ahorros.
   BANCOLOMBIA
+  /// "Pagar después" para clientes de confianza que el admin aprobó a mano
+  /// (User.canUseCredit) -- no hay comprobante que subir: el admin aprueba
+  /// la consulta primero (booking.status/paymentStatus siguen el mismo
+  /// criterio que un pago manual confirmado) y por separado, más adelante,
+  /// marca Booking.creditPaid cuando el cliente efectivamente le paga. Ver
+  /// server/credit.ts.
+  CREDITO_BETO
 }
 
 /// Reserva de una consulta. `startsAt`/`endsAt` son instantes UTC absolutos
@@ -354,6 +368,12 @@ model Booking {
   /// URL (Vercel Blob) de la captura del comprobante que el cliente sube
   /// para un pago manual — visible en el panel admin antes de confirmar.
   manualPaymentProofUrl  String?
+  /// Solo aplica a paymentMethod = CREDITO_BETO. Bookkeeping propio de Beto
+  /// para saber si ya le pagaron una consulta a crédito -- NO participa en
+  /// el gating de chat/audio/llamada (eso sigue siendo únicamente
+  /// status === CONFIRMED && paymentStatus === PAID, sin cambios). Se marca
+  /// aparte, después, con server/credit.ts::setCreditPaid().
+  creditPaid      Boolean       @default(false)
   notes           String?
   /// Datos adicionales que algunos servicios exigen para poder realizarse
   /// (ej. fecha/hora/lugar de nacimiento para Carta Astral) — ver

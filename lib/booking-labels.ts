@@ -26,6 +26,7 @@ export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
   WESTERN_UNION: "Western Union",
   MONEYGRAM: "MoneyGram",
   BANCOLOMBIA: "Bancolombia",
+  CREDITO_BETO: "Créditos Beto",
 };
 
 /** Nombre del archivo en public/assets/payment-logos/<slug>.png para cada método. */
@@ -38,4 +39,5 @@ export const PAYMENT_METHOD_LOGO_SLUG: Record<PaymentMethod, string> = {
   WESTERN_UNION: "western-union",
   MONEYGRAM: "moneygram",
   BANCOLOMBIA: "bancolombia",
+  CREDITO_BETO: "creditos-beto",
 };

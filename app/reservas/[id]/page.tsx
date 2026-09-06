@@ -142,6 +142,7 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
                         ? { clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID, currency: booking.service.currency }
                         : null
                     }
+                    creditEnabled={Boolean(viewer?.canUseCredit)}
                   />
                 ) : null}
                 <PendingPaymentPanel

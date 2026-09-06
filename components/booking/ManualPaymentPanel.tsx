@@ -6,10 +6,11 @@ import { useRouter } from "next/navigation";
 import type { ManualPaymentInstructions } from "@/server/settings";
 import { PAYMENT_METHOD_LABEL, PAYMENT_METHOD_LOGO_SLUG } from "@/lib/booking-labels";
 import { PayPalButton } from "@/components/booking/PayPalButton";
+import { requestCreditBookingAction } from "@/app/reservas/[id]/credit-actions";
 
 type ManualMethod = "PAGO_MOVIL" | "ZELLE" | "BINANCE" | "REMITLY" | "WESTERN_UNION" | "MONEYGRAM" | "BANCOLOMBIA";
-/** "PAYPAL" solo existe acá para la selección visual -- nunca se manda a /api/bookings/manual-payment, dispara el checkout automático de PayPalButton. */
-type PickableMethod = ManualMethod | "PAYPAL";
+/** "PAYPAL" y "CREDITO_BETO" solo existen acá para la selección visual -- ninguna se manda a /api/bookings/manual-payment: PAYPAL dispara el checkout de PayPalButton, CREDITO_BETO llama a requestCreditBookingAction (sin comprobante). */
+type PickableMethod = ManualMethod | "PAYPAL" | "CREDITO_BETO";
 
 const MANUAL_METHODS: ManualMethod[] = [
   "PAGO_MOVIL",
@@ -24,8 +25,10 @@ const MANUAL_METHODS: ManualMethod[] = [
 interface ManualPaymentPanelProps {
   bookingId: string;
   instructions: ManualPaymentInstructions;
-  /** Si viene configurado, PayPal aparece como séptima opción en la misma grilla. */
+  /** Si viene configurado, PayPal aparece como opción extra en la misma grilla. */
   paypal?: { clientId: string; currency: string } | null;
+  /** Solo true si Beto ya habilitó esta cuenta para pagar a crédito (User.canUseCredit) -- si no, "Créditos Beto" ni aparece. */
+  creditEnabled?: boolean;
 }
 
 /**
@@ -36,22 +39,34 @@ interface ManualPaymentPanelProps {
  * Cada método se muestra como un botón cuadrado con su logo, todos del
  * mismo tamaño — ver public/assets/payment-logos/.
  */
-export function ManualPaymentPanel({ bookingId, instructions, paypal }: ManualPaymentPanelProps) {
+export function ManualPaymentPanel({ bookingId, instructions, paypal, creditEnabled }: ManualPaymentPanelProps) {
   const router = useRouter();
   const [method, setMethod] = useState<PickableMethod | null>(null);
   const [reference, setReference] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState<"PROOF" | "CREDIT" | null>(null);
+
+  async function handleCreditRequest() {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const result = await requestCreditBookingAction(bookingId);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      setDone("CREDIT");
+      router.refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!method || method === "PAYPAL") return;
-    if (!reference.trim()) {
-      setError("Ingresa el número de referencia de tu pago.");
-      return;
-    }
+    if (!method || method === "PAYPAL" || method === "CREDITO_BETO") return;
     if (!file) {
       setError("Sube una captura del comprobante.");
       return;
@@ -69,7 +84,21 @@ export function ManualPaymentPanel({ bookingId, instructions, paypal }: ManualPa
       uploadForm.set("bookingId", bookingId);
       uploadForm.set("file", file);
       const uploadRes = await fetch("/api/uploads/payment-proof", { method: "POST", body: uploadForm });
-      const uploadData = await uploadRes.json();
+      // Si el archivo supera el límite real de Vercel para el body de una
+      // función, la plataforma corta la petición ANTES de que nuestra ruta
+      // corra -- la respuesta no siempre es el JSON que devuelve nuestro
+      // propio chequeo de tamaño, así que .json() puede tirar un error acá.
+      let uploadData: { url?: string; error?: string } = {};
+      try {
+        uploadData = await uploadRes.json();
+      } catch {
+        setError(
+          uploadRes.status === 413
+            ? "Esta captura pesa demasiado para subirla (máximo ~4 MB). Recortá la imagen a solo la parte del comprobante, o mandala directo a Beto por WhatsApp."
+            : "No se pudo subir el comprobante. Intenta de nuevo o mandalo por WhatsApp.",
+        );
+        return;
+      }
       if (!uploadRes.ok || !uploadData.url) {
         setError(uploadData.error ?? "No se pudo subir el comprobante.");
         return;
@@ -86,26 +115,39 @@ export function ManualPaymentPanel({ bookingId, instructions, paypal }: ManualPa
         return;
       }
 
-      setDone(true);
+      setDone("PROOF");
       router.refresh();
     } finally {
       setSubmitting(false);
     }
   }
 
-  if (done) {
+  if (done === "PROOF") {
     return (
       <p className="mb-0 text-sm text-gold-soft">
         Recibimos tu comprobante — Beto lo revisará y confirmará tu pago pronto.
       </p>
     );
   }
+  if (done === "CREDIT") {
+    return (
+      <p className="mb-0 text-sm text-gold-soft">
+        Recibimos tu solicitud — Beto la revisará y habilitará tu consulta a crédito pronto.
+      </p>
+    );
+  }
+
+  const pickableMethods: PickableMethod[] = [
+    ...MANUAL_METHODS,
+    ...(paypal ? (["PAYPAL"] as const) : []),
+    ...(creditEnabled ? (["CREDITO_BETO"] as const) : []),
+  ];
 
   return (
     <div className="flex flex-col gap-3">
       <span className="eyebrow">Elige un método de pago</span>
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-        {(paypal ? [...MANUAL_METHODS, "PAYPAL" as const] : MANUAL_METHODS).map((m) => (
+        {pickableMethods.map((m) => (
           <button
             key={m}
             type="button"
@@ -139,7 +181,25 @@ export function ManualPaymentPanel({ bookingId, instructions, paypal }: ManualPa
         </div>
       ) : null}
 
-      {method && method !== "PAYPAL" ? (
+      {method === "CREDITO_BETO" ? (
+        <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <p className="mb-0 text-sm text-bone-dim">
+            Tu cuenta está habilitada para atenderte ahora y pagar después. Al solicitarlo, Beto revisa y habilita tu
+            consulta — no necesitas subir ningún comprobante.
+          </p>
+          <button
+            type="button"
+            onClick={handleCreditRequest}
+            disabled={submitting}
+            className="btn btn-gold self-start disabled:opacity-60"
+          >
+            {submitting ? "Enviando..." : "Solicitar a crédito"}
+          </button>
+          {error ? <p className="mb-0 text-sm text-ember">{error}</p> : null}
+        </div>
+      ) : null}
+
+      {method && method !== "PAYPAL" && method !== "CREDITO_BETO" ? (
         <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
           <div className="text-sm text-bone-dim">
             {method === "PAGO_MOVIL" ? (
@@ -225,14 +285,13 @@ export function ManualPaymentPanel({ bookingId, instructions, paypal }: ManualPa
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              Número de referencia / operación
+              Número de referencia / operación (opcional)
               <input
                 type="text"
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
                 className="rounded-lg border border-white/15 bg-obsidian/60 px-3 py-2 text-bone"
                 placeholder="Ej. 000123456789"
-                required
               />
             </label>
             <label className="flex flex-col gap-1 text-sm">

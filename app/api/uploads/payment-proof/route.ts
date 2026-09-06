@@ -4,15 +4,25 @@ import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
-// Vercel corta el body de cualquier función serverless en ~4.5 MB -- no hay
-// forma de subir un archivo más pesado a través de esta función sin importar
-// qué límite pongamos acá. Se intentó una subida directa a Vercel Blob
+// Vercel corta el body de cualquier función serverless en ~4.5 MB *reales*
+// (decimales, no 4.5*1024*1024) -- medido en producción, el corte ocurre
+// entre 4.48 MB (pasa) y 4.495 MB (falla) de body total. Ese corte pasa a
+// nivel de plataforma, ANTES de que este código llegue a correr, así que
+// nuestro propio chequeo de tamaño de acá abajo NUNCA se alcanza para un
+// archivo que ya disparó el corte de la plataforma -- por eso el límite
+// acá es más bajo que el real: para que ALGUNOS archivos grandes (4-4.48
+// MB) sí lleguen a este código y reciban este mensaje explicado en vez del
+// "Request Entity Too Large" en texto plano que devuelve la plataforma
+// (ver el manejo de ese caso en el fetch del cliente, que también lo
+// traduce a este mismo mensaje). No hay forma de subir un archivo más
+// pesado que esto a través de esta función sin importar qué límite
+// pongamos acá. Se intentó una subida directa a Vercel Blob
 // (@vercel/blob/client, sin este límite) pero el store la rechaza con
 // "Access denied" -- muy probablemente una restricción de red del plan
 // actual, no algo resoluble desde el código. Mientras tanto, esta es la vía
 // simple y confiable, usada por web y app por igual. Nunca se comprime la
 // imagen -- si pesa de más, se avisa con un mensaje claro.
-const MAX_BYTES = 4.5 * 1024 * 1024;
+const MAX_BYTES = 4_000_000;
 const ALLOWED_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",

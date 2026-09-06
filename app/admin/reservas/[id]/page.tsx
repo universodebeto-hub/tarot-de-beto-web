@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getBookingAdminById } from "@/server/admin/bookings";
-import { changeBookingStatusFormAction } from "@/app/admin/reservas/[id]/actions";
+import { changeBookingStatusFormAction, setCreditPaidFormAction } from "@/app/admin/reservas/[id]/actions";
 import { minutesInBusinessDay, formatMinutes, businessDateString } from "@/lib/timezone";
 import { fullDateLabel } from "@/lib/date-labels";
 import { BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL, PAYMENT_METHOD_LABEL } from "@/lib/booking-labels";
@@ -38,7 +38,10 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
   const isConsultation = Boolean(booking.tarotistaId) && !isReport;
   const dateLabel = fullDateLabel(businessDateString(booking.startsAt));
   const timeLabel = formatMinutes(minutesInBusinessDay(booking.startsAt));
-  const transitions = TRANSITIONS[booking.status] ?? [];
+  const isCredit = booking.paymentMethod === "CREDITO_BETO";
+  const transitions = (TRANSITIONS[booking.status] ?? []).map((t) =>
+    isCredit && t.status === "CONFIRMED" ? { ...t, label: "Aprobar consulta a crédito" } : t,
+  );
 
   const intakeData =
     booking.intakeData && typeof booking.intakeData === "object" && !Array.isArray(booking.intakeData)
@@ -113,6 +116,20 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
                 </div>
               ))}
           </div>
+        </GlassCard>
+      ) : null}
+
+      {isCredit ? (
+        <GlassCard className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="eyebrow">Créditos Beto</span>
+            <span className="text-xs text-bone-dim">{booking.creditPaid ? "Ya cobrado" : "Pendiente de cobro"}</span>
+          </div>
+          <form action={setCreditPaidFormAction.bind(null, booking.id, !booking.creditPaid)}>
+            <button type="submit" className={booking.creditPaid ? "btn btn-ghost" : "btn btn-gold"}>
+              {booking.creditPaid ? "Marcar como no cobrado" : "Marcar crédito como cobrado"}
+            </button>
+          </form>
         </GlassCard>
       ) : null}
 

@@ -36,6 +36,8 @@ export interface CurrentUser {
   email: string;
   phone: string | null;
   role: "ADMIN" | "CLIENT";
+  /** Habilitado a mano por un admin -- ver server/admin/clients.ts::setUserCreditApproval(). Controla si "Créditos Beto" aparece como opción de pago. */
+  canUseCredit: boolean;
 }
 
 /** Carga el usuario a partir de un payload de sesión ya verificado — usado
@@ -54,6 +56,7 @@ export async function loadCurrentUser(payload: SessionPayload | null): Promise<C
     email: user.email,
     phone: user.phone,
     role: user.role,
+    canUseCredit: user.canUseCredit,
   };
 }
 

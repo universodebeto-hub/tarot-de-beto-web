@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { setBookingStatus, addBookingNote } from "@/server/admin/bookings";
+import { setBookingStatus, addBookingNote, setCreditPaid } from "@/server/admin/bookings";
 import type { AdminFormState } from "@/server/admin/services";
 import type { BookingStatus } from "@prisma/client";
 
@@ -19,6 +19,11 @@ export async function changeBookingStatusAction(
 /** Variante que devuelve `void` — la que usan los `<form action>` planos, que no aceptan un valor de retorno. */
 export async function changeBookingStatusFormAction(bookingId: string, status: BookingStatus): Promise<void> {
   await changeBookingStatusAction(bookingId, status);
+}
+
+export async function setCreditPaidFormAction(bookingId: string, paid: boolean): Promise<void> {
+  await setCreditPaid(bookingId, paid);
+  revalidatePath(`/admin/reservas/${bookingId}`);
 }
 
 export async function addBookingNoteAction(

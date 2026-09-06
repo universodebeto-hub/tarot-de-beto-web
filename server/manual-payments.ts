@@ -34,7 +34,6 @@ export async function submitManualPaymentProof(
   proofUrl: string,
 ): Promise<ManualPaymentResult> {
   if (!MANUAL_METHODS.includes(method)) return { error: "Método de pago inválido." };
-  if (!reference.trim()) return { error: "Ingresa el número de referencia de tu pago." };
   if (!proofUrl.trim()) return { error: "Sube una captura del comprobante." };
 
   await expireStaleBookings();
@@ -49,7 +48,7 @@ export async function submitManualPaymentProof(
     where: { id: bookingId },
     data: {
       paymentMethod: method,
-      manualPaymentReference: reference.trim(),
+      manualPaymentReference: reference.trim() || null,
       manualPaymentProofUrl: proofUrl.trim(),
       paymentStatus: "PENDING",
     },

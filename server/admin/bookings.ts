@@ -137,6 +137,41 @@ export async function setBookingStatus(
   return {};
 }
 
+export interface SetCreditPaidResult {
+  error?: string;
+}
+
+/**
+ * Bookkeeping propio de Beto: marca si una reserva a crédito (paymentMethod
+ * CREDITO_BETO) ya fue cobrada. A propósito NO toca status/paymentStatus --
+ * esos ya se movieron a CONFIRMED/PAID cuando Beto aprobó la consulta (ver
+ * setBookingStatus), que es lo único que gatea chat/audio/llamada. Esto es
+ * solo para que Beto lleve la cuenta de a quién todavía le falta cobrar.
+ */
+export async function setCreditPaid(
+  bookingId: string,
+  paid: boolean,
+  currentUser?: CurrentUser | null,
+): Promise<SetCreditPaidResult> {
+  const admin = await requireAdmin(currentUser);
+
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking) return { error: "Reserva no encontrada." };
+  if (booking.paymentMethod !== "CREDITO_BETO") {
+    return { error: "Esta reserva no es un pago a crédito." };
+  }
+
+  await prisma.booking.update({ where: { id: bookingId }, data: { creditPaid: paid } });
+  await logAdminAction({
+    adminId: admin.id,
+    action: paid ? "booking.credit_marked_paid" : "booking.credit_marked_unpaid",
+    targetType: "Booking",
+    targetId: bookingId,
+  });
+
+  return {};
+}
+
 export async function addBookingNote(
   bookingId: string,
   note: string,

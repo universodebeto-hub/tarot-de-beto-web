@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getClientAdminById } from "@/server/admin/clients";
+import { setUserCreditApprovalFormAction } from "@/app/admin/clientes/[id]/actions";
 import { minutesInBusinessDay, formatMinutes, businessDateString } from "@/lib/timezone";
 import { fullDateLabel } from "@/lib/date-labels";
 import { BOOKING_STATUS_LABEL } from "@/lib/booking-labels";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { EditClientInfoForm } from "@/components/admin/EditClientInfoForm";
 
 export const metadata: Metadata = { title: "Panel — Cliente", robots: { index: false } };
 
@@ -15,14 +17,38 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
 
   return (
     <div className="flex flex-col gap-6">
-      <GlassCard>
+      <GlassCard className="flex flex-col gap-3">
         <span className="eyebrow">Cliente</span>
-        <h2 className="mt-2 mb-1">
-          {client.firstName} {client.lastName ?? ""}
-        </h2>
-        <p className="mb-0 text-sm text-bone-dim">{client.email}</p>
-        <p className="mb-0 text-sm text-bone-dim">{client.phone ?? "Sin WhatsApp"}</p>
-        <p className="mb-0 text-sm text-bone-dim">{client.country ?? ""}</p>
+        <div>
+          <h2 className="mt-2 mb-1">
+            {client.firstName} {client.lastName ?? ""}
+          </h2>
+          <p className="mb-0 text-sm text-bone-dim">{client.email}</p>
+          <p className="mb-0 text-sm text-bone-dim">{client.phone ?? "Sin WhatsApp"}</p>
+          <p className="mb-0 text-sm text-bone-dim">{client.country ?? ""}</p>
+        </div>
+        <EditClientInfoForm
+          userId={client.id}
+          firstName={client.firstName}
+          lastName={client.lastName}
+          email={client.email}
+          phone={client.phone}
+          country={client.country}
+        />
+      </GlassCard>
+
+      <GlassCard className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <span className="eyebrow">Créditos Beto</span>
+          <span className="text-xs text-bone-dim">
+            {client.canUseCredit ? "Habilitado para pagar a crédito" : "No habilitado"}
+          </span>
+        </div>
+        <form action={setUserCreditApprovalFormAction.bind(null, client.id, !client.canUseCredit)}>
+          <button type="submit" className={client.canUseCredit ? "btn btn-ghost" : "btn btn-gold"}>
+            {client.canUseCredit ? "Deshabilitar crédito" : "Habilitar para pagar a crédito"}
+          </button>
+        </form>
       </GlassCard>
 
       <GlassCard>
