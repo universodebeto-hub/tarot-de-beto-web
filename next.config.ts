@@ -28,7 +28,10 @@ const CSP = [
   // de audio (Fase 11) a veces enrutan a un edge de región distinto dentro
   // del mismo dominio (ver "settings/regions" en las llamadas del SDK) —
   // mismo criterio que recomienda la propia documentación de LiveKit.
-  "connect-src 'self' https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google-analytics.com https://analytics.tiktok.com https://*.livekit.cloud wss://*.livekit.cloud",
+  // vercel.com: subida directa de comprobantes a Vercel Blob desde el
+  // navegador (@vercel/blob/client) -- el archivo nunca pasa por nuestro
+  // servidor, así que el navegador necesita permiso para conectarse ahí.
+  "connect-src 'self' https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google-analytics.com https://analytics.tiktok.com https://*.livekit.cloud wss://*.livekit.cloud https://vercel.com https://*.public.blob.vercel-storage.com",
   "frame-src https://www.paypal.com https://www.sandbox.paypal.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
