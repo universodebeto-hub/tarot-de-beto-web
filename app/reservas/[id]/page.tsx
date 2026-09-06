@@ -136,6 +136,7 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
                 {manualPaymentInstructions ? (
                   <ManualPaymentPanel
                     bookingId={booking.id}
+                    bookingNumber={booking.bookingNumber}
                     instructions={manualPaymentInstructions}
                     paypal={
                       process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID
@@ -143,6 +144,7 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
                         : null
                     }
                     creditEnabled={Boolean(viewer?.canUseCredit)}
+                    whatsappNumber={siteConfig.contact.whatsappNumber}
                   />
                 ) : null}
                 <PendingPaymentPanel

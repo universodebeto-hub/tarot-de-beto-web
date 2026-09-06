@@ -7,6 +7,7 @@ import type { ManualPaymentInstructions } from "@/server/settings";
 import { PAYMENT_METHOD_LABEL, PAYMENT_METHOD_LOGO_SLUG } from "@/lib/booking-labels";
 import { PayPalButton } from "@/components/booking/PayPalButton";
 import { requestCreditBookingAction } from "@/app/reservas/[id]/credit-actions";
+import { buildWhatsAppLink } from "@/config/site";
 
 type ManualMethod = "PAGO_MOVIL" | "ZELLE" | "BINANCE" | "REMITLY" | "WESTERN_UNION" | "MONEYGRAM" | "BANCOLOMBIA";
 /** "PAYPAL" y "CREDITO_BETO" solo existen acá para la selección visual -- ninguna se manda a /api/bookings/manual-payment: PAYPAL dispara el checkout de PayPalButton, CREDITO_BETO llama a requestCreditBookingAction (sin comprobante). */
@@ -29,6 +30,9 @@ interface ManualPaymentPanelProps {
   paypal?: { clientId: string; currency: string } | null;
   /** Solo true si Beto ya habilitó esta cuenta para pagar a crédito (User.canUseCredit) -- si no, "Créditos Beto" ni aparece. */
   creditEnabled?: boolean;
+  bookingNumber: string;
+  /** Número de WhatsApp de Beto -- botón de respaldo si falla la subida del comprobante. */
+  whatsappNumber?: string;
 }
 
 /**
@@ -39,7 +43,14 @@ interface ManualPaymentPanelProps {
  * Cada método se muestra como un botón cuadrado con su logo, todos del
  * mismo tamaño — ver public/assets/payment-logos/.
  */
-export function ManualPaymentPanel({ bookingId, instructions, paypal, creditEnabled }: ManualPaymentPanelProps) {
+export function ManualPaymentPanel({
+  bookingId,
+  instructions,
+  paypal,
+  creditEnabled,
+  bookingNumber,
+  whatsappNumber,
+}: ManualPaymentPanelProps) {
   const router = useRouter();
   const [method, setMethod] = useState<PickableMethod | null>(null);
   const [reference, setReference] = useState("");
@@ -109,7 +120,13 @@ export function ManualPaymentPanel({ bookingId, instructions, paypal, creditEnab
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bookingId, method, reference, proofUrl: uploadData.url }),
       });
-      const submitData = await submitRes.json();
+      let submitData: { success?: boolean; error?: string } = {};
+      try {
+        submitData = await submitRes.json();
+      } catch {
+        setError("No se pudo registrar el pago. Intenta de nuevo o mandalo por WhatsApp.");
+        return;
+      }
       if (!submitRes.ok || !submitData.success) {
         setError(submitData.error ?? "No se pudo registrar el pago.");
         return;
@@ -309,6 +326,19 @@ export function ManualPaymentPanel({ bookingId, instructions, paypal, creditEnab
               {submitting ? "Enviando..." : "Enviar comprobante"}
             </button>
             {error ? <p className="mb-0 text-sm text-ember">{error}</p> : null}
+            {error && whatsappNumber ? (
+              <a
+                href={buildWhatsAppLink(
+                  whatsappNumber,
+                  `Hola Beto, tuve un problema subiendo el comprobante de mi reserva ${bookingNumber} (${PAYMENT_METHOD_LABEL[method]}). Te mando la captura por acá.`,
+                )}
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-ghost self-start"
+              >
+                Enviar comprobante por WhatsApp
+              </a>
+            ) : null}
           </form>
         </div>
       ) : null}
