@@ -5,9 +5,29 @@ import { Room, RoomEvent, Track, type RemoteTrack, type RemoteTrackPublication }
 
 interface CallRoomProps {
   bookingId: string;
+  /** Minutos pagados del servicio -- una vez transcurridos, la llamada se corta sola (salvo creditExempt). */
+  durationMinutes: number;
+  /** true solo para reservas pagadas con "Créditos Beto" (ver server/credit.ts) -- a esas cuentas no se les corta la llamada por tiempo. */
+  creditExempt: boolean;
 }
 
 type CallState = "connecting" | "waiting" | "connected" | "ended" | "error";
+
+function formatClock(totalSeconds: number): string {
+  const sign = totalSeconds < 0 ? "-" : "";
+  const abs = Math.abs(totalSeconds);
+  const m = Math.floor(abs / 60);
+  const s = abs % 60;
+  return `${sign}${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+/** Verde/dorado con tiempo de sobra, ámbar bajo 5 min, rojo bajo 1 min o en tiempo extra. */
+function timerColorClass(durationMinutes: number, elapsedSeconds: number): string {
+  const remaining = durationMinutes * 60 - elapsedSeconds;
+  if (remaining <= 60) return "text-ember";
+  if (remaining <= 300) return "text-gold";
+  return "text-gold-soft";
+}
 
 /**
  * Llamada en vivo (Fase 11) — audio siempre activo; el video es opcional,
@@ -18,7 +38,7 @@ type CallState = "connecting" | "waiting" | "connected" | "ended" | "error";
  * de emitirlo — ver server/calls.ts). Sala = bookingId, siempre 2
  * participantes esperados (cliente y tarotista).
  */
-export function CallRoom({ bookingId }: CallRoomProps) {
+export function CallRoom({ bookingId, durationMinutes, creditExempt }: CallRoomProps) {
   const [state, setState] = useState<CallState>("connecting");
   const [error, setError] = useState<string | null>(null);
   const [otherPartyName, setOtherPartyName] = useState<string | null>(null);
@@ -27,10 +47,13 @@ export function CallRoom({ bookingId }: CallRoomProps) {
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraWarning, setCameraWarning] = useState<string | null>(null);
   const [remoteVideoOn, setRemoteVideoOn] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const roomRef = useRef<Room | null>(null);
   const audioContainerRef = useRef<HTMLDivElement>(null);
   const remoteVideoRef = useRef<HTMLDivElement>(null);
   const localVideoRef = useRef<HTMLDivElement>(null);
+  /** Segundos ya contados en tramos "connected" previos -- para que el reloj no salte hacia atrás si hay un corte y reconexión breve. */
+  const accumulatedRef = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,6 +143,27 @@ export function CallRoom({ bookingId }: CallRoomProps) {
     };
   }, [bookingId]);
 
+  useEffect(() => {
+    if (state !== "connected") return;
+    const segmentStart = Date.now();
+    const interval = setInterval(() => {
+      setElapsedSeconds(accumulatedRef.current + Math.floor((Date.now() - segmentStart) / 1000));
+    }, 1000);
+    return () => {
+      clearInterval(interval);
+      accumulatedRef.current += Math.floor((Date.now() - segmentStart) / 1000);
+    };
+  }, [state]);
+
+  // Corte automático al llegar al tiempo pagado -- salvo Créditos Beto (ver
+  // creditExempt). Del lado del cliente, igual que el resto del contador --
+  // no reemplaza una validación de servidor, pero cubre el caso real pedido.
+  useEffect(() => {
+    if (creditExempt || state !== "connected") return;
+    if (elapsedSeconds >= durationMinutes * 60) hangUp();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hangUp se redefine cada render (usa roomRef/fetch, no estado), agregarlo re-dispararía el efecto sin cambiar el comportamiento.
+  }, [creditExempt, state, elapsedSeconds, durationMinutes]);
+
   function toggleMute() {
     const room = roomRef.current;
     if (!room) return;
@@ -199,6 +243,21 @@ export function CallRoom({ bookingId }: CallRoomProps) {
       ) : null}
       {state === "connected" ? (
         <p className="mb-0 text-gold-soft">En llamada con {otherPartyName ?? "la otra persona"}</p>
+      ) : null}
+
+      {state === "connected" ? (
+        <div className="flex flex-col items-center gap-0.5">
+          <span className={`font-display text-3xl font-bold tabular-nums ${timerColorClass(durationMinutes, elapsedSeconds)}`}>
+            {formatClock(elapsedSeconds)}
+          </span>
+          <span className="text-xs text-bone-dim">
+            {creditExempt
+              ? "Consulta a crédito -- sin corte por tiempo"
+              : durationMinutes * 60 - elapsedSeconds >= 0
+                ? `Quedan ${formatClock(durationMinutes * 60 - elapsedSeconds)} de ${durationMinutes} min`
+                : `${formatClock(elapsedSeconds - durationMinutes * 60)} fuera de tiempo`}
+          </span>
+        </div>
       ) : null}
       {state === "ended" ? <p className="mb-0 text-bone-dim">Llamada finalizada.</p> : null}
       {state === "error" ? <p className="mb-0 text-ember">{error}</p> : null}

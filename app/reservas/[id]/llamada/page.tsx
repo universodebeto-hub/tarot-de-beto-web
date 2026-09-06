@@ -35,7 +35,11 @@ export default async function CallPage({ params }: CallPageProps) {
 
         <GlassCard>
           {isReady ? (
-            <CallRoom bookingId={booking.id} />
+            <CallRoom
+              bookingId={booking.id}
+              durationMinutes={booking.service.durationMinutes}
+              creditExempt={booking.paymentMethod === "CREDITO_BETO"}
+            />
           ) : (
             <p className="mb-0 text-center text-sm text-bone-dim">
               Esta consulta todavía no está habilitada para llamar.
