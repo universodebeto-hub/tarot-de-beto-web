@@ -69,16 +69,22 @@ export function RegisterForm() {
               id="phoneDialCode"
               name="phoneDialCode"
               defaultValue="+57"
-              className={`${selectClass} w-[6.5rem] shrink-0`}
+              className={`${selectClass} w-[5.5rem] shrink-0 !px-2`}
               aria-label="Código de país del teléfono"
             >
               {COUNTRIES.map((c) => (
                 <option key={`${c.iso2}-${c.dialCode}`} value={c.dialCode} className="bg-obsidian">
-                  {c.dialCode} {c.iso2 !== "XX" ? c.iso2 : ""}
+                  {c.dialCode}
                 </option>
               ))}
             </select>
-            <input id="phone" name="phoneNumber" type="tel" placeholder="3001234567" className={inputClass} />
+            <input
+              id="phone"
+              name="phoneNumber"
+              type="tel"
+              placeholder="3001234567"
+              className={`${inputClass} min-w-0 flex-1`}
+            />
           </div>
         </div>
 
