@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { savePushSubscription } from "@/server/push-notifications";
+import { getCallUsageReport } from "@/server/admin/call-usage";
 import type { TarotistaStatus, AttentionRequestStatus } from "@prisma/client";
 import type { CurrentUser } from "@/lib/auth/session";
 
@@ -112,6 +113,13 @@ export async function getOwnConfirmedConsultations(currentUser?: CurrentUser | n
   const unreadByBooking = new Map(unread.map((row) => [row.bookingId, row._count._all]));
 
   return bookings.map((booking) => ({ ...booking, unreadCount: unreadByBooking.get(booking.id) ?? 0 }));
+}
+
+/** Informe de minutos pagados vs. consumidos, acotado al tarotista vinculado a la cuenta actual -- nunca acepta un tarotistaId de afuera, siempre el propio. Igual que /admin/consumo pero para su propio panel. */
+export async function getOwnCallUsageReport(currentUser?: CurrentUser | null) {
+  const tarotista = await getOwnTarotista(currentUser);
+  if (!tarotista) return [];
+  return getCallUsageReport(tarotista.id);
 }
 
 export interface SubscribePushResult {
