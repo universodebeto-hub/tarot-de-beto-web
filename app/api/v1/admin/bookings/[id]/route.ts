@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdminFromRequest, UnauthorizedError } from "@/lib/auth/api-auth";
-import { getBookingAdminById, setBookingStatus, addBookingNote } from "@/server/admin/bookings";
+import { getBookingAdminById, setBookingStatus, addBookingNote, setCreditPaid } from "@/server/admin/bookings";
 import type { BookingStatus } from "@prisma/client";
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -32,6 +32,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
     if (typeof body?.note === "string" && body.note.trim()) {
       const result = await addBookingNote(id, body.note, user);
+      if (result.error) return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+    if (typeof body?.creditPaid === "boolean") {
+      const result = await setCreditPaid(id, body.creditPaid, user);
       if (result.error) return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
