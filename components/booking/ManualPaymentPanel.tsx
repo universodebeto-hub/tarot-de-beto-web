@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { upload } from "@vercel/blob/client";
 import type { ManualPaymentInstructions } from "@/server/settings";
 import { PAYMENT_METHOD_LABEL, PAYMENT_METHOD_LOGO_SLUG } from "@/lib/booking-labels";
 import { PayPalButton } from "@/components/booking/PayPalButton";
@@ -61,24 +60,25 @@ export function ManualPaymentPanel({ bookingId, instructions, paypal }: ManualPa
     setSubmitting(true);
     setError(null);
     try {
-      const ext = file.name.split(".").pop() || "jpg";
-      let blobUrl: string;
-      try {
-        const blob = await upload(`comprobantes/${bookingId}-${Date.now()}.${ext}`, file, {
-          access: "public",
-          handleUploadUrl: "/api/uploads/payment-proof",
-          clientPayload: JSON.stringify({ bookingId }),
-        });
-        blobUrl = blob.url;
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "No se pudo subir el comprobante.");
+      // La subida directa a Vercel Blob (@vercel/blob/client) queda rechazada
+      // en este store ("Access denied") -- probablemente una restricción de
+      // red del plan actual, no algo que se arregle desde el código. Mientras
+      // tanto, misma vía simple y ya probada que usa la app: el archivo pasa
+      // por nuestro servidor (tope real de ~4 MB de Vercel), sin comprimir.
+      const uploadForm = new FormData();
+      uploadForm.set("bookingId", bookingId);
+      uploadForm.set("file", file);
+      const uploadRes = await fetch("/api/uploads/payment-proof", { method: "POST", body: uploadForm });
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok || !uploadData.url) {
+        setError(uploadData.error ?? "No se pudo subir el comprobante.");
         return;
       }
 
       const submitRes = await fetch("/api/bookings/manual-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookingId, method, reference, proofUrl: blobUrl }),
+        body: JSON.stringify({ bookingId, method, reference, proofUrl: uploadData.url }),
       });
       const submitData = await submitRes.json();
       if (!submitRes.ok || !submitData.success) {
