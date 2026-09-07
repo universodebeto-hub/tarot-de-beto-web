@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createCallToken, isLiveKitConfigured } from "@/server/livekit";
+import { sendExpoPushToUser } from "@/server/expo-push";
 import type { CurrentUser } from "@/lib/auth/session";
 
 export interface CallAccessResult {
@@ -59,6 +60,36 @@ export async function getCallAccess(
   const token = await createCallToken(bookingId, identity, name);
 
   await prisma.callLog.create({ data: { bookingId, roomName: bookingId } });
+
+  // Aviso de "llamada entrante" a la otra parte -- mismo mecanismo ya usado
+  // por getInternalCallAccess() (server/internal-calls.ts), acá faltaba
+  // por completo: sin esto, la persona del otro lado nunca se entera de
+  // que alguien está llamando, tiene que estar mirando la pantalla de
+  // casualidad. Reservas de invitado (sin userId) se quedan sin este aviso
+  // -- no tienen cuenta a la que mandarle push.
+  if (isClient) {
+    if (booking.tarotista.userId) {
+      await sendExpoPushToUser(booking.tarotista.userId, {
+        title: "Llamada entrante",
+        body: `${name} te está llamando.`,
+        data: { type: "incoming_call", bookingId },
+        priority: "high",
+        sound: "default",
+        channelId: "incoming_calls",
+        categoryId: "incoming_call",
+      }).catch((err) => console.error("[expo-push] incoming_call:", err));
+    }
+  } else if (booking.userId) {
+    await sendExpoPushToUser(booking.userId, {
+      title: "Llamada entrante",
+      body: `${booking.tarotista.name} te está llamando.`,
+      data: { type: "incoming_call", bookingId },
+      priority: "high",
+      sound: "default",
+      channelId: "incoming_calls",
+      categoryId: "incoming_call",
+    }).catch((err) => console.error("[expo-push] incoming_call:", err));
+  }
 
   return { token, url: process.env.NEXT_PUBLIC_LIVEKIT_URL, roomName: bookingId, otherPartyName };
 }

@@ -52,6 +52,10 @@ export async function getInternalCallAccess(
       title: "Llamada interna",
       body: `${user.firstName} te está llamando.`,
       data: { type: "internal_call", tarotistaId },
+      priority: "high",
+      sound: "default",
+      channelId: "incoming_calls",
+      categoryId: "incoming_call",
     });
   } else {
     const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
@@ -61,6 +65,10 @@ export async function getInternalCallAccess(
           title: "Llamada interna",
           body: `${tarotista.name} te está llamando.`,
           data: { type: "internal_call", tarotistaId },
+          priority: "high",
+          sound: "default",
+          channelId: "incoming_calls",
+          categoryId: "incoming_call",
         }),
       ),
     );

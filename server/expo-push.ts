@@ -7,6 +7,17 @@ export interface ExpoPushPayload {
   title: string;
   body: string;
   data?: Record<string, unknown>;
+  /// Solo para llamadas entrantes (ver server/calls.ts, server/internal-calls.ts):
+  /// prioridad alta + sonido + canal propio de Android con importancia
+  /// máxima (ver src/notifications.ts en la app) + categoría con botones de
+  /// Aceptar/Rechazar (registrada en el dispositivo con
+  /// Notifications.setNotificationCategoryAsync) -- sin esto la notificación
+  /// se comporta como cualquier otra (silenciosa, sin urgencia), que es
+  /// justo lo que no queríamos para "que repique como un teléfono".
+  priority?: "default" | "high";
+  sound?: "default" | null;
+  channelId?: string;
+  categoryId?: string;
 }
 
 /**
@@ -31,6 +42,10 @@ export async function sendExpoPushToUser(userId: string, payload: ExpoPushPayloa
           title: payload.title,
           body: payload.body,
           data: payload.data ?? {},
+          ...(payload.priority ? { priority: payload.priority } : {}),
+          ...(payload.sound !== undefined ? { sound: payload.sound } : {}),
+          ...(payload.channelId ? { channelId: payload.channelId } : {}),
+          ...(payload.categoryId ? { categoryId: payload.categoryId } : {}),
         })),
       ),
     });
