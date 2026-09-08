@@ -126,7 +126,13 @@ export async function captureOrderForBooking(orderId: string): Promise<CaptureRe
   await prisma.$transaction([
     prisma.booking.update({
       where: { id: booking.id },
-      data: { status: "CONFIRMED", paymentStatus: "PAID", paypalCaptureId: capture.id, paidAt: new Date() },
+      data: {
+        status: "CONFIRMED",
+        paymentStatus: "PAID",
+        paymentMethod: "PAYPAL",
+        paypalCaptureId: capture.id,
+        paidAt: new Date(),
+      },
     }),
     prisma.paypalTransaction.update({
       where: { paypalOrderId: orderId },

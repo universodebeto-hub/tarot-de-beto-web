@@ -73,7 +73,13 @@ export async function getAccountingReport(range?: { from?: Date; to?: Date }): P
   const baseWhere: Prisma.BookingWhereInput = {
     paymentStatus: "PAID",
     status: { in: ["CONFIRMED", "COMPLETED"] },
-    paymentMethod: { not: "CORTESIA" },
+    // OJO: `paymentMethod: { not: "CORTESIA" }` a secas excluiría también las
+    // reservas confirmadas a mano sin comprobante (ver
+    // server/admin/bookings.ts::setBookingStatus, que puede marcar PAID sin
+    // guardar ningún método) -- en SQL, `<> 'CORTESIA'` sobre NULL da NULL
+    // (se excluye), no true. Esas reservas sí cobraron de verdad, así que
+    // hay que incluirlas explícitamente.
+    OR: [{ paymentMethod: null }, { paymentMethod: { not: "CORTESIA" } }],
   };
 
   const [bookings, expenses, yearBookings, usdToCopRate] = await Promise.all([
