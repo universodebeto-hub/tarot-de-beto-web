@@ -2,7 +2,13 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { setBookingStatus, addBookingNote, setCreditPaid, deleteBookingPermanently } from "@/server/admin/bookings";
+import {
+  setBookingStatus,
+  addBookingNote,
+  setCreditPaid,
+  deleteBookingPermanently,
+  setManualMinutesAdjustment,
+} from "@/server/admin/bookings";
 import type { AdminFormState } from "@/server/admin/services";
 import type { BookingStatus } from "@prisma/client";
 
@@ -39,6 +45,15 @@ export async function deleteBookingAction(bookingId: string): Promise<AdminFormS
 export async function deleteBookingFromListAction(bookingId: string): Promise<AdminFormState> {
   const result = await deleteBookingPermanently(bookingId);
   if (!result.error) revalidatePath("/admin/reservas");
+  return result;
+}
+
+export async function setManualMinutesAdjustmentAction(
+  bookingId: string,
+  minutes: number,
+): Promise<{ error?: string }> {
+  const result = await setManualMinutesAdjustment(bookingId, minutes);
+  if (!result.error) revalidatePath(`/admin/reservas/${bookingId}`);
   return result;
 }
 

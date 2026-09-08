@@ -94,6 +94,44 @@ export async function getCallAccess(
   return { token, url: process.env.NEXT_PUBLIC_LIVEKIT_URL, roomName: bookingId, otherPartyName };
 }
 
+export interface MarkCallConnectedResult {
+  success?: boolean;
+  error?: string;
+}
+
+/**
+ * Marca el CallLog abierto de esta reserva como realmente contestado --
+ * llamado por el cliente (web/móvil) recién cuando LiveKit avisa que la
+ * OTRA persona entró a la sala (RoomEvent.ParticipantConnected), nunca al
+ * pedir el token. Antes de esto, `connectedAt` queda null y ese tramo de
+ * "timbrando sin que contesten" no cuenta como minutos consumidos (ver
+ * server/admin/call-usage.ts). Idempotente: si ya estaba marcado, no hace nada.
+ */
+export async function markCallConnected(
+  bookingId: string,
+  currentUser?: CurrentUser | null,
+): Promise<MarkCallConnectedResult> {
+  const user = currentUser === undefined ? await getCurrentUser() : currentUser;
+  if (!user) return { error: "Necesitas iniciar sesión." };
+
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId }, include: { tarotista: true } });
+  if (!booking) return { error: "Reserva no encontrada." };
+
+  const isClient = booking.userId === user.id;
+  const isTarotista = booking.tarotista?.userId === user.id;
+  if (!isClient && !isTarotista) return { error: "No tienes acceso a esta llamada." };
+
+  const openLog = await prisma.callLog.findFirst({
+    where: { bookingId, endedAt: null },
+    orderBy: { startedAt: "desc" },
+  });
+  if (openLog && !openLog.connectedAt) {
+    await prisma.callLog.update({ where: { id: openLog.id }, data: { connectedAt: new Date() } });
+  }
+
+  return { success: true };
+}
+
 export interface EndCallResult {
   success?: boolean;
   error?: string;

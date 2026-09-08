@@ -62,7 +62,12 @@ export function CallRoom({ bookingId, durationMinutes, creditExempt, videoReques
     const room = new Room();
     roomRef.current = room;
 
-    room.on(RoomEvent.ParticipantConnected, () => setState("connected"));
+    room.on(RoomEvent.ParticipantConnected, () => {
+      setState("connected");
+      // Recién ahora la otra persona realmente entró -- antes de esto no
+      // cuenta como minutos consumidos (ver server/calls.ts::markCallConnected).
+      fetch(`/api/calls/${bookingId}/connected`, { method: "POST" }).catch(() => {});
+    });
     room.on(RoomEvent.ParticipantDisconnected, () => setState("waiting"));
     room.on(RoomEvent.Disconnected, () => {
       if (!cancelled) setState("ended");
@@ -144,7 +149,12 @@ export function CallRoom({ bookingId, durationMinutes, creditExempt, videoReques
       }
 
       if (!cancelled) {
-        setState(room.remoteParticipants.size > 0 ? "connected" : "waiting");
+        const alreadyThere = room.remoteParticipants.size > 0;
+        setState(alreadyThere ? "connected" : "waiting");
+        // La otra persona ya estaba en la sala antes de que nos uniéramos --
+        // el evento ParticipantConnected no dispara para alguien que ya
+        // estaba ahí, así que hay que marcarlo acá también.
+        if (alreadyThere) fetch(`/api/calls/${bookingId}/connected`, { method: "POST" }).catch(() => {});
       }
     }
     void join();

@@ -12,6 +12,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { TrashIcon } from "@/components/ui/icons";
 import { Tabs, type TabItem } from "@/components/ui/Tabs";
 import { AdminNoteForm } from "@/components/admin/AdminNoteForm";
+import { ManualMinutesAdjustmentForm } from "@/components/admin/ManualMinutesAdjustmentForm";
 import { intakeFieldsFor } from "@/lib/service-intake";
 import { isReportOnlyService, REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
 import { effectivePrice } from "@/lib/booking-price";
@@ -214,12 +215,14 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
     }
 
     if (isConsultation) {
-      const consumedMinutes = Math.round(
+      const autoMinutes = Math.round(
         booking.callLogs.reduce(
-          (sum, log) => sum + (log.endedAt ? Math.max(0, (log.endedAt.getTime() - log.startedAt.getTime()) / 60000) : 0),
+          (sum, log) =>
+            sum + (log.connectedAt && log.endedAt ? Math.max(0, (log.endedAt.getTime() - log.connectedAt.getTime()) / 60000) : 0),
           0,
         ),
       );
+      const consumedMinutes = Math.max(0, autoMinutes + booking.manualMinutesAdjustment);
       tabs.push({
         id: "llamadas",
         label: "Llamadas",
@@ -229,26 +232,41 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
             <p className="mb-0 text-xs text-ash">
               Pagado: <span className="text-bone">{booking.service.durationMinutes} min</span> · Consumido:{" "}
               <span className="text-bone">{consumedMinutes} min</span>
+              {booking.manualMinutesAdjustment !== 0 ? (
+                <span className="text-gold-soft">
+                  {" "}
+                  (incluye ajuste manual de {booking.manualMinutesAdjustment > 0 ? "+" : ""}
+                  {booking.manualMinutesAdjustment} min)
+                </span>
+              ) : null}
             </p>
             {booking.callLogs.length === 0 ? (
               <p className="mb-0 text-sm text-ash">Todavía no hubo ninguna llamada en esta consulta.</p>
             ) : (
               <div className="flex flex-col gap-2 text-sm">
                 {booking.callLogs.map((log) => {
-                  const durationMinutes = log.endedAt
-                    ? Math.round((log.endedAt.getTime() - log.startedAt.getTime()) / 60000)
-                    : null;
+                  const durationMinutes =
+                    log.connectedAt && log.endedAt
+                      ? Math.round((log.endedAt.getTime() - log.connectedAt.getTime()) / 60000)
+                      : null;
                   return (
                     <div key={log.id} className="flex items-center justify-between border-b border-white/5 pb-2">
                       <span className="text-bone-dim">{log.startedAt.toLocaleString("es")}</span>
                       <span className="text-bone-dim">
-                        {durationMinutes !== null ? `${durationMinutes} min` : "En curso / sin cerrar"}
+                        {!log.connectedAt
+                          ? log.endedAt
+                            ? "Sin contestar"
+                            : "En curso / timbrando"
+                          : durationMinutes !== null
+                            ? `${durationMinutes} min`
+                            : "En curso / sin cerrar"}
                       </span>
                     </div>
                   );
                 })}
               </div>
             )}
+            <ManualMinutesAdjustmentForm bookingId={booking.id} initial={booking.manualMinutesAdjustment} />
           </div>
         ),
       });

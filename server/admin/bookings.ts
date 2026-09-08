@@ -176,6 +176,41 @@ export async function deleteBookingPermanently(
   return {};
 }
 
+export interface SetManualMinutesAdjustmentResult {
+  error?: string;
+}
+
+/**
+ * Corrección manual de minutos consumidos (puede ser negativa) -- para
+ * cuando hubo un problema real de conexión (ej. la llamada contó timbrando
+ * sin que contesten, o un corte de red a mitad de consulta) que el conteo
+ * automático (CallLog.connectedAt -> endedAt, ver server/admin/call-usage.ts)
+ * no pudo resolver solo. No toca CallLog ni el gating de nada, solo suma/
+ * resta al total que se muestra en el informe de consumo.
+ */
+export async function setManualMinutesAdjustment(
+  bookingId: string,
+  minutes: number,
+  currentUser?: CurrentUser | null,
+): Promise<SetManualMinutesAdjustmentResult> {
+  const admin = await requireAdmin(currentUser);
+  if (!Number.isFinite(minutes)) return { error: "Ingresá un número válido." };
+
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking) return { error: "Reserva no encontrada." };
+
+  await prisma.booking.update({ where: { id: bookingId }, data: { manualMinutesAdjustment: Math.round(minutes) } });
+  await logAdminAction({
+    adminId: admin.id,
+    action: "booking.manual_minutes_adjusted",
+    targetType: "Booking",
+    targetId: bookingId,
+    details: `${Math.round(minutes)} min`,
+  });
+
+  return {};
+}
+
 export interface SetCreditPaidResult {
   error?: string;
 }

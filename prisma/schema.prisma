@@ -385,6 +385,12 @@ model Booking {
   /// en cualquier llamada, que sigue siendo gratis para cualquiera -- esto
   /// es específicamente "pedí y pagué por video desde el vamos".
   videoRequested  Boolean       @default(false)
+  /// Ajuste manual de minutos (puede ser negativo) que el admin agrega al
+  /// total de minutos consumidos de esta reserva en server/admin/call-usage.ts
+  /// -- para corregir el conteo automático (basado en CallLog.connectedAt/
+  /// endedAt) cuando hubo un problema real de conexión que el sistema no
+  /// pudo detectar solo. No afecta nada del gating de chat/llamada.
+  manualMinutesAdjustment Int    @default(0)
   notes           String?
   /// Datos adicionales que algunos servicios exigen para poder realizarse
   /// (ej. fecha/hora/lugar de nacimiento para Carta Astral) — ver
@@ -459,6 +465,13 @@ model CallLog {
   booking   Booking?      @relation(fields: [bookingId], references: [id])
   roomName  String
   startedAt DateTime      @default(now())
+  /// Momento en que la OTRA persona realmente entró a la sala (LiveKit
+  /// RoomEvent.ParticipantConnected desde el cliente, ver
+  /// server/calls.ts::markCallConnected) -- null si nadie contestó. Los
+  /// minutos consumidos (server/admin/call-usage.ts) se cuentan desde acá,
+  /// nunca desde `startedAt`, para no facturar el tiempo de timbrado si la
+  /// otra persona nunca atendió.
+  connectedAt DateTime?
   endedAt   DateTime?
   status    CallLogStatus @default(STARTED)
 
