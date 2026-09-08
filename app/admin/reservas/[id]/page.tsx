@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getBookingAdminById } from "@/server/admin/bookings";
-import { changeBookingStatusFormAction, setCreditPaidFormAction } from "@/app/admin/reservas/[id]/actions";
+import { changeBookingStatusFormAction, setCreditPaidFormAction, deleteBookingAction } from "@/app/admin/reservas/[id]/actions";
+import { ConfirmActionButton } from "@/components/admin/ConfirmActionButton";
 import { minutesInBusinessDay, formatMinutes, businessDateString } from "@/lib/timezone";
 import { fullDateLabel } from "@/lib/date-labels";
 import { BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL, PAYMENT_METHOD_LABEL } from "@/lib/booking-labels";
@@ -90,17 +91,22 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
           </div>
         </div>
 
-        {transitions.length > 0 ? (
-          <div className="flex flex-wrap gap-3 border-t border-white/10 pt-4">
-            {transitions.map((t) => (
-              <form key={t.status} action={changeBookingStatusFormAction.bind(null, booking.id, t.status)}>
-                <button type="submit" className={t.status === "CANCELLED" ? "btn btn-ghost" : "btn btn-gold"}>
-                  {t.label}
-                </button>
-              </form>
-            ))}
-          </div>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-3 border-t border-white/10 pt-4">
+          {transitions.map((t) => (
+            <form key={t.status} action={changeBookingStatusFormAction.bind(null, booking.id, t.status)}>
+              <button type="submit" className={t.status === "CANCELLED" ? "btn btn-ghost" : "btn btn-gold"}>
+                {t.label}
+              </button>
+            </form>
+          ))}
+          <ConfirmActionButton
+            label="Eliminar registro"
+            pendingLabel="Eliminando…"
+            confirmText={`¿Eliminar por completo la reserva #${booking.bookingNumber}? Se borra el registro entero (mensajes, llamadas, transacciones) y no se puede deshacer. Si solo querés que quede anulada, usa "Cancelar" en vez de esto.`}
+            action={deleteBookingAction.bind(null, booking.id)}
+            className="btn btn-ghost ml-auto border-ember/40 text-ember hover:border-ember hover:bg-ember/10"
+          />
+        </div>
       </GlassCard>
 
       {intakeData ? (

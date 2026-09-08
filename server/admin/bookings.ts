@@ -137,6 +137,45 @@ export async function setBookingStatus(
   return {};
 }
 
+export interface DeleteBookingResult {
+  error?: string;
+}
+
+/**
+ * Borra una reserva y todo lo que dependa de ella (mensajes, registros de
+ * llamada, transacciones PayPal) -- a diferencia de "Cancelar" (que solo
+ * cambia el estado y conserva el registro), esto es irreversible y no deja
+ * rastro. Pensado para limpiar datos de prueba o duplicados, no para el uso
+ * diario -- cancelar sigue siendo la opción correcta para una reserva real
+ * que el cliente ya no quiere.
+ */
+export async function deleteBookingPermanently(
+  bookingId: string,
+  currentUser?: CurrentUser | null,
+): Promise<DeleteBookingResult> {
+  const admin = await requireAdmin(currentUser);
+
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking) return { error: "Reserva no encontrada." };
+
+  await prisma.$transaction([
+    prisma.message.deleteMany({ where: { bookingId } }),
+    prisma.callLog.deleteMany({ where: { bookingId } }),
+    prisma.paypalTransaction.deleteMany({ where: { bookingId } }),
+    prisma.booking.delete({ where: { id: bookingId } }),
+  ]);
+
+  await logAdminAction({
+    adminId: admin.id,
+    action: "booking.deleted",
+    targetType: "Booking",
+    targetId: bookingId,
+    details: `#${booking.bookingNumber}`,
+  });
+
+  return {};
+}
+
 export interface SetCreditPaidResult {
   error?: string;
 }

@@ -7,7 +7,11 @@ import { fullDateLabel } from "@/lib/date-labels";
 import { BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL } from "@/lib/booking-labels";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ConfirmActionButton } from "@/components/admin/ConfirmActionButton";
+import { changeBookingStatusFormAction, deleteBookingFromListAction } from "@/app/admin/reservas/[id]/actions";
 import type { BookingStatus } from "@prisma/client";
+
+const CANCELLABLE_STATUSES: BookingStatus[] = ["PENDING_PAYMENT", "CONFIRMED", "RESCHEDULE_REQUESTED"];
 
 export const metadata: Metadata = { title: "Panel — Reservas", robots: { index: false } };
 
@@ -120,6 +124,7 @@ export default async function AdminBookingsPage({ searchParams }: PageProps) {
                 <th className="py-2 pr-4">Fecha</th>
                 <th className="py-2 pr-4">Estado</th>
                 <th className="py-2 pr-4">Pago</th>
+                <th className="py-2 pr-4">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -140,6 +145,26 @@ export default async function AdminBookingsPage({ searchParams }: PageProps) {
                   </td>
                   <td className="py-2.5 pr-4 text-bone-dim">{BOOKING_STATUS_LABEL[b.status]}</td>
                   <td className="py-2.5 pr-4 text-bone-dim">{PAYMENT_STATUS_LABEL[b.paymentStatus]}</td>
+                  <td className="py-2.5 pr-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {CANCELLABLE_STATUSES.includes(b.status) ? (
+                        <ConfirmActionButton
+                          label="Cancelar"
+                          pendingLabel="…"
+                          confirmText={`¿Cancelar la reserva #${b.bookingNumber}? Queda anulada pero el registro se conserva.`}
+                          action={changeBookingStatusFormAction.bind(null, b.id, "CANCELLED")}
+                          className="rounded-md border border-white/15 px-2.5 py-1 font-mono text-[11px] uppercase tracking-wide text-bone-dim hover:border-gold/30 hover:text-gold-soft"
+                        />
+                      ) : null}
+                      <ConfirmActionButton
+                        label="Eliminar"
+                        pendingLabel="…"
+                        confirmText={`¿Eliminar por completo la reserva #${b.bookingNumber}? No se puede deshacer.`}
+                        action={deleteBookingFromListAction.bind(null, b.id)}
+                        className="rounded-md border border-ember/30 px-2.5 py-1 font-mono text-[11px] uppercase tracking-wide text-ember hover:border-ember hover:bg-ember/10"
+                      />
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
