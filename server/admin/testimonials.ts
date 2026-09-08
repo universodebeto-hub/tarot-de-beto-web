@@ -22,3 +22,16 @@ export async function setTestimonialStatus(id: string, status: TestimonialStatus
     details: status,
   });
 }
+
+export async function deleteTestimonial(id: string): Promise<void> {
+  const admin = await requireAdmin();
+  const testimonial = await prisma.testimonial.findUnique({ where: { id } });
+  await prisma.testimonial.delete({ where: { id } });
+  await logAdminAction({
+    adminId: admin.id,
+    action: "testimonial.deleted",
+    targetType: "Testimonial",
+    targetId: id,
+    details: testimonial?.name,
+  });
+}

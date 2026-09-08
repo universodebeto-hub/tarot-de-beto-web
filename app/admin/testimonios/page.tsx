@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { revalidatePath } from "next/cache";
-import { listTestimonialsAdmin, setTestimonialStatus } from "@/server/admin/testimonials";
+import { listTestimonialsAdmin, setTestimonialStatus, deleteTestimonial } from "@/server/admin/testimonials";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { TrashIcon } from "@/components/ui/icons";
 import { SummaryBar } from "@/components/admin/SummaryBar";
+import { ConfirmActionButton } from "@/components/admin/ConfirmActionButton";
 import type { Tone } from "@/lib/status-tone";
 import type { TestimonialStatus } from "@prisma/client";
 
@@ -29,6 +31,14 @@ async function changeStatus(id: string, status: TestimonialStatus) {
   await setTestimonialStatus(id, status);
   revalidatePath("/admin/testimonios");
   revalidatePath("/");
+}
+
+async function deleteTestimonialAction(id: string): Promise<{ error?: string }> {
+  "use server";
+  await deleteTestimonial(id);
+  revalidatePath("/admin/testimonios");
+  revalidatePath("/");
+  return {};
 }
 
 export default async function AdminTestimonialsPage() {
@@ -72,6 +82,16 @@ export default async function AdminTestimonialsPage() {
                 Rechazar
               </button>
             </form>
+            <ConfirmActionButton
+              label="Eliminar"
+              icon={<TrashIcon className="h-4 w-4" />}
+              pendingLabel="Eliminando…"
+              tone="danger"
+              confirmLabel="Sí, eliminar"
+              confirmMessage={`¿Eliminar por completo el testimonio de ${t.name}? No se puede deshacer.`}
+              action={deleteTestimonialAction.bind(null, t.id)}
+              className="btn btn-ghost ml-auto flex items-center gap-2 border-ember/40 text-ember hover:border-ember hover:bg-ember/10"
+            />
           </div>
         </GlassCard>
       ))}

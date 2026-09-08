@@ -10,6 +10,7 @@ import { BOOKING_STATUS_TONE, PAYMENT_STATUS_TONE } from "@/lib/status-tone";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { TrashIcon } from "@/components/ui/icons";
+import { Tabs, type TabItem } from "@/components/ui/Tabs";
 import { AdminNoteForm } from "@/components/admin/AdminNoteForm";
 import { intakeFieldsFor } from "@/lib/service-intake";
 import { isReportOnlyService, REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
@@ -36,8 +37,9 @@ const TRANSITIONS: Record<string, { label: string; status: BookingStatus }[]> = 
 
 export default async function AdminBookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const booking = await getBookingAdminById(id);
-  if (!booking) notFound();
+  const bookingOrNull = await getBookingAdminById(id);
+  if (!bookingOrNull) notFound();
+  const booking = bookingOrNull;
 
   const isReport = isReportOnlyService(booking.service.slug);
   const isConsultation = Boolean(booking.tarotistaId) && !isReport;
@@ -117,9 +119,20 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
         </div>
       </GlassCard>
 
-      {intakeData ? (
-        <GlassCard>
-          <span className="eyebrow mb-3">Datos adicionales del servicio</span>
+      <GlassCard>
+        <Tabs items={buildTabs()} />
+      </GlassCard>
+    </div>
+  );
+
+  function buildTabs(): TabItem[] {
+    const tabs: TabItem[] = [];
+
+    if (intakeData) {
+      tabs.push({
+        id: "detalles",
+        label: "Detalles",
+        content: (
           <div className="grid grid-cols-2 gap-4 text-sm">
             {(intakeLabels.length > 0 ? intakeLabels : Object.keys(intakeData).map((key) => ({ key, label: key })))
               .filter((field) => intakeData[field.key])
@@ -132,114 +145,130 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
                 </div>
               ))}
           </div>
-        </GlassCard>
-      ) : null}
+        ),
+      });
+    }
 
-      {isCredit ? (
-        <GlassCard className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <span className="eyebrow">Créditos Beto</span>
-            <span className="text-xs text-bone-dim">{booking.creditPaid ? "Ya cobrado" : "Pendiente de cobro"}</span>
-          </div>
-          <form action={setCreditPaidFormAction.bind(null, booking.id, !booking.creditPaid)}>
-            <button type="submit" className={booking.creditPaid ? "btn btn-ghost" : "btn btn-gold"}>
-              {booking.creditPaid ? "Marcar como no cobrado" : "Marcar crédito como cobrado"}
-            </button>
-          </form>
-        </GlassCard>
-      ) : null}
+    if (isCredit || booking.manualPaymentProofUrl || booking.transactions.length > 0) {
+      tabs.push({
+        id: "pago",
+        label: "Pago",
+        content: (
+          <div className="flex flex-col gap-6">
+            {isCredit ? (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="eyebrow">Créditos Beto</span>
+                  <StatusBadge label={booking.creditPaid ? "Ya cobrado" : "Pendiente de cobro"} tone={booking.creditPaid ? "success" : "warning"} />
+                </div>
+                <form action={setCreditPaidFormAction.bind(null, booking.id, !booking.creditPaid)}>
+                  <button type="submit" className={booking.creditPaid ? "btn btn-ghost" : "btn btn-gold"}>
+                    {booking.creditPaid ? "Marcar como no cobrado" : "Marcar crédito como cobrado"}
+                  </button>
+                </form>
+              </div>
+            ) : null}
 
-      {booking.manualPaymentProofUrl ? (
-        <GlassCard className="flex flex-col gap-3">
-          <span className="eyebrow">
-            Comprobante — {booking.paymentMethod ? PAYMENT_METHOD_LABEL[booking.paymentMethod] : "Método desconocido"}
-          </span>
-          <p className="mb-0 text-sm text-bone-dim">
-            Referencia: <span className="text-bone">{booking.manualPaymentReference}</span>
-          </p>
-          <a
-            href={booking.manualPaymentProofUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="block w-fit overflow-hidden rounded-lg border border-white/10"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element -- URL dinámica de Vercel Blob, sin dominio fijo que declarar en next.config */}
-            <img src={booking.manualPaymentProofUrl} alt="Comprobante de pago" className="max-h-80 w-auto" />
-          </a>
-          <p className="mb-0 text-xs text-ash">
-            Verifica el comprobante contra tu estado de cuenta antes de confirmar el pago arriba.
-          </p>
-        </GlassCard>
-      ) : null}
-
-      {isConsultation ? (
-        <GlassCard className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <span className="eyebrow">Llamadas</span>
-            <span className="text-xs text-ash">
-              Pagado: <span className="text-bone">{booking.service.durationMinutes} min</span> · Consumido:{" "}
-              <span className="text-bone">
-                {Math.round(
-                  booking.callLogs.reduce(
-                    (sum, log) =>
-                      sum + (log.endedAt ? Math.max(0, (log.endedAt.getTime() - log.startedAt.getTime()) / 60000) : 0),
-                    0,
-                  ),
-                )}{" "}
-                min
-              </span>
-            </span>
-          </div>
-          {booking.callLogs.length === 0 ? (
-            <p className="mb-0 text-sm text-ash">Todavía no hubo ninguna llamada en esta consulta.</p>
-          ) : (
-            <div className="flex flex-col gap-2 text-sm">
-              {booking.callLogs.map((log) => {
-                const durationMinutes = log.endedAt
-                  ? Math.round((log.endedAt.getTime() - log.startedAt.getTime()) / 60000)
-                  : null;
-                return (
-                  <div key={log.id} className="flex items-center justify-between border-b border-white/5 pb-2">
-                    <span className="text-bone-dim">{log.startedAt.toLocaleString("es")}</span>
-                    <span className="text-bone-dim">
-                      {durationMinutes !== null ? `${durationMinutes} min` : "En curso / sin cerrar"}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </GlassCard>
-      ) : null}
-
-      {booking.transactions.length > 0 ? (
-        <GlassCard>
-          <span className="eyebrow mb-3">Transacciones PayPal</span>
-          <div className="flex flex-col gap-2 text-sm">
-            {booking.transactions.map((t) => (
-              <div key={t.id} className="border-b border-white/5 pb-2">
-                <p className="mb-0 text-bone">
-                  {t.paypalOrderId} — {t.status}
+            {booking.manualPaymentProofUrl ? (
+              <div className="flex flex-col gap-3 border-t border-white/10 pt-6 first:border-0 first:pt-0">
+                <span className="eyebrow">
+                  Comprobante — {booking.paymentMethod ? PAYMENT_METHOD_LABEL[booking.paymentMethod] : "Método desconocido"}
+                </span>
+                <p className="mb-0 text-sm text-bone-dim">
+                  Referencia: <span className="text-bone">{booking.manualPaymentReference}</span>
                 </p>
+                <a
+                  href={booking.manualPaymentProofUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block w-fit overflow-hidden rounded-lg border border-white/10"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- URL dinámica de Vercel Blob, sin dominio fijo que declarar en next.config */}
+                  <img src={booking.manualPaymentProofUrl} alt="Comprobante de pago" className="max-h-80 w-auto" />
+                </a>
                 <p className="mb-0 text-xs text-ash">
-                  {Number(t.amount).toFixed(2)} {t.currency}
-                  {t.paypalCaptureId ? ` · captura ${t.paypalCaptureId}` : ""}
+                  Verifica el comprobante contra tu estado de cuenta antes de confirmar el pago arriba.
                 </p>
               </div>
-            ))}
-          </div>
-        </GlassCard>
-      ) : null}
+            ) : null}
 
-      <GlassCard className="flex flex-col gap-3">
-        <span className="eyebrow">Notas internas</span>
-        {booking.notes ? (
-          <pre className="mb-0 whitespace-pre-wrap font-body text-sm text-bone-dim">{booking.notes}</pre>
-        ) : (
-          <p className="mb-0 text-sm text-ash">Sin notas todavía.</p>
-        )}
-        <AdminNoteForm bookingId={booking.id} />
-      </GlassCard>
-    </div>
-  );
+            {booking.transactions.length > 0 ? (
+              <div className="flex flex-col gap-2 border-t border-white/10 pt-6 text-sm first:border-0 first:pt-0">
+                <span className="eyebrow mb-1">Transacciones PayPal</span>
+                {booking.transactions.map((t) => (
+                  <div key={t.id} className="border-b border-white/5 pb-2">
+                    <p className="mb-0 text-bone">
+                      {t.paypalOrderId} — {t.status}
+                    </p>
+                    <p className="mb-0 text-xs text-ash">
+                      {Number(t.amount).toFixed(2)} {t.currency}
+                      {t.paypalCaptureId ? ` · captura ${t.paypalCaptureId}` : ""}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ),
+      });
+    }
+
+    if (isConsultation) {
+      const consumedMinutes = Math.round(
+        booking.callLogs.reduce(
+          (sum, log) => sum + (log.endedAt ? Math.max(0, (log.endedAt.getTime() - log.startedAt.getTime()) / 60000) : 0),
+          0,
+        ),
+      );
+      tabs.push({
+        id: "llamadas",
+        label: "Llamadas",
+        badge: booking.callLogs.length > 0 ? <span className="text-ash">({booking.callLogs.length})</span> : null,
+        content: (
+          <div className="flex flex-col gap-3">
+            <p className="mb-0 text-xs text-ash">
+              Pagado: <span className="text-bone">{booking.service.durationMinutes} min</span> · Consumido:{" "}
+              <span className="text-bone">{consumedMinutes} min</span>
+            </p>
+            {booking.callLogs.length === 0 ? (
+              <p className="mb-0 text-sm text-ash">Todavía no hubo ninguna llamada en esta consulta.</p>
+            ) : (
+              <div className="flex flex-col gap-2 text-sm">
+                {booking.callLogs.map((log) => {
+                  const durationMinutes = log.endedAt
+                    ? Math.round((log.endedAt.getTime() - log.startedAt.getTime()) / 60000)
+                    : null;
+                  return (
+                    <div key={log.id} className="flex items-center justify-between border-b border-white/5 pb-2">
+                      <span className="text-bone-dim">{log.startedAt.toLocaleString("es")}</span>
+                      <span className="text-bone-dim">
+                        {durationMinutes !== null ? `${durationMinutes} min` : "En curso / sin cerrar"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ),
+      });
+    }
+
+    tabs.push({
+      id: "notas",
+      label: "Notas",
+      content: (
+        <div className="flex flex-col gap-3">
+          {booking.notes ? (
+            <pre className="mb-0 whitespace-pre-wrap font-body text-sm text-bone-dim">{booking.notes}</pre>
+          ) : (
+            <p className="mb-0 text-sm text-ash">Sin notas todavía.</p>
+          )}
+          <AdminNoteForm bookingId={booking.id} />
+        </div>
+      ),
+    });
+
+    return tabs;
+  }
 }
