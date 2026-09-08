@@ -8,12 +8,19 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SummaryBar } from "@/components/admin/SummaryBar";
 import { BookingsTable, type BookingRow } from "@/components/admin/BookingsTable";
-import type { BookingStatus } from "@prisma/client";
+import type { BookingStatus, PaymentStatus } from "@prisma/client";
 
 export const metadata: Metadata = { title: "Panel — Reservas", robots: { index: false } };
 
 interface PageProps {
-  searchParams: Promise<{ status?: string; serviceId?: string; from?: string; to?: string; q?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    paymentStatus?: string;
+    serviceId?: string;
+    from?: string;
+    to?: string;
+    q?: string;
+  }>;
 }
 
 const STATUS_OPTIONS: BookingStatus[] = [
@@ -30,6 +37,7 @@ export default async function AdminBookingsPage({ searchParams }: PageProps) {
   const [bookings, services] = await Promise.all([
     listBookingsAdmin({
       status: params.status as BookingStatus | undefined,
+      paymentStatus: params.paymentStatus as PaymentStatus | undefined,
       serviceId: params.serviceId,
       from: params.from,
       to: params.to,
@@ -41,6 +49,18 @@ export default async function AdminBookingsPage({ searchParams }: PageProps) {
   const pendingCount = bookings.filter((b) => b.status === "PENDING_PAYMENT").length;
   const confirmedCount = bookings.filter((b) => b.status === "CONFIRMED").length;
   const expiredCount = bookings.filter((b) => b.status === "EXPIRED" || b.status === "CANCELLED").length;
+
+  function hrefForStatus(status: BookingStatus | ""): string {
+    const qs = new URLSearchParams();
+    if (params.serviceId) qs.set("serviceId", params.serviceId);
+    if (params.from) qs.set("from", params.from);
+    if (params.to) qs.set("to", params.to);
+    if (params.q) qs.set("q", params.q);
+    if (params.paymentStatus) qs.set("paymentStatus", params.paymentStatus);
+    if (status) qs.set("status", status);
+    const query = qs.toString();
+    return `/admin/reservas${query ? `?${query}` : ""}`;
+  }
 
   const rows: BookingRow[] = bookings.map((b) => ({
     id: b.id,
@@ -58,10 +78,28 @@ export default async function AdminBookingsPage({ searchParams }: PageProps) {
     <div className="flex flex-col gap-6">
       <SummaryBar
         stats={[
-          { label: "Resultados", value: bookings.length },
-          { label: "Pendientes de pago", value: pendingCount, tone: "warning" },
-          { label: "Confirmadas", value: confirmedCount, tone: "success" },
-          { label: "Canceladas / expiradas", value: expiredCount, tone: "danger" },
+          { label: "Resultados", value: bookings.length, href: hrefForStatus(""), active: !params.status },
+          {
+            label: "Pendientes de pago",
+            value: pendingCount,
+            tone: "warning",
+            href: hrefForStatus("PENDING_PAYMENT"),
+            active: params.status === "PENDING_PAYMENT",
+          },
+          {
+            label: "Confirmadas",
+            value: confirmedCount,
+            tone: "success",
+            href: hrefForStatus("CONFIRMED"),
+            active: params.status === "CONFIRMED",
+          },
+          {
+            label: "Canceladas / expiradas",
+            value: expiredCount,
+            tone: "danger",
+            href: hrefForStatus("CANCELLED"),
+            active: params.status === "CANCELLED" || params.status === "EXPIRED",
+          },
         ]}
       />
 

@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { getDashboardStats } from "@/server/admin/dashboard";
 import { sendDueReminders } from "@/server/notifications/reminders";
 import { expireAndNotify } from "@/server/notifications/expiry";
 import { getProviderPresence, toggleProviderOnline } from "@/server/presence";
 import { requireAdmin } from "@/lib/auth/session";
+import { businessDateString } from "@/lib/timezone";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CleanupBookingsButton } from "@/components/admin/CleanupBookingsButton";
@@ -37,13 +39,19 @@ export default async function AdminDashboardPage() {
   const stats = await getDashboardStats();
   const presence = await getProviderPresence();
 
+  const today = businessDateString(new Date());
   const cards = [
-    { label: "Reservas de hoy", value: stats.todayCount, tone: "neutral" as const },
-    { label: "Pendientes de pago", value: stats.pendingCount, tone: "warning" as const },
-    { label: "Pagos recibidos", value: stats.paidCount, tone: "success" as const },
-    { label: "Próximas consultas confirmadas", value: stats.upcomingCount, tone: "neutral" as const },
-    { label: "Clientes registrados", value: stats.clientsCount, tone: "neutral" as const },
-    { label: "Ingresos totales", value: `$${stats.revenue.toFixed(2)}`, tone: "success" as const },
+    { label: "Reservas de hoy", value: stats.todayCount, tone: "neutral" as const, href: `/admin/reservas?from=${today}&to=${today}` },
+    { label: "Pendientes de pago", value: stats.pendingCount, tone: "warning" as const, href: "/admin/reservas?status=PENDING_PAYMENT" },
+    { label: "Pagos recibidos", value: stats.paidCount, tone: "success" as const, href: "/admin/reservas?paymentStatus=PAID" },
+    {
+      label: "Próximas consultas confirmadas",
+      value: stats.upcomingCount,
+      tone: "neutral" as const,
+      href: `/admin/reservas?status=CONFIRMED&from=${today}`,
+    },
+    { label: "Clientes registrados", value: stats.clientsCount, tone: "neutral" as const, href: "/admin/clientes" },
+    { label: "Ingresos totales", value: `$${stats.revenue.toFixed(2)}`, tone: "success" as const, href: "/admin/reservas?paymentStatus=PAID" },
   ];
 
   const cardValueClass = {
@@ -57,10 +65,12 @@ export default async function AdminDashboardPage() {
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((c) => (
-          <GlassCard key={c.label}>
-            <span className="mb-2 block font-mono text-[11px] uppercase tracking-wide text-ash">{c.label}</span>
-            <span className={`text-2xl font-semibold ${cardValueClass[c.tone]}`}>{c.value}</span>
-          </GlassCard>
+          <Link key={c.label} href={c.href} className="block">
+            <GlassCard className="transition-colors hover:border-gold/30">
+              <span className="mb-2 block font-mono text-[11px] uppercase tracking-wide text-ash">{c.label}</span>
+              <span className={`text-2xl font-semibold ${cardValueClass[c.tone]}`}>{c.value}</span>
+            </GlassCard>
+          </Link>
         ))}
       </div>
 

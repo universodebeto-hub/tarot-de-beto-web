@@ -1,22 +1,34 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getClientAdminById } from "@/server/admin/clients";
-import { setUserCreditApprovalFormAction } from "@/app/admin/clientes/[id]/actions";
+import { listTarotistasAdmin } from "@/server/admin/tarotistas";
+import { getServices } from "@/server/services";
+import {
+  setUserCreditApprovalFormAction,
+  deleteClientAction,
+} from "@/app/admin/clientes/[id]/actions";
 import { minutesInBusinessDay, formatMinutes, businessDateString } from "@/lib/timezone";
 import { fullDateLabel } from "@/lib/date-labels";
-import { BOOKING_STATUS_LABEL } from "@/lib/booking-labels";
+import { BOOKING_STATUS_LABEL, PAYMENT_METHOD_LABEL } from "@/lib/booking-labels";
 import { BOOKING_STATUS_TONE } from "@/lib/status-tone";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { TrashIcon } from "@/components/ui/icons";
 import { Tabs, type TabItem } from "@/components/ui/Tabs";
 import { EditClientInfoForm } from "@/components/admin/EditClientInfoForm";
 import { PromoteToAdminButton } from "@/components/admin/PromoteToAdminButton";
+import { ConfirmActionButton } from "@/components/admin/ConfirmActionButton";
+import { GiftConsultationForm } from "@/components/admin/GiftConsultationForm";
 
 export const metadata: Metadata = { title: "Panel — Cliente", robots: { index: false } };
 
 export default async function AdminClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const clientOrNull = await getClientAdminById(id);
+  const [clientOrNull, tarotistas, services] = await Promise.all([
+    getClientAdminById(id),
+    listTarotistasAdmin(),
+    getServices(),
+  ]);
   if (!clientOrNull) notFound();
   const client = clientOrNull;
 
@@ -50,6 +62,29 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
               </button>
             </form>
           </div>
+
+          <div className="flex flex-col gap-3 border-t border-white/10 pt-6">
+            <span className="eyebrow">Regalar consulta</span>
+            <GiftConsultationForm
+              clientId={client.id}
+              services={services.map((s) => ({ id: s.id, name: s.name, slug: s.slug }))}
+              tarotistas={tarotistas.map((t) => ({ id: t.id, name: t.name }))}
+            />
+          </div>
+
+          <div className="flex flex-col gap-3 border-t border-white/10 pt-6">
+            <span className="eyebrow">Zona de riesgo</span>
+            <ConfirmActionButton
+              label="Eliminar cuenta"
+              icon={<TrashIcon className="h-4 w-4" />}
+              pendingLabel="Eliminando…"
+              tone="danger"
+              confirmLabel="Sí, eliminar"
+              confirmMessage={`¿Eliminar la cuenta de ${client.firstName} ${client.lastName ?? ""}? Solo se puede si nunca tuvo reservas.`}
+              action={deleteClientAction.bind(null, client.id)}
+              className="btn btn-ghost self-start flex items-center gap-2 border-ember/40 text-ember hover:border-ember hover:bg-ember/10"
+            />
+          </div>
         </div>
       ),
     },
@@ -67,6 +102,9 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
                 <span className="text-bone">
                   {b.service.name} — {fullDateLabel(businessDateString(b.startsAt))} ·{" "}
                   {formatMinutes(minutesInBusinessDay(b.startsAt))}
+                  {b.paymentMethod === "CORTESIA" ? (
+                    <span className="ml-2 text-xs text-gold-soft">({PAYMENT_METHOD_LABEL.CORTESIA})</span>
+                  ) : null}
                 </span>
                 <StatusBadge label={BOOKING_STATUS_LABEL[b.status]} tone={BOOKING_STATUS_TONE[b.status]} />
               </div>
@@ -79,7 +117,10 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
   return (
     <div className="flex flex-col gap-6">
       <GlassCard className="flex flex-col gap-3">
-        <span className="eyebrow">Cliente</span>
+        <div className="flex items-center justify-between">
+          <span className="eyebrow">Cliente</span>
+          <StatusBadge label={client.isActive ? "Activo" : "Inactivo"} tone={client.isActive ? "success" : "neutral"} />
+        </div>
         <div>
           <h2 className="mt-2 mb-1">
             {client.firstName} {client.lastName ?? ""}

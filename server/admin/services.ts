@@ -122,3 +122,37 @@ export async function toggleServiceAvailability(serviceId: string, currentUser?:
     targetId: serviceId,
   });
 }
+
+/**
+ * Borra el servicio por completo -- solo si nunca tuvo ninguna reserva
+ * (Booking.serviceId no tiene cascada, así que la base de datos rechazaría
+ * el borrado igual, pero se chequea antes para dar un mensaje claro). Si
+ * ya tuvo reservas, la opción correcta es "Desactivar" (toggleServiceAvailability),
+ * que oculta el servicio sin perder el historial.
+ */
+export async function deleteServiceAdmin(
+  serviceId: string,
+  currentUser?: CurrentUser | null,
+): Promise<AdminFormState> {
+  const admin = await requireAdmin(currentUser);
+  const service = await prisma.service.findUnique({ where: { id: serviceId } });
+  if (!service) return { error: "Servicio no encontrado." };
+
+  const bookingsCount = await prisma.booking.count({ where: { serviceId } });
+  if (bookingsCount > 0) {
+    return {
+      error: `No se puede eliminar: ya tiene ${bookingsCount} reserva(s) asociada(s). Usá "Desactivar" para ocultarlo sin perder ese historial.`,
+    };
+  }
+
+  await prisma.service.delete({ where: { id: serviceId } });
+  await logAdminAction({
+    adminId: admin.id,
+    action: "service.deleted",
+    targetType: "Service",
+    targetId: serviceId,
+    details: service.name,
+  });
+
+  return {};
+}

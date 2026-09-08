@@ -161,38 +161,26 @@ export function ManualPaymentPanel({
       {paypal ? (
         <div className="flex flex-col gap-3">
           <span className="eyebrow">Pago con tarjeta</span>
-          <button
-            type="button"
-            onClick={() => setMethod("PAYPAL")}
-            className={`flex items-center gap-4 rounded-xl border px-4 py-3.5 text-left transition-colors ${
-              method === "PAYPAL" ? "border-gold/60 bg-gold/[0.08]" : "border-white/10 bg-white/[0.02] hover:border-gold/25"
-            }`}
-          >
-            <span className="flex shrink-0 items-center gap-1.5">
-              <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-white p-2">
-                <Image src="/assets/payment-logos/paypal.png" alt="" width={32} height={32} className="h-full w-full object-contain" />
-              </span>
-              <span className="flex h-11 w-8 items-center justify-center rounded-lg bg-white/10">
-                <svg viewBox="0 0 32 20" className="h-4 w-7">
-                  <text x="16" y="14" textAnchor="middle" fontFamily="Georgia, serif" fontStyle="italic" fontWeight="700" fontSize="11" fill="#f7b600">
-                    VISA
-                  </text>
-                </svg>
-              </span>
-              <span className="flex h-11 w-8 items-center justify-center rounded-lg bg-white/10">
-                <svg viewBox="0 0 32 20" className="h-5 w-7">
-                  <circle cx="13" cy="10" r="7" fill="#EB001B" />
-                  <circle cx="21" cy="10" r="7" fill="#F79E1B" fillOpacity="0.9" />
-                </svg>
-              </span>
-            </span>
-            <span>
-              <span className="block text-bone">Tarjeta de crédito o débito</span>
-              <span className="block text-xs text-bone-dim">
-                Visa, Mastercard u otra — no necesitás cuenta de PayPal, pagás como invitado
-              </span>
-            </span>
-          </button>
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+            {(["paypal", "visa", "mastercard"] as const).map((logo) => (
+              <button
+                key={logo}
+                type="button"
+                onClick={() => setMethod("PAYPAL")}
+                aria-label="Tarjeta de crédito o débito (vía PayPal)"
+                className="flex flex-col items-center gap-1.5"
+              >
+                <span
+                  className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl bg-white transition-all ${
+                    method === "PAYPAL" ? "ring-2 ring-gold ring-offset-2 ring-offset-obsidian" : "hover:brightness-110"
+                  }`}
+                >
+                  <Image src={`/assets/payment-logos/${logo}.png`} alt="" fill sizes="80px" className="object-contain p-1.5" />
+                </span>
+              </button>
+            ))}
+          </div>
+          <p className="mb-0 text-xs text-bone-dim">Visa, Mastercard u otra — no necesitás cuenta de PayPal, pagás como invitado.</p>
 
           {method === "PAYPAL" ? (
             <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
@@ -358,23 +346,26 @@ export function ManualPaymentPanel({
               />
               {file ? <span className="text-xs text-bone-dim">{file.name}</span> : null}
             </label>
-            <button type="submit" disabled={submitting} className="btn btn-gold self-start disabled:opacity-60">
-              {submitting ? "Enviando..." : "Enviar comprobante"}
-            </button>
+            <p className="mb-0 text-xs text-ash">Elegí cómo mandarlo -- no hace falta crear una cuenta para ninguna de las dos opciones.</p>
+            <div className="flex flex-wrap gap-3">
+              <button type="submit" disabled={submitting} className="btn btn-gold disabled:opacity-60">
+                {submitting ? "Enviando..." : "Enviar por la web"}
+              </button>
+              {whatsappNumber ? (
+                <a
+                  href={buildWhatsAppLink(
+                    whatsappNumber,
+                    `Hola Beto, te mando el comprobante de mi reserva ${bookingNumber} (${PAYMENT_METHOD_LABEL[method]}) por acá.`,
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-ghost"
+                >
+                  Enviar por WhatsApp
+                </a>
+              ) : null}
+            </div>
             {error ? <p className="mb-0 text-sm text-ember">{error}</p> : null}
-            {error && whatsappNumber ? (
-              <a
-                href={buildWhatsAppLink(
-                  whatsappNumber,
-                  `Hola Beto, tuve un problema subiendo el comprobante de mi reserva ${bookingNumber} (${PAYMENT_METHOD_LABEL[method]}). Te mando la captura por acá.`,
-                )}
-                target="_blank"
-                rel="noreferrer"
-                className="btn btn-ghost self-start"
-              >
-                Enviar comprobante por WhatsApp
-              </a>
-            ) : null}
           </form>
         </div>
       ) : null}

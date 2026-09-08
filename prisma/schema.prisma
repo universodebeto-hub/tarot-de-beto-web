@@ -314,6 +314,10 @@ enum PaymentMethod {
   /// marca Booking.creditPaid cuando el cliente efectivamente le paga. Ver
   /// server/credit.ts.
   CREDITO_BETO
+  /// Consulta regalada por el admin (nunca elegida por el cliente) --
+  /// ej. para reactivar a alguien inactivo. Se crea ya CONFIRMED+PAID sin
+  /// pasar por ningún flujo de pago real. Ver server/admin/gifts.ts.
+  CORTESIA
 }
 
 /// Reserva de una consulta. `startsAt`/`endsAt` son instantes UTC absolutos

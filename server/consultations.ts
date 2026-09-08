@@ -8,19 +8,9 @@ import { hasRequiredIntakeData } from "@/lib/service-intake";
 import { isReportOnlyService } from "@/lib/service-fulfillment";
 import { notifyBookingReceived } from "@/server/notifications/send";
 import { sendExpoPushToUser } from "@/server/expo-push";
+import { nextBookingNumber } from "@/server/booking-number";
 import type { Booking } from "@prisma/client";
 import type { CurrentUser } from "@/lib/auth/session";
-
-async function nextBookingNumber(): Promise<string> {
-  const year = new Date().getFullYear();
-  const key = `booking_number_${year}`;
-  const counter = await prisma.counter.upsert({
-    where: { key },
-    update: { value: { increment: 1 } },
-    create: { key, value: 1 },
-  });
-  return `BETO-${year}-${String(counter.value).padStart(5, "0")}`;
-}
 
 const createConsultationSchema = z.object({
   tarotistaId: z.string().min(1),

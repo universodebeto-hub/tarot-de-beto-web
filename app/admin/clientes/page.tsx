@@ -5,9 +5,12 @@ import { fullDateLabel } from "@/lib/date-labels";
 import { businessDateString } from "@/lib/timezone";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { EyeIcon } from "@/components/ui/icons";
-import { ICON_BTN_NEUTRAL } from "@/lib/admin-ui";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { EyeIcon, TrashIcon } from "@/components/ui/icons";
+import { ICON_BTN_NEUTRAL, ICON_BTN_DANGER } from "@/lib/admin-ui";
 import { SummaryBar } from "@/components/admin/SummaryBar";
+import { ConfirmActionButton } from "@/components/admin/ConfirmActionButton";
+import { deleteClientFromListAction } from "@/app/admin/clientes/[id]/actions";
 
 export const metadata: Metadata = { title: "Panel — Clientes", robots: { index: false } };
 
@@ -26,7 +29,8 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
       <SummaryBar
         stats={[
           { label: "Clientes", value: clients.length },
-          { label: "Con reservas", value: clients.filter((c) => c.bookingsCount > 0).length, tone: "success" },
+          { label: "Activos (30 días)", value: clients.filter((c) => c.isActive).length, tone: "success" },
+          { label: "Inactivos", value: clients.filter((c) => !c.isActive).length, tone: "neutral" },
           { label: "Total histórico", value: `$${totalSpent.toFixed(2)}` },
         ]}
       />
@@ -55,6 +59,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
               <tr className="border-b border-white/10 text-left font-mono text-[11px] uppercase tracking-wide text-ash">
                 <th className="py-2 pr-4">Nombre</th>
                 <th className="py-2 pr-4">Email</th>
+                <th className="py-2 pr-4">Estado</th>
                 <th className="py-2 pr-4">Reservas</th>
                 <th className="py-2 pr-4">Última consulta</th>
                 <th className="py-2 pr-4">Total gastado</th>
@@ -70,15 +75,31 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
                     </Link>
                   </td>
                   <td className="py-2.5 pr-4 text-bone-dim">{c.email}</td>
+                  <td className="py-2.5 pr-4">
+                    <StatusBadge label={c.isActive ? "Activo" : "Inactivo"} tone={c.isActive ? "success" : "neutral"} />
+                  </td>
                   <td className="py-2.5 pr-4 text-bone-dim">{c.bookingsCount}</td>
                   <td className="py-2.5 pr-4 text-bone-dim">
                     {c.lastBookingAt ? fullDateLabel(businessDateString(c.lastBookingAt)) : "—"}
                   </td>
                   <td className="py-2.5 pr-4 text-bone-dim">${c.totalSpent.toFixed(2)}</td>
                   <td className="py-2.5 pr-4">
-                    <Link href={`/admin/clientes/${c.id}`} title="Ver cliente" className={ICON_BTN_NEUTRAL}>
-                      <EyeIcon />
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/admin/clientes/${c.id}`} title="Ver cliente" className={ICON_BTN_NEUTRAL}>
+                        <EyeIcon />
+                      </Link>
+                      <ConfirmActionButton
+                        label=""
+                        icon={<TrashIcon />}
+                        title="Eliminar"
+                        pendingLabel=""
+                        tone="danger"
+                        confirmLabel="Sí, eliminar"
+                        confirmMessage={`¿Eliminar la cuenta de ${c.firstName} ${c.lastName ?? ""}? Solo se puede si nunca tuvo reservas.`}
+                        action={deleteClientFromListAction.bind(null, c.id)}
+                        className={ICON_BTN_DANGER}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

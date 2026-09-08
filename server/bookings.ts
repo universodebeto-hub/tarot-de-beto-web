@@ -10,22 +10,7 @@ import { PAYMENT_WINDOW_MINUTES } from "@/lib/booking-window";
 import { notifyBookingReceived } from "@/server/notifications/send";
 import { hasRequiredIntakeData } from "@/lib/service-intake";
 import { isReportOnlyService } from "@/lib/service-fulfillment";
-
-async function nextBookingNumber(): Promise<string> {
-  const year = new Date().getFullYear();
-  const key = `booking_number_${year}`;
-  // Un solo upsert atómico (INSERT ... ON CONFLICT DO UPDATE) — separarlo en
-  // upsert+update, como antes, deja una ventana de carrera real: dos
-  // solicitudes concurrentes que crean el contador del año por primera vez
-  // al mismo tiempo pueden violar la restricción única de `key` entre el
-  // upsert y el update.
-  const counter = await prisma.counter.upsert({
-    where: { key },
-    update: { value: { increment: 1 } },
-    create: { key, value: 1 },
-  });
-  return `BETO-${year}-${String(counter.value).padStart(5, "0")}`;
-}
+import { nextBookingNumber } from "@/server/booking-number";
 
 export interface CreateBookingResult {
   /** Solo el id: el registro completo (con service/user incluidos para la

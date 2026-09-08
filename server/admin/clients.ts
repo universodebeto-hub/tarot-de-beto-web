@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/auth/session";
 import { logAdminAction } from "@/server/audit";
 import type { CurrentUser } from "@/lib/auth/session";
 import type { AdminFormState } from "@/server/admin/services";
+import { isClientActive } from "@/lib/client-activity";
 
 export async function listClientsAdmin(q?: string) {
   const users = await prisma.user.findMany({
@@ -27,28 +28,37 @@ export async function listClientsAdmin(q?: string) {
     take: 200,
   });
 
-  return users.map((u) => ({
-    id: u.id,
-    firstName: u.firstName,
-    lastName: u.lastName,
-    email: u.email,
-    phone: u.phone,
-    createdAt: u.createdAt,
-    bookingsCount: u.bookings.length,
-    lastBookingAt: u.bookings[0]?.startsAt ?? null,
-    totalSpent: u.bookings
-      .filter((b) => b.paymentStatus === "PAID")
-      .reduce((sum, b) => sum + Number(b.service.price), 0),
-  }));
+  return users.map((u) => {
+    const lastPaidConsultationAt = u.bookings.find((b) => b.paymentStatus === "PAID")?.startsAt ?? null;
+    return {
+      id: u.id,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      email: u.email,
+      phone: u.phone,
+      createdAt: u.createdAt,
+      bookingsCount: u.bookings.length,
+      lastBookingAt: u.bookings[0]?.startsAt ?? null,
+      lastPaidConsultationAt,
+      isActive: isClientActive(lastPaidConsultationAt),
+      totalSpent: u.bookings
+        .filter((b) => b.paymentStatus === "PAID")
+        .reduce((sum, b) => sum + Number(b.service.price), 0),
+    };
+  });
 }
 
 export async function getClientAdminById(id: string) {
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id, role: "CLIENT" },
     include: {
-      bookings: { include: { service: true }, orderBy: { startsAt: "desc" } },
+      bookings: { include: { service: true, tarotista: true }, orderBy: { startsAt: "desc" } },
     },
   });
+  if (!user) return null;
+
+  const lastPaidConsultationAt = user.bookings.find((b) => b.paymentStatus === "PAID")?.startsAt ?? null;
+  return { ...user, lastPaidConsultationAt, isActive: isClientActive(lastPaidConsultationAt) };
 }
 
 const clientInfoSchema = z.object({
@@ -201,6 +211,38 @@ export async function promoteToAdmin(userId: string, currentUser?: CurrentUser |
   await logAdminAction({
     adminId: admin.id,
     action: "client.promoted_to_admin",
+    targetType: "User",
+    targetId: userId,
+    details: user.email,
+  });
+
+  return {};
+}
+
+/**
+ * Borra la cuenta de un cliente por completo -- solo si nunca tuvo ninguna
+ * reserva (igual que deleteServiceAdmin: la base de datos rechazaría el
+ * borrado de todos modos, esto solo da un mensaje claro antes). Pensado
+ * para cuentas duplicadas o de prueba, nunca para clientes con historial
+ * real de consultas.
+ */
+export async function deleteClientAdmin(userId: string, currentUser?: CurrentUser | null): Promise<AdminFormState> {
+  const admin = await requireAdmin(currentUser);
+
+  const user = await prisma.user.findUnique({ where: { id: userId, role: "CLIENT" } });
+  if (!user) return { error: "Cliente no encontrado." };
+
+  const bookingsCount = await prisma.booking.count({ where: { userId } });
+  if (bookingsCount > 0) {
+    return {
+      error: `No se puede eliminar: ya tiene ${bookingsCount} reserva(s) asociada(s). Esta cuenta queda como parte del historial.`,
+    };
+  }
+
+  await prisma.user.delete({ where: { id: userId } });
+  await logAdminAction({
+    adminId: admin.id,
+    action: "client.deleted",
     targetType: "User",
     targetId: userId,
     details: user.email,
