@@ -24,6 +24,12 @@ export interface BookingFilters {
 export async function listBookingsAdmin(filters: BookingFilters) {
   await expireStaleBookings();
 
+  // Cada palabra por separado (AND entre palabras, OR entre campos por
+  // palabra) -- así "victor bracho" encuentra a alguien con
+  // firstName="Victor"/lastName="Bracho", que un solo `contains` de la
+  // frase completa nunca hubiera encontrado.
+  const words = filters.q?.trim().split(/\s+/).filter(Boolean) ?? [];
+
   return prisma.booking.findMany({
     where: {
       status: filters.status,
@@ -33,17 +39,16 @@ export async function listBookingsAdmin(filters: BookingFilters) {
         gte: filters.from ? new Date(filters.from) : undefined,
         lte: filters.to ? new Date(`${filters.to}T23:59:59`) : undefined,
       },
-      ...(filters.q
-        ? {
-            OR: [
-              { bookingNumber: { contains: filters.q, mode: "insensitive" } },
-              { guestName: { contains: filters.q, mode: "insensitive" } },
-              { guestEmail: { contains: filters.q, mode: "insensitive" } },
-              { user: { firstName: { contains: filters.q, mode: "insensitive" } } },
-              { user: { email: { contains: filters.q, mode: "insensitive" } } },
-            ],
-          }
-        : {}),
+      AND: words.map((word) => ({
+        OR: [
+          { bookingNumber: { contains: word, mode: "insensitive" as const } },
+          { guestName: { contains: word, mode: "insensitive" as const } },
+          { guestEmail: { contains: word, mode: "insensitive" as const } },
+          { user: { firstName: { contains: word, mode: "insensitive" as const } } },
+          { user: { lastName: { contains: word, mode: "insensitive" as const } } },
+          { user: { email: { contains: word, mode: "insensitive" as const } } },
+        ],
+      })),
     },
     include: { service: true, user: true, tarotista: true },
     orderBy: { startsAt: "desc" },

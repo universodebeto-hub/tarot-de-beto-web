@@ -8,18 +8,22 @@ import type { AdminFormState } from "@/server/admin/services";
 import { isClientActive } from "@/lib/client-activity";
 
 export async function listClientsAdmin(q?: string) {
+  // Cada palabra buscada por separado (AND entre palabras, OR entre campos
+  // por palabra) -- así "victor bracho" encuentra a alguien con
+  // firstName="Victor" y lastName="Bracho" en filas distintas, que un solo
+  // `contains` de la frase completa nunca hubiera encontrado.
+  const words = q?.trim().split(/\s+/).filter(Boolean) ?? [];
+
   const users = await prisma.user.findMany({
     where: {
       role: "CLIENT",
-      ...(q
-        ? {
-            OR: [
-              { firstName: { contains: q, mode: "insensitive" } },
-              { lastName: { contains: q, mode: "insensitive" } },
-              { email: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : {}),
+      AND: words.map((word) => ({
+        OR: [
+          { firstName: { contains: word, mode: "insensitive" } },
+          { lastName: { contains: word, mode: "insensitive" } },
+          { email: { contains: word, mode: "insensitive" } },
+        ],
+      })),
     },
     include: {
       bookings: { include: { service: true }, orderBy: { startsAt: "desc" } },
