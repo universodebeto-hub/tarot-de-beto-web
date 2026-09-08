@@ -1,57 +1,49 @@
 import type { Metadata } from "next";
-import { revalidatePath } from "next/cache";
-import { listSettingsAdmin, upsertSettingAdmin } from "@/server/admin/settings";
+import { getManualPaymentInstructions, getFaqItems, getSetting } from "@/server/settings";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { SettingRow } from "@/components/admin/SettingRow";
-import { NewSettingForm } from "@/components/admin/NewSettingForm";
+import { Tabs, type TabItem } from "@/components/ui/Tabs";
+import { ManualPaymentInstructionsForm } from "@/components/admin/ManualPaymentInstructionsForm";
+import { FaqEditorForm } from "@/components/admin/FaqEditorForm";
+import { ReminderHoursForm } from "@/components/admin/ReminderHoursForm";
 
 export const metadata: Metadata = { title: "Panel — Configuración", robots: { index: false } };
 
-async function saveAction(key: string, prev: { error?: string; success?: boolean }, formData: FormData) {
-  "use server";
-  const result = await upsertSettingAdmin(key, prev, formData);
-  if (result.success) {
-    revalidatePath("/admin/configuracion");
-    revalidatePath("/faq");
-    revalidatePath("/");
-  }
-  return result;
-}
-
-/** Igual que saveAction, pero la clave viene del propio formulario en vez de estar fija -- para crear una fila que todavía no existe. */
-async function createAction(prev: { error?: string; success?: boolean }, formData: FormData) {
-  "use server";
-  const key = String(formData.get("key") ?? "").trim();
-  if (!key) return { error: "Falta la clave." };
-  const result = await upsertSettingAdmin(key, prev, formData);
-  if (result.success) {
-    revalidatePath("/admin/configuracion");
-    revalidatePath("/faq");
-    revalidatePath("/");
-  }
-  return result;
-}
-
 export default async function AdminSettingsPage() {
-  const settings = await listSettingsAdmin();
+  const [manualPayment, faqItems, reminderHours] = await Promise.all([
+    getManualPaymentInstructions(),
+    getFaqItems(),
+    getSetting<number[]>("reminder_hours_before", [24, 2]),
+  ]);
+
+  const tabs: TabItem[] = [
+    {
+      id: "pago",
+      label: "Datos de pago",
+      content: <ManualPaymentInstructionsForm initial={manualPayment} />,
+    },
+    {
+      id: "faq",
+      label: "Preguntas frecuentes",
+      content: <FaqEditorForm initial={faqItems} />,
+    },
+    {
+      id: "recordatorios",
+      label: "Recordatorios",
+      content: <ReminderHoursForm initial={reminderHours} />,
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-6">
       <GlassCard>
         <p className="mb-0 text-sm text-bone-dim">
-          Configuración clave/valor (JSON). Se lee en todo el sitio sin necesitar redeploy — por ejemplo
-          <code className="mx-1 rounded bg-white/10 px-1.5 py-0.5 text-xs">faq_items</code>
-          controla las preguntas frecuentes de Inicio y{" "}
-          <code className="rounded bg-white/10 px-1.5 py-0.5 text-xs">/faq</code>. Editar con cuidado: el valor
-          debe ser JSON válido.
+          Los cambios se ven en la web al instante, sin necesitar un redeploy.
         </p>
       </GlassCard>
 
-      {settings.map((s) => (
-        <SettingRow key={s.key} settingKey={s.key} value={s.value} action={saveAction.bind(null, s.key)} />
-      ))}
-
-      <NewSettingForm action={createAction} />
+      <GlassCard>
+        <Tabs items={tabs} />
+      </GlassCard>
     </div>
   );
 }

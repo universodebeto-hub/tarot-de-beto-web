@@ -3,9 +3,45 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAdminAction } from "@/server/audit";
 import type { CurrentUser } from "@/lib/auth/session";
+import type { ManualPaymentInstructions } from "@/server/settings";
+import type { FaqItem } from "@/types/content";
 
 export async function listSettingsAdmin() {
   return prisma.setting.findMany({ orderBy: { key: "asc" } });
+}
+
+async function saveSettingValue(key: string, value: unknown, currentUser?: CurrentUser | null): Promise<void> {
+  const admin = await requireAdmin(currentUser);
+  await prisma.setting.upsert({
+    where: { key },
+    update: { value: JSON.stringify(value) },
+    create: { key, value: JSON.stringify(value) },
+  });
+  await logAdminAction({ adminId: admin.id, action: "setting.updated", targetType: "Setting", targetId: key });
+}
+
+/** Guarda los datos de cuenta para pago manual (setting `manual_payment_instructions`) desde el formulario con un campo por dato, sin que el admin toque JSON. */
+export async function updateManualPaymentInstructions(
+  data: ManualPaymentInstructions,
+  currentUser?: CurrentUser | null,
+): Promise<{ error?: string }> {
+  await saveSettingValue("manual_payment_instructions", data, currentUser);
+  return {};
+}
+
+/** Guarda la lista de preguntas frecuentes (setting `faq_items`) -- filtra pares vacíos que hayan quedado del editor. */
+export async function updateFaqItems(items: FaqItem[], currentUser?: CurrentUser | null): Promise<{ error?: string }> {
+  const cleaned = items.filter((i) => i.question.trim() && i.answer.trim());
+  await saveSettingValue("faq_items", cleaned, currentUser);
+  return {};
+}
+
+/** Guarda a cuántas horas antes de la consulta se manda cada recordatorio (setting `reminder_hours_before`). */
+export async function updateReminderHours(hours: number[], currentUser?: CurrentUser | null): Promise<{ error?: string }> {
+  const cleaned = hours.filter((h) => Number.isFinite(h) && h > 0);
+  if (cleaned.length === 0) return { error: "Agregá al menos un recordatorio válido." };
+  await saveSettingValue("reminder_hours_before", cleaned, currentUser);
+  return {};
 }
 
 export interface AdminFormState {
