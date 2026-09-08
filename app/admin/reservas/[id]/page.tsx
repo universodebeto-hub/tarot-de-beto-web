@@ -173,7 +173,9 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
             {booking.manualPaymentProofUrl ? (
               <div className="flex flex-col gap-3 border-t border-white/10 pt-6 first:border-0 first:pt-0">
                 <span className="eyebrow">
-                  Comprobante — {booking.paymentMethod ? PAYMENT_METHOD_LABEL[booking.paymentMethod] : "Método desconocido"}
+                  Comprobante —{" "}
+                  {booking.manualPaymentMethodLabel ??
+                    (booking.paymentMethod ? PAYMENT_METHOD_LABEL[booking.paymentMethod] : "Método desconocido")}
                 </span>
                 <p className="mb-0 text-sm text-bone-dim">
                   Referencia: <span className="text-bone">{booking.manualPaymentReference}</span>

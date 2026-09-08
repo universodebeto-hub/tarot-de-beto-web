@@ -32,9 +32,18 @@ export async function submitManualPaymentProof(
   method: PaymentMethod,
   reference: string,
   proofUrl: string,
+  manualPaymentMethodId?: string,
 ): Promise<ManualPaymentResult> {
-  if (!MANUAL_METHODS.includes(method)) return { error: "Método de pago inválido." };
+  if (!MANUAL_METHODS.includes(method) && method !== "OTRO") return { error: "Método de pago inválido." };
   if (!proofUrl.trim()) return { error: "Sube una captura del comprobante." };
+
+  let manualPaymentMethodLabel: string | null = null;
+  if (method === "OTRO") {
+    if (!manualPaymentMethodId) return { error: "Método de pago inválido." };
+    const customMethod = await prisma.manualPaymentMethod.findUnique({ where: { id: manualPaymentMethodId } });
+    if (!customMethod || !customMethod.active) return { error: "Ese método de pago ya no está disponible." };
+    manualPaymentMethodLabel = customMethod.name;
+  }
 
   await expireStaleBookings();
 
@@ -50,13 +59,15 @@ export async function submitManualPaymentProof(
       paymentMethod: method,
       manualPaymentReference: reference.trim() || null,
       manualPaymentProofUrl: proofUrl.trim(),
+      manualPaymentMethodId: method === "OTRO" ? manualPaymentMethodId : null,
+      manualPaymentMethodLabel,
       paymentStatus: "PENDING",
     },
   });
 
   await notifyAdminsPendingApproval({
     title: "Nuevo comprobante de pago",
-    body: `Reserva #${booking.bookingNumber} — ${method} — esperando revisión.`,
+    body: `Reserva #${booking.bookingNumber} — ${manualPaymentMethodLabel ?? method} — esperando revisión.`,
     bookingId,
     pushType: "manual_payment_pending",
   });

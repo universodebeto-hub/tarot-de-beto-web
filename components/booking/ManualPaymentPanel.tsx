@@ -10,8 +10,8 @@ import { requestCreditBookingAction } from "@/app/reservas/[id]/credit-actions";
 import { buildWhatsAppLink } from "@/config/site";
 
 type ManualMethod = "PAGO_MOVIL" | "ZELLE" | "BINANCE" | "REMITLY" | "WESTERN_UNION" | "MONEYGRAM" | "BANCOLOMBIA";
-/** "PAYPAL" y "CREDITO_BETO" solo existen acá para la selección visual -- ninguna se manda a /api/bookings/manual-payment: PAYPAL dispara el checkout de PayPalButton, CREDITO_BETO llama a requestCreditBookingAction (sin comprobante). */
-type PickableMethod = ManualMethod | "PAYPAL" | "CREDITO_BETO";
+/** "PAYPAL" y "CREDITO_BETO" solo existen acá para la selección visual -- ninguna se manda a /api/bookings/manual-payment: PAYPAL dispara el checkout de PayPalButton, CREDITO_BETO llama a requestCreditBookingAction (sin comprobante). Un método agregado por el admin (ManualPaymentMethod) se identifica como `custom:<id>`. */
+type PickableMethod = ManualMethod | "PAYPAL" | "CREDITO_BETO" | `custom:${string}`;
 
 const MANUAL_METHODS: ManualMethod[] = [
   "PAGO_MOVIL",
@@ -23,6 +23,13 @@ const MANUAL_METHODS: ManualMethod[] = [
   "BANCOLOMBIA",
 ];
 
+export interface CustomPaymentMethod {
+  id: string;
+  name: string;
+  logoUrl: string;
+  instructions: string;
+}
+
 interface ManualPaymentPanelProps {
   bookingId: string;
   instructions: ManualPaymentInstructions;
@@ -33,6 +40,10 @@ interface ManualPaymentPanelProps {
   bookingNumber: string;
   /** Número de WhatsApp de Beto -- botón de respaldo si falla la subida del comprobante. */
   whatsappNumber?: string;
+  /** Métodos agregados por el admin desde /admin/configuracion (además de los 7 fijos de arriba). */
+  customMethods?: CustomPaymentMethod[];
+  /** Logo alternativo (subido por el admin) para un método fijo -- si no está acá, se usa el archivo estático de siempre. */
+  logoOverrides?: Record<string, string>;
 }
 
 /**
@@ -50,6 +61,8 @@ export function ManualPaymentPanel({
   creditEnabled,
   bookingNumber,
   whatsappNumber,
+  customMethods = [],
+  logoOverrides = {},
 }: ManualPaymentPanelProps) {
   const router = useRouter();
   const [method, setMethod] = useState<PickableMethod | null>(null);
@@ -74,6 +87,10 @@ export function ManualPaymentPanel({
       setSubmitting(false);
     }
   }
+
+  const selectedCustomMethod = method?.startsWith("custom:")
+    ? customMethods.find((m) => `custom:${m.id}` === method)
+    : undefined;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -118,7 +135,13 @@ export function ManualPaymentPanel({
       const submitRes = await fetch("/api/bookings/manual-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookingId, method, reference, proofUrl: uploadData.url }),
+        body: JSON.stringify({
+          bookingId,
+          method: selectedCustomMethod ? "OTRO" : method,
+          reference,
+          proofUrl: uploadData.url,
+          manualPaymentMethodId: selectedCustomMethod?.id,
+        }),
       });
       let submitData: { success?: boolean; error?: string } = {};
       try {
@@ -154,7 +177,10 @@ export function ManualPaymentPanel({
     );
   }
 
-  const manualMethods: PickableMethod[] = [...MANUAL_METHODS, ...(creditEnabled ? (["CREDITO_BETO"] as const) : [])];
+  const manualMethods: (ManualMethod | "CREDITO_BETO")[] = [
+    ...MANUAL_METHODS,
+    ...(creditEnabled ? (["CREDITO_BETO"] as const) : []),
+  ];
 
   return (
     <div className="flex flex-col gap-5">
@@ -207,7 +233,7 @@ export function ManualPaymentPanel({
                 }`}
               >
                 <Image
-                  src={`/assets/payment-logos/${PAYMENT_METHOD_LOGO_SLUG[m]}.png`}
+                  src={logoOverrides[m] ?? `/assets/payment-logos/${PAYMENT_METHOD_LOGO_SLUG[m]}.png`}
                   alt={PAYMENT_METHOD_LABEL[m]}
                   fill
                   sizes="80px"
@@ -219,6 +245,29 @@ export function ManualPaymentPanel({
               </span>
             </button>
           ))}
+          {customMethods.map((cm) => {
+            const key: PickableMethod = `custom:${cm.id}`;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setMethod(key)}
+                aria-label={cm.name}
+                className="flex flex-col items-center gap-1.5"
+              >
+                <span
+                  className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl transition-all ${
+                    method === key ? "ring-2 ring-gold ring-offset-2 ring-offset-obsidian" : "hover:brightness-110"
+                  }`}
+                >
+                  <Image src={cm.logoUrl} alt={cm.name} fill sizes="80px" className="object-cover" />
+                </span>
+                <span className="text-center font-mono text-[9.5px] uppercase leading-tight tracking-wide text-ash">
+                  {cm.name}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -243,7 +292,9 @@ export function ManualPaymentPanel({
       {method && method !== "PAYPAL" && method !== "CREDITO_BETO" ? (
         <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
           <div className="text-sm text-bone-dim">
-            {method === "PAGO_MOVIL" ? (
+            {selectedCustomMethod ? (
+              <p className="mb-0 whitespace-pre-wrap">{selectedCustomMethod.instructions}</p>
+            ) : method === "PAGO_MOVIL" ? (
               <ul className="mb-0 flex flex-col gap-1">
                 <li>
                   Teléfono: <span className="text-bone">{instructions.pagoMovil.telefono}</span>
@@ -355,7 +406,7 @@ export function ManualPaymentPanel({
                 <a
                   href={buildWhatsAppLink(
                     whatsappNumber,
-                    `Hola Beto, te mando el comprobante de mi reserva ${bookingNumber} (${PAYMENT_METHOD_LABEL[method]}) por acá.`,
+                    `Hola Beto, te mando el comprobante de mi reserva ${bookingNumber} (${selectedCustomMethod ? selectedCustomMethod.name : PAYMENT_METHOD_LABEL[method as ManualMethod]}) por acá.`,
                   )}
                   target="_blank"
                   rel="noreferrer"

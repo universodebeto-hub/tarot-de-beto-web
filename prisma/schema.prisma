@@ -332,6 +332,41 @@ enum PaymentMethod {
   /// ej. para reactivar a alguien inactivo. Se crea ya CONFIRMED+PAID sin
   /// pasar por ningún flujo de pago real. Ver server/admin/gifts.ts.
   CORTESIA
+  /// Método manual agregado por el propio admin desde /admin/configuracion
+  /// (no uno de los fijos de arriba) -- el nombre/instrucciones/logo reales
+  /// viven en ManualPaymentMethod, referenciada desde
+  /// Booking.manualPaymentMethodId. Ver server/admin/payment-methods.ts.
+  OTRO
+}
+
+/// Método de pago manual agregado por el admin (además de los fijos del
+/// enum PaymentMethod de arriba) -- pensado para que Beto pueda sumar una
+/// forma de pago nueva (ej. otro banco, otra app) sin necesitar un cambio
+/// de código. `logoUrl` es un archivo subido a Vercel Blob (nunca un
+/// asset estático). `instructions` es texto libre (no campos
+/// estructurados como los métodos fijos) -- el cliente lo lee tal cual al
+/// elegir este método.
+model ManualPaymentMethod {
+  id           String   @id @default(cuid())
+  name         String
+  logoUrl      String
+  instructions String
+  sortOrder    Int      @default(0)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+/// Logo alternativo (subido por el admin) para CUALQUIER método de pago --
+/// tanto uno fijo del enum PaymentMethod (`method` = el nombre del enum,
+/// ej. "ZELLE") como uno de ManualPaymentMethod (`method` = su id). Si no
+/// hay fila acá para un método fijo, se usa el logo estático de
+/// public/assets/payment-logos/ como hasta ahora (ver
+/// lib/booking-labels.ts::PAYMENT_METHOD_LOGO_SLUG). Un método de
+/// ManualPaymentMethod siempre tiene su logo acá (se sube al crearlo).
+model PaymentMethodLogo {
+  method  String @id
+  logoUrl String
 }
 
 /// Reserva de una consulta. `startsAt`/`endsAt` son instantes UTC absolutos
@@ -386,6 +421,12 @@ model Booking {
   /// URL (Vercel Blob) de la captura del comprobante que el cliente sube
   /// para un pago manual — visible en el panel admin antes de confirmar.
   manualPaymentProofUrl  String?
+  /// Solo aplica a paymentMethod = OTRO -- id de la ManualPaymentMethod
+  /// elegida. `manualPaymentMethodLabel` copia su nombre al momento de
+  /// elegirla (no es una relación real) para que el historial no cambie si
+  /// el admin renombra o borra ese método después.
+  manualPaymentMethodId    String?
+  manualPaymentMethodLabel String?
   /// Solo aplica a paymentMethod = CREDITO_BETO. Bookkeeping propio de Beto
   /// para saber si ya le pagaron una consulta a crédito -- NO participa en
   /// el gating de chat/audio/llamada (eso sigue siendo únicamente

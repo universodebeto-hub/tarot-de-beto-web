@@ -28,6 +28,8 @@ export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
   BANCOLOMBIA: "Bancolombia",
   CREDITO_BETO: "Créditos Beto",
   CORTESIA: "Cortesía",
+  /** Nombre real en Booking.manualPaymentMethodLabel -- ver server/admin/payment-methods.ts. */
+  OTRO: "Otro método",
 };
 
 /** Nombre del archivo en public/assets/payment-logos/<slug>.png para cada método. */
@@ -43,4 +45,6 @@ export const PAYMENT_METHOD_LOGO_SLUG: Record<PaymentMethod, string> = {
   CREDITO_BETO: "creditos-beto",
   /** Nunca se renderiza -- CORTESIA no es un método elegible en ManualPaymentPanel, solo lo asigna el admin. */
   CORTESIA: "creditos-beto",
+  /** Nunca se renderiza -- OTRO siempre tiene su logo real en PaymentMethodLogo (ver server/admin/payment-methods.ts). */
+  OTRO: "paypal",
 };

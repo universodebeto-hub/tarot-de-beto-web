@@ -15,6 +15,7 @@ import { ChatPanel } from "@/components/chat/ChatPanel";
 import { isReportOnlyService, REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
 import { getManualPaymentInstructions } from "@/server/settings";
 import { effectivePrice } from "@/lib/booking-price";
+import { listActiveManualPaymentMethods, getPaymentMethodLogoOverrides } from "@/server/payment-methods";
 
 export const metadata: Metadata = {
   title: "Tu reserva",
@@ -37,6 +38,9 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
   const isPending = booking.status === "PENDING_PAYMENT";
   const isExpired = booking.status === "EXPIRED";
   const manualPaymentInstructions = isPending ? await getManualPaymentInstructions() : null;
+  const [customPaymentMethods, paymentLogoOverrides] = isPending
+    ? await Promise.all([listActiveManualPaymentMethods(), getPaymentMethodLogoOverrides()])
+    : [[], {}];
   /** Esta misma página la puede ver el cliente o el tarotista (ej. desde /panel-tarotista) -- el chat necesita saber cuál de los dos es quien mira, para alinear sus propios mensajes a la derecha. */
   const viewer = await getCurrentUser();
   const viewerRole = viewer && booking.tarotista?.userId === viewer.id ? "TAROTISTA" : "CLIENT";
@@ -156,6 +160,13 @@ export default async function BookingConfirmationPage({ params }: BookingPagePro
                     }
                     creditEnabled={Boolean(viewer?.canUseCredit)}
                     whatsappNumber={siteConfig.contact.whatsappNumber}
+                    customMethods={customPaymentMethods.map((m) => ({
+                      id: m.id,
+                      name: m.name,
+                      logoUrl: m.logoUrl,
+                      instructions: m.instructions,
+                    }))}
+                    logoOverrides={paymentLogoOverrides}
                   />
                 ) : null}
                 <PendingPaymentPanel
