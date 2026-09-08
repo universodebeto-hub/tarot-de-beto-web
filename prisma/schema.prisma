@@ -84,7 +84,14 @@ model User {
   username     String?  @unique
   phone        String?
   country      String?
-  passwordHash String
+  /// Null = cuenta "sin reclamar": la creó un admin a mano desde una reserva
+  /// de invitado (ver server/admin/clients.ts::registerGuestAsClient), y
+  /// todavía nadie puso una contraseña propia. No se puede iniciar sesión
+  /// así (server/user-auth.ts::loginAccount la rechaza) -- el cliente la
+  /// reclama registrándose con el mismo correo (mismo archivo,
+  /// registerAccount) o pidiendo "olvidé mi contraseña", que ya funciona
+  /// igual para estas cuentas sin cambios.
+  passwordHash String?
   role         Role     @default(CLIENT)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

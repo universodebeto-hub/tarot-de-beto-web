@@ -163,6 +163,80 @@ export async function updateClientInfoFromJson(
   return applyClientInfoUpdate(userId, parsed.data, admin);
 }
 
+interface RegisterGuestAsClientResult {
+  error?: string;
+  userId?: string;
+}
+
+/**
+ * Convierte una reserva de invitado (sin cuenta, `userId` null) en un
+ * cliente registrado -- para cuando Beto ya tiene el correo/datos por
+ * PayPal y quiere que la persona aparezca en Clientes, con notas de
+ * seguimiento y bolsa de minutos, sin esperar a que se registre sola. La
+ * cuenta se crea SIN contraseña (`passwordHash: null`) -- queda "sin
+ * reclamar" hasta que el cliente se registre con el mismo correo (toma
+ * posesión, ver server/user-auth.ts::registerAccount) o pida "olvidé mi
+ * contraseña" (ya funciona igual para estas cuentas, sin cambios).
+ * De paso, vincula cualquier OTRA reserva de invitado con el mismo correo
+ * -- si ya había comprado antes sin registrarse, todo ese historial queda
+ * junto en la misma cuenta nueva.
+ */
+export async function registerGuestAsClient(
+  bookingId: string,
+  input: z.infer<typeof clientInfoSchema>,
+  currentUser?: CurrentUser | null,
+): Promise<RegisterGuestAsClientResult> {
+  const admin = await requireAdmin(currentUser);
+
+  const parsed = clientInfoSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking) return { error: "Reserva no encontrada." };
+  if (booking.userId) return { error: "Esta reserva ya está vinculada a un cliente." };
+
+  const { firstName, lastName, email, phone, country } = parsed.data;
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  let userId: string;
+
+  if (existing) {
+    if (existing.passwordHash) {
+      return { error: "Ese correo ya pertenece a una cuenta registrada -- vinculá la reserva a ese cliente en vez de crear uno nuevo." };
+    }
+    // Ya existe una cuenta sin reclamar con este correo (de otra reserva de
+    // invitado registrada antes) -- se reutiliza en vez de duplicar.
+    await prisma.user.update({ where: { id: existing.id }, data: { firstName, lastName, phone, country } });
+    userId = existing.id;
+  } else {
+    const created = await prisma.user.create({
+      data: { firstName, lastName, email, phone, country, passwordHash: null, role: "CLIENT" },
+    });
+    userId = created.id;
+  }
+
+  // Se vincula tanto la reserva puntual que se estaba editando (por si el
+  // admin corrigió el correo en el formulario, puede ya no coincidir con
+  // guestEmail) como cualquier otra reserva de invitado con este correo.
+  await prisma.booking.updateMany({
+    where: {
+      userId: null,
+      OR: [{ id: bookingId }, { guestEmail: { equals: email, mode: "insensitive" } }],
+    },
+    data: { userId, guestName: null, guestEmail: null, guestPhone: null },
+  });
+
+  await logAdminAction({
+    adminId: admin.id,
+    action: "client.registered_from_guest_booking",
+    targetType: "User",
+    targetId: userId,
+    details: `${email} · reserva ${booking.bookingNumber}`,
+  });
+
+  return { userId };
+}
+
 export interface SetCreditApprovalResult {
   error?: string;
 }

@@ -9,6 +9,7 @@ import {
   deleteBookingPermanently,
   setManualMinutesAdjustment,
 } from "@/server/admin/bookings";
+import { registerGuestAsClient } from "@/server/admin/clients";
 import type { AdminFormState } from "@/server/admin/services";
 import type { BookingStatus } from "@prisma/client";
 
@@ -56,6 +57,18 @@ export async function setManualMinutesAdjustmentAction(
   if (!result.error) {
     revalidatePath(`/admin/reservas/${bookingId}`);
     revalidatePath("/admin/consumo");
+  }
+  return result;
+}
+
+export async function registerGuestAsClientAction(
+  bookingId: string,
+  input: { firstName: string; lastName: string; email: string; phone: string; country: string },
+): Promise<{ error?: string }> {
+  const result = await registerGuestAsClient(bookingId, input);
+  if (!result.error) {
+    revalidatePath(`/admin/reservas/${bookingId}`);
+    revalidatePath("/admin/clientes");
   }
   return result;
 }

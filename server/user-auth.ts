@@ -66,6 +66,34 @@ export async function registerAccount(input: unknown, ip: string): Promise<Accou
   const { firstName, lastName, email, username, phone, country, password } = parsed.data;
 
   const existing = await prisma.user.findFirst({ where: { OR: [{ email }, { username }] } });
+
+  // Cuenta "sin reclamar" (la creó un admin a mano desde una reserva de
+  // invitado, ver server/admin/clients.ts::registerGuestAsClient) -- en vez
+  // de rechazar el registro, esta persona toma posesión de esa cuenta
+  // (mismo id, mismo historial de reservas/notas/minutos) poniéndole ahora
+  // su propia contraseña, en vez de terminar con una cuenta duplicada.
+  if (existing && existing.email === email && !existing.passwordHash) {
+    if (username && username !== existing.username) {
+      const usernameTaken = await prisma.user.findUnique({ where: { username } });
+      if (usernameTaken) return { error: "Ese nombre de usuario ya está en uso. Elige otro." };
+    }
+
+    const passwordHash = await hashPassword(password);
+    const user = await prisma.user.update({
+      where: { id: existing.id },
+      data: {
+        passwordHash,
+        firstName,
+        lastName: lastName ?? existing.lastName,
+        username: username ?? existing.username,
+        phone: phone ?? existing.phone,
+        country: country ?? existing.country,
+      },
+    });
+
+    return { user: { id: user.id, role: user.role } };
+  }
+
   if (existing) {
     return {
       error:

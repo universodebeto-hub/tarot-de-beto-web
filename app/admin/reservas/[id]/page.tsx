@@ -13,6 +13,7 @@ import { TrashIcon } from "@/components/ui/icons";
 import { Tabs, type TabItem } from "@/components/ui/Tabs";
 import { AdminNoteForm } from "@/components/admin/AdminNoteForm";
 import { ManualMinutesAdjustmentForm } from "@/components/admin/ManualMinutesAdjustmentForm";
+import { RegisterGuestClientForm } from "@/components/admin/RegisterGuestClientForm";
 import { intakeFieldsFor } from "@/lib/service-intake";
 import { isReportOnlyService, REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
 import { effectivePrice } from "@/lib/booking-price";
@@ -69,6 +70,14 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
             </span>
             <p className="mb-0 text-xs text-ash">{booking.user?.email ?? booking.guestEmail}</p>
             <p className="mb-0 text-xs text-ash">{booking.user?.phone ?? booking.guestPhone ?? "Sin WhatsApp"}</p>
+            {!booking.user ? (
+              <RegisterGuestClientForm
+                bookingId={booking.id}
+                guestName={booking.guestName}
+                guestEmail={booking.guestEmail}
+                guestPhone={booking.guestPhone}
+              />
+            ) : null}
           </div>
           <div>
             <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">Servicio</span>
