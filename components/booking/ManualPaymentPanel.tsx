@@ -168,11 +168,23 @@ export function ManualPaymentPanel({
               method === "PAYPAL" ? "border-gold/60 bg-gold/[0.08]" : "border-white/10 bg-white/[0.02] hover:border-gold/25"
             }`}
           >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/10 text-gold-soft">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className="h-6 w-6">
-                <rect x="2.5" y="5" width="19" height="14" rx="2" />
-                <path d="M2.5 10h19" strokeLinecap="round" />
-              </svg>
+            <span className="flex shrink-0 items-center gap-1.5">
+              <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-white p-2">
+                <Image src="/assets/payment-logos/paypal.png" alt="" width={32} height={32} className="h-full w-full object-contain" />
+              </span>
+              <span className="flex h-11 w-8 items-center justify-center rounded-lg bg-white/10">
+                <svg viewBox="0 0 32 20" className="h-4 w-7">
+                  <text x="16" y="14" textAnchor="middle" fontFamily="Georgia, serif" fontStyle="italic" fontWeight="700" fontSize="11" fill="#f7b600">
+                    VISA
+                  </text>
+                </svg>
+              </span>
+              <span className="flex h-11 w-8 items-center justify-center rounded-lg bg-white/10">
+                <svg viewBox="0 0 32 20" className="h-5 w-7">
+                  <circle cx="13" cy="10" r="7" fill="#EB001B" />
+                  <circle cx="21" cy="10" r="7" fill="#F79E1B" fillOpacity="0.9" />
+                </svg>
+              </span>
             </span>
             <span>
               <span className="block text-bone">Tarjeta de crédito o débito</span>
@@ -181,6 +193,12 @@ export function ManualPaymentPanel({
               </span>
             </span>
           </button>
+
+          {method === "PAYPAL" ? (
+            <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+              <PayPalButton clientId={paypal.clientId} currency={paypal.currency} bookingId={bookingId} />
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -215,12 +233,6 @@ export function ManualPaymentPanel({
           ))}
         </div>
       </div>
-
-      {method === "PAYPAL" && paypal ? (
-        <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
-          <PayPalButton clientId={paypal.clientId} currency={paypal.currency} bookingId={bookingId} />
-        </div>
-      ) : null}
 
       {method === "CREDITO_BETO" ? (
         <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">

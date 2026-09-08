@@ -172,6 +172,46 @@ export async function setCreditPaid(
   return {};
 }
 
+export interface CleanupIncompleteBookingsResult {
+  deleted?: number;
+  error?: string;
+}
+
+/**
+ * Botón manual del panel admin para borrar de una vez las reservas que
+ * nunca se concretaron: expiradas, canceladas sin haberse pagado, o cuyo
+ * plazo de pago ya venció. `expireStaleBookings` (server/availability.ts)
+ * ya hace esto mismo automáticamente cada vez que se lee una reserva, así
+ * que en producción esto queda al día solo -- este botón es para forzarlo
+ * ya mismo (ej. limpiar datos de prueba) sin esperar a que alguien abra
+ * esa reserva.
+ */
+export async function cleanupIncompleteBookings(
+  currentUser?: CurrentUser | null,
+): Promise<CleanupIncompleteBookingsResult> {
+  const admin = await requireAdmin(currentUser);
+
+  const result = await prisma.booking.deleteMany({
+    where: {
+      OR: [
+        { status: "EXPIRED" },
+        { status: "PENDING_PAYMENT", paymentDeadline: { lt: new Date() } },
+        { status: "CANCELLED", paymentStatus: { not: "PAID" } },
+      ],
+    },
+  });
+
+  await logAdminAction({
+    adminId: admin.id,
+    action: "booking.cleanup_incomplete",
+    targetType: "Booking",
+    targetId: "bulk",
+    details: `${result.count} reservas eliminadas`,
+  });
+
+  return { deleted: result.count };
+}
+
 export async function addBookingNote(
   bookingId: string,
   note: string,

@@ -6,6 +6,7 @@ import { expireAndNotify } from "@/server/notifications/expiry";
 import { getProviderPresence, toggleProviderOnline } from "@/server/presence";
 import { requireAdmin } from "@/lib/auth/session";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { CleanupBookingsButton } from "@/components/admin/CleanupBookingsButton";
 
 export const metadata: Metadata = { title: "Panel — Resumen", robots: { index: false } };
 
@@ -85,6 +86,15 @@ export default async function AdminDashboardPage() {
             Ejecutar mantenimiento ahora
           </button>
         </form>
+      </GlassCard>
+
+      <GlassCard className="flex flex-wrap items-center justify-between gap-3">
+        <p className="mb-0 text-sm text-bone-dim">
+          Borra de una vez las reservas que nunca se concretaron (expiradas, vencidas sin pagar, o canceladas sin
+          pago) — útil para limpiar datos de prueba. En producción esto ya queda al día solo: cualquier reserva sin
+          pagar se borra sola a los 30 minutos.
+        </p>
+        <CleanupBookingsButton />
       </GlassCard>
     </div>
   );
