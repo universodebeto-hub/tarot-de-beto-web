@@ -5,7 +5,9 @@ import { setUserCreditApprovalFormAction } from "@/app/admin/clientes/[id]/actio
 import { minutesInBusinessDay, formatMinutes, businessDateString } from "@/lib/timezone";
 import { fullDateLabel } from "@/lib/date-labels";
 import { BOOKING_STATUS_LABEL } from "@/lib/booking-labels";
+import { BOOKING_STATUS_TONE } from "@/lib/status-tone";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EditClientInfoForm } from "@/components/admin/EditClientInfoForm";
 import { PromoteToAdminButton } from "@/components/admin/PromoteToAdminButton";
 
@@ -42,9 +44,10 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
       <GlassCard className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <span className="eyebrow">Créditos Beto</span>
-          <span className="text-xs text-bone-dim">
-            {client.canUseCredit ? "Habilitado para pagar a crédito" : "No habilitado"}
-          </span>
+          <StatusBadge
+            label={client.canUseCredit ? "Habilitado" : "No habilitado"}
+            tone={client.canUseCredit ? "success" : "neutral"}
+          />
         </div>
         <form action={setUserCreditApprovalFormAction.bind(null, client.id, !client.canUseCredit)}>
           <button type="submit" className={client.canUseCredit ? "btn btn-ghost" : "btn btn-gold"}>
@@ -65,7 +68,7 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
                   {b.service.name} — {fullDateLabel(businessDateString(b.startsAt))} ·{" "}
                   {formatMinutes(minutesInBusinessDay(b.startsAt))}
                 </span>
-                <span className="text-bone-dim">{BOOKING_STATUS_LABEL[b.status]}</span>
+                <StatusBadge label={BOOKING_STATUS_LABEL[b.status]} tone={BOOKING_STATUS_TONE[b.status]} />
               </div>
             ))}
           </div>

@@ -5,6 +5,9 @@ import { fullDateLabel } from "@/lib/date-labels";
 import { businessDateString } from "@/lib/timezone";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { EyeIcon } from "@/components/ui/icons";
+import { ICON_BTN_NEUTRAL } from "@/lib/admin-ui";
+import { SummaryBar } from "@/components/admin/SummaryBar";
 
 export const metadata: Metadata = { title: "Panel — Clientes", robots: { index: false } };
 
@@ -16,8 +19,18 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
   const { q } = await searchParams;
   const clients = await listClientsAdmin(q);
 
+  const totalSpent = clients.reduce((sum, c) => sum + c.totalSpent, 0);
+
   return (
     <div className="flex flex-col gap-6">
+      <SummaryBar
+        stats={[
+          { label: "Clientes", value: clients.length },
+          { label: "Con reservas", value: clients.filter((c) => c.bookingsCount > 0).length, tone: "success" },
+          { label: "Total histórico", value: `$${totalSpent.toFixed(2)}` },
+        ]}
+      />
+
       <GlassCard>
         <form method="get" className="flex gap-3">
           <input
@@ -45,6 +58,7 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
                 <th className="py-2 pr-4">Reservas</th>
                 <th className="py-2 pr-4">Última consulta</th>
                 <th className="py-2 pr-4">Total gastado</th>
+                <th className="py-2 pr-4">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -61,6 +75,11 @@ export default async function AdminClientsPage({ searchParams }: PageProps) {
                     {c.lastBookingAt ? fullDateLabel(businessDateString(c.lastBookingAt)) : "—"}
                   </td>
                   <td className="py-2.5 pr-4 text-bone-dim">${c.totalSpent.toFixed(2)}</td>
+                  <td className="py-2.5 pr-4">
+                    <Link href={`/admin/clientes/${c.id}`} title="Ver cliente" className={ICON_BTN_NEUTRAL}>
+                      <EyeIcon />
+                    </Link>
+                  </td>
                 </tr>
               ))}
             </tbody>

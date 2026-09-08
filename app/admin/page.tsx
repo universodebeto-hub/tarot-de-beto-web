@@ -6,6 +6,7 @@ import { expireAndNotify } from "@/server/notifications/expiry";
 import { getProviderPresence, toggleProviderOnline } from "@/server/presence";
 import { requireAdmin } from "@/lib/auth/session";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CleanupBookingsButton } from "@/components/admin/CleanupBookingsButton";
 
 export const metadata: Metadata = { title: "Panel — Resumen", robots: { index: false } };
@@ -37,13 +38,20 @@ export default async function AdminDashboardPage() {
   const presence = await getProviderPresence();
 
   const cards = [
-    { label: "Reservas de hoy", value: stats.todayCount },
-    { label: "Pendientes de pago", value: stats.pendingCount },
-    { label: "Pagos recibidos", value: stats.paidCount },
-    { label: "Próximas consultas confirmadas", value: stats.upcomingCount },
-    { label: "Clientes registrados", value: stats.clientsCount },
-    { label: "Ingresos totales", value: `$${stats.revenue.toFixed(2)}` },
+    { label: "Reservas de hoy", value: stats.todayCount, tone: "neutral" as const },
+    { label: "Pendientes de pago", value: stats.pendingCount, tone: "warning" as const },
+    { label: "Pagos recibidos", value: stats.paidCount, tone: "success" as const },
+    { label: "Próximas consultas confirmadas", value: stats.upcomingCount, tone: "neutral" as const },
+    { label: "Clientes registrados", value: stats.clientsCount, tone: "neutral" as const },
+    { label: "Ingresos totales", value: `$${stats.revenue.toFixed(2)}`, tone: "success" as const },
   ];
+
+  const cardValueClass = {
+    success: "text-emerald",
+    warning: "text-gold-soft",
+    danger: "text-ember",
+    neutral: "text-gold-soft",
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -51,19 +59,15 @@ export default async function AdminDashboardPage() {
         {cards.map((c) => (
           <GlassCard key={c.label}>
             <span className="mb-2 block font-mono text-[11px] uppercase tracking-wide text-ash">{c.label}</span>
-            <span className="text-2xl text-gold-soft">{c.value}</span>
+            <span className={`text-2xl font-semibold ${cardValueClass[c.tone]}`}>{c.value}</span>
           </GlassCard>
         ))}
       </div>
 
       <GlassCard className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <span
-            className={`h-2.5 w-2.5 rounded-full ${presence.isOnline ? "bg-emerald-400 shadow-[0_0_8px_2px_rgba(52,211,153,0.6)]" : "bg-ash-dim"}`}
-          />
+          <StatusBadge label={presence.isOnline ? "En línea" : "Desconectado"} tone={presence.isOnline ? "success" : "neutral"} />
           <p className="mb-0 text-sm text-bone-dim">
-            Estado público: <span className="text-bone">{presence.isOnline ? "En línea" : "Desconectado"}</span>
-            {" — "}
             los visitantes {presence.isOnline ? "ven" : "no ven"} el botón &quot;Contactar ahora&quot;.
           </p>
         </div>

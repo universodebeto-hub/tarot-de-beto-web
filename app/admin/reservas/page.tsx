@@ -5,9 +5,14 @@ import { getServices } from "@/server/services";
 import { minutesInBusinessDay, formatMinutes, businessDateString } from "@/lib/timezone";
 import { fullDateLabel } from "@/lib/date-labels";
 import { BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL } from "@/lib/booking-labels";
+import { BOOKING_STATUS_TONE, PAYMENT_STATUS_TONE } from "@/lib/status-tone";
+import { ICON_BTN_NEUTRAL, ICON_BTN_DANGER } from "@/lib/admin-ui";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { XCircleIcon, TrashIcon } from "@/components/ui/icons";
 import { ConfirmActionButton } from "@/components/admin/ConfirmActionButton";
+import { SummaryBar } from "@/components/admin/SummaryBar";
 import { changeBookingStatusFormAction, deleteBookingFromListAction } from "@/app/admin/reservas/[id]/actions";
 import type { BookingStatus } from "@prisma/client";
 
@@ -41,8 +46,21 @@ export default async function AdminBookingsPage({ searchParams }: PageProps) {
     getServices(),
   ]);
 
+  const pendingCount = bookings.filter((b) => b.status === "PENDING_PAYMENT").length;
+  const confirmedCount = bookings.filter((b) => b.status === "CONFIRMED").length;
+  const expiredCount = bookings.filter((b) => b.status === "EXPIRED" || b.status === "CANCELLED").length;
+
   return (
     <div className="flex flex-col gap-6">
+      <SummaryBar
+        stats={[
+          { label: "Resultados", value: bookings.length },
+          { label: "Pendientes de pago", value: pendingCount, tone: "warning" },
+          { label: "Confirmadas", value: confirmedCount, tone: "success" },
+          { label: "Canceladas / expiradas", value: expiredCount, tone: "danger" },
+        ]}
+      />
+
       <GlassCard>
         <form method="get" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div>
@@ -143,25 +161,36 @@ export default async function AdminBookingsPage({ searchParams }: PageProps) {
                   <td className="py-2.5 pr-4 text-bone-dim">
                     {fullDateLabel(businessDateString(b.startsAt))} · {formatMinutes(minutesInBusinessDay(b.startsAt))}
                   </td>
-                  <td className="py-2.5 pr-4 text-bone-dim">{BOOKING_STATUS_LABEL[b.status]}</td>
-                  <td className="py-2.5 pr-4 text-bone-dim">{PAYMENT_STATUS_LABEL[b.paymentStatus]}</td>
+                  <td className="py-2.5 pr-4">
+                    <StatusBadge label={BOOKING_STATUS_LABEL[b.status]} tone={BOOKING_STATUS_TONE[b.status]} />
+                  </td>
+                  <td className="py-2.5 pr-4">
+                    <StatusBadge label={PAYMENT_STATUS_LABEL[b.paymentStatus]} tone={PAYMENT_STATUS_TONE[b.paymentStatus]} />
+                  </td>
                   <td className="py-2.5 pr-4">
                     <div className="flex flex-wrap items-center gap-2">
                       {CANCELLABLE_STATUSES.includes(b.status) ? (
                         <ConfirmActionButton
-                          label="Cancelar"
-                          pendingLabel="…"
-                          confirmText={`¿Cancelar la reserva #${b.bookingNumber}? Queda anulada pero el registro se conserva.`}
+                          label=""
+                          icon={<XCircleIcon />}
+                          title="Cancelar"
+                          pendingLabel=""
+                          confirmLabel="Sí, cancelar"
+                          confirmMessage={`¿Cancelar la reserva #${b.bookingNumber}? Queda anulada pero el registro se conserva.`}
                           action={changeBookingStatusFormAction.bind(null, b.id, "CANCELLED")}
-                          className="rounded-md border border-white/15 px-2.5 py-1 font-mono text-[11px] uppercase tracking-wide text-bone-dim hover:border-gold/30 hover:text-gold-soft"
+                          className={ICON_BTN_NEUTRAL}
                         />
                       ) : null}
                       <ConfirmActionButton
-                        label="Eliminar"
-                        pendingLabel="…"
-                        confirmText={`¿Eliminar por completo la reserva #${b.bookingNumber}? No se puede deshacer.`}
+                        label=""
+                        icon={<TrashIcon />}
+                        title="Eliminar"
+                        pendingLabel=""
+                        tone="danger"
+                        confirmLabel="Sí, eliminar"
+                        confirmMessage={`¿Eliminar por completo la reserva #${b.bookingNumber}? No se puede deshacer.`}
                         action={deleteBookingFromListAction.bind(null, b.id)}
-                        className="rounded-md border border-ember/30 px-2.5 py-1 font-mono text-[11px] uppercase tracking-wide text-ember hover:border-ember hover:bg-ember/10"
+                        className={ICON_BTN_DANGER}
                       />
                     </div>
                   </td>

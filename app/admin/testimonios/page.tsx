@@ -3,6 +3,9 @@ import { revalidatePath } from "next/cache";
 import { listTestimonialsAdmin, setTestimonialStatus } from "@/server/admin/testimonials";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { SummaryBar } from "@/components/admin/SummaryBar";
+import type { Tone } from "@/lib/status-tone";
 import type { TestimonialStatus } from "@prisma/client";
 
 export const metadata: Metadata = { title: "Panel — Testimonios", robots: { index: false } };
@@ -12,6 +15,13 @@ const STATUS_LABEL: Record<TestimonialStatus, string> = {
   APPROVED: "Aprobado",
   REJECTED: "Rechazado",
   PUBLISHED: "Publicado",
+};
+
+const STATUS_TONE: Record<TestimonialStatus, Tone> = {
+  PENDING: "warning",
+  APPROVED: "success",
+  REJECTED: "danger",
+  PUBLISHED: "success",
 };
 
 async function changeStatus(id: string, status: TestimonialStatus) {
@@ -29,12 +39,21 @@ export default async function AdminTestimonialsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
+      <SummaryBar
+        stats={[
+          { label: "Testimonios", value: testimonials.length },
+          { label: "Pendientes", value: testimonials.filter((t) => t.status === "PENDING").length, tone: "warning" },
+          { label: "Publicados", value: testimonials.filter((t) => t.status === "PUBLISHED").length, tone: "success" },
+        ]}
+      />
+
+      <div className="flex flex-col gap-4">
       {testimonials.map((t) => (
         <GlassCard key={t.id} className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="font-mono text-[11px] uppercase tracking-wide text-gold">{t.name}</span>
-            <span className="font-mono text-[11px] uppercase tracking-wide text-ash">{STATUS_LABEL[t.status]}</span>
+            <StatusBadge label={STATUS_LABEL[t.status]} tone={STATUS_TONE[t.status]} />
           </div>
           <p className="mb-0 text-sm italic text-bone">&ldquo;{t.text}&rdquo;</p>
           <div className="flex flex-wrap gap-2">
@@ -56,6 +75,7 @@ export default async function AdminTestimonialsPage() {
           </div>
         </GlassCard>
       ))}
+      </div>
     </div>
   );
 }

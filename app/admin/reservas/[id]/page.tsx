@@ -6,7 +6,10 @@ import { ConfirmActionButton } from "@/components/admin/ConfirmActionButton";
 import { minutesInBusinessDay, formatMinutes, businessDateString } from "@/lib/timezone";
 import { fullDateLabel } from "@/lib/date-labels";
 import { BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL, PAYMENT_METHOD_LABEL } from "@/lib/booking-labels";
+import { BOOKING_STATUS_TONE, PAYMENT_STATUS_TONE } from "@/lib/status-tone";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { TrashIcon } from "@/components/ui/icons";
 import { AdminNoteForm } from "@/components/admin/AdminNoteForm";
 import { intakeFieldsFor } from "@/lib/service-intake";
 import { isReportOnlyService, REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
@@ -84,10 +87,12 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
               <p className="mb-0 text-xs text-gold-soft">Informe · entrega en {REPORT_DELIVERY_TEXT}</p>
             ) : null}
           </div>
-          <div>
+          <div className="flex flex-col gap-2">
             <span className="mb-1 block font-mono text-[11px] uppercase tracking-wide text-ash">Estado</span>
-            <span className="text-bone">{BOOKING_STATUS_LABEL[booking.status]}</span>
-            <p className="mb-0 text-xs text-ash">{PAYMENT_STATUS_LABEL[booking.paymentStatus]}</p>
+            <div className="flex flex-wrap gap-1.5">
+              <StatusBadge label={BOOKING_STATUS_LABEL[booking.status]} tone={BOOKING_STATUS_TONE[booking.status]} />
+              <StatusBadge label={PAYMENT_STATUS_LABEL[booking.paymentStatus]} tone={PAYMENT_STATUS_TONE[booking.paymentStatus]} />
+            </div>
           </div>
         </div>
 
@@ -101,10 +106,13 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
           ))}
           <ConfirmActionButton
             label="Eliminar registro"
+            icon={<TrashIcon className="h-4 w-4" />}
             pendingLabel="Eliminando…"
-            confirmText={`¿Eliminar por completo la reserva #${booking.bookingNumber}? Se borra el registro entero (mensajes, llamadas, transacciones) y no se puede deshacer. Si solo querés que quede anulada, usa "Cancelar" en vez de esto.`}
+            tone="danger"
+            confirmLabel="Sí, eliminar"
+            confirmMessage={`¿Eliminar por completo la reserva #${booking.bookingNumber}? Se borra el registro entero (mensajes, llamadas, transacciones) y no se puede deshacer. Si solo querés que quede anulada, usa "Cancelar" en vez de esto.`}
             action={deleteBookingAction.bind(null, booking.id)}
-            className="btn btn-ghost ml-auto border-ember/40 text-ember hover:border-ember hover:bg-ember/10"
+            className="btn btn-ghost ml-auto flex items-center gap-2 border-ember/40 text-ember hover:border-ember hover:bg-ember/10"
           />
         </div>
       </GlassCard>
