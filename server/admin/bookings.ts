@@ -9,6 +9,7 @@ import { sendExpoPushToUser } from "@/server/expo-push";
 import { calculateOverage, CREDIT_MINUTES_CAP } from "@/server/credit-overage";
 import { assignBookingNumberIfMissing } from "@/server/booking-number";
 import { deleteBookingsWithDependents } from "@/server/booking-cleanup";
+import { fundMinutesWalletIfApplicable } from "@/server/wallet";
 import type { BookingStatus, PaymentStatus } from "@prisma/client";
 import type { CurrentUser } from "@/lib/auth/session";
 
@@ -104,6 +105,7 @@ export async function setBookingStatus(
     data: {
       status: next,
       paymentStatus: willMarkPaid ? "PAID" : undefined,
+      paidAt: willMarkPaid ? new Date() : undefined,
     },
   });
 
@@ -116,6 +118,7 @@ export async function setBookingStatus(
     // (que ya usan esta misma variable `booking`) muestren el número real,
     // no el marcador temporal con el que se creó la reserva.
     booking.bookingNumber = await assignBookingNumberIfMissing(bookingId, booking.bookingNumber);
+    await fundMinutesWalletIfApplicable(booking);
   }
 
   // Liquidación de "Créditos Beto": recién al marcar la consulta como

@@ -6,6 +6,7 @@ import { expireStaleBookings } from "@/server/availability";
 import { notifyPaymentConfirmed } from "@/server/notifications/send";
 import { sendPushToTarotista } from "@/server/push-notifications";
 import { assignBookingNumberIfMissing } from "@/server/booking-number";
+import { fundMinutesWalletIfApplicable } from "@/server/wallet";
 
 export interface OrderResult {
   orderId?: string;
@@ -120,16 +121,20 @@ export async function captureOrderForBooking(orderId: string): Promise<CaptureRe
     return { error: "El monto capturado no coincide con el de la reserva. Contacta soporte." };
   }
 
+  const feeBreakdown = capture.seller_receivable_breakdown;
+
   await prisma.$transaction([
     prisma.booking.update({
       where: { id: booking.id },
-      data: { status: "CONFIRMED", paymentStatus: "PAID", paypalCaptureId: capture.id },
+      data: { status: "CONFIRMED", paymentStatus: "PAID", paypalCaptureId: capture.id, paidAt: new Date() },
     }),
     prisma.paypalTransaction.update({
       where: { paypalOrderId: orderId },
       data: {
         status: "COMPLETED",
         paypalCaptureId: capture.id,
+        paypalFeeAmount: feeBreakdown?.paypal_fee?.value ? Number(feeBreakdown.paypal_fee.value) : undefined,
+        netAmount: feeBreakdown?.net_amount?.value ? Number(feeBreakdown.net_amount.value) : undefined,
         rawPayload: captured as unknown as object,
       },
     }),
@@ -139,6 +144,7 @@ export async function captureOrderForBooking(orderId: string): Promise<CaptureRe
   // server/booking-number.ts) -- hasta ahora tenía un marcador temporal que
   // no consumía ningún valor de la serie BETO-<año>-NNNNN.
   booking.bookingNumber = await assignBookingNumberIfMissing(booking.id, booking.bookingNumber);
+  await fundMinutesWalletIfApplicable(booking);
 
   await notifyPaymentConfirmed(booking).catch((err) => console.error("[notify] payment_confirmed:", err));
   if (booking.tarotistaId) {

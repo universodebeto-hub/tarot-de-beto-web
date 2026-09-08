@@ -57,6 +57,7 @@ export async function grantComplimentaryConsultation(
       paymentStatus: "PAID",
       paymentMethod: "CORTESIA",
       paymentDeadline: now,
+      paidAt: now,
     },
     include: { service: true, user: true },
   });

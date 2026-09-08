@@ -4,10 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { Room, RoomEvent, Track, type RemoteTrack, type RemoteTrackPublication } from "livekit-client";
 
 interface CallRoomProps {
-  bookingId: string;
-  /** Minutos pagados del servicio -- una vez transcurridos, la llamada se corta sola (salvo creditExempt). */
+  /** Llamada de una reserva puntual -- pasar esto (y no walletTarotistaId). */
+  bookingId?: string;
+  /** Llamada de la bolsa de minutos (server/wallet.ts) con cualquier tarotista -- pasar esto (y no bookingId). */
+  walletTarotistaId?: string;
+  /** Minutos disponibles -- una vez transcurridos, la llamada se corta sola (salvo creditExempt). En modo bolsa, es el saldo del cliente. */
   durationMinutes: number;
-  /** true solo para reservas pagadas con "Créditos Beto" (ver server/credit.ts) -- a esas cuentas no se les corta la llamada por tiempo. */
+  /** true solo para reservas pagadas con "Créditos Beto" (ver server/credit.ts) -- a esas cuentas no se les corta la llamada por tiempo. Siempre false en modo bolsa. */
   creditExempt: boolean;
   /** true si el cliente pagó el recargo de videollamada (Booking.videoRequested) -- la cámara se prende sola al conectar en vez de esperar a que alguien toque el botón. */
   videoRequested: boolean;
@@ -40,7 +43,16 @@ function timerColorClass(durationMinutes: number, elapsedSeconds: number): strin
  * de emitirlo — ver server/calls.ts). Sala = bookingId, siempre 2
  * participantes esperados (cliente y tarotista).
  */
-export function CallRoom({ bookingId, durationMinutes, creditExempt, videoRequested }: CallRoomProps) {
+export function CallRoom({ bookingId, walletTarotistaId, durationMinutes, creditExempt, videoRequested }: CallRoomProps) {
+  const isWallet = Boolean(walletTarotistaId);
+  const roomNameRef = useRef<string | null>(null);
+  function connectedUrl() {
+    return isWallet ? `/api/wallet/${roomNameRef.current}/connected` : `/api/calls/${bookingId}/connected`;
+  }
+  function endUrl() {
+    return isWallet ? `/api/wallet/${roomNameRef.current}/end` : `/api/calls/${bookingId}/end`;
+  }
+
   const [state, setState] = useState<CallState>("connecting");
   const [error, setError] = useState<string | null>(null);
   const [otherPartyName, setOtherPartyName] = useState<string | null>(null);
@@ -66,7 +78,7 @@ export function CallRoom({ bookingId, durationMinutes, creditExempt, videoReques
       setState("connected");
       // Recién ahora la otra persona realmente entró -- antes de esto no
       // cuenta como minutos consumidos (ver server/calls.ts::markCallConnected).
-      fetch(`/api/calls/${bookingId}/connected`, { method: "POST" }).catch(() => {});
+      fetch(connectedUrl(), { method: "POST" }).catch(() => {});
     });
     room.on(RoomEvent.ParticipantDisconnected, () => setState("waiting"));
     room.on(RoomEvent.Disconnected, () => {
@@ -93,10 +105,11 @@ export function CallRoom({ bookingId, durationMinutes, creditExempt, videoReques
     });
 
     async function join() {
-      let data: { token?: string; url?: string; otherPartyName?: string; error?: string };
+      let data: { token?: string; url?: string; roomName?: string; otherPartyName?: string; error?: string };
       try {
-        const res = await fetch(`/api/calls/${bookingId}/token`);
+        const res = await fetch(isWallet ? `/api/wallet/${walletTarotistaId}/token` : `/api/calls/${bookingId}/token`);
         data = await res.json();
+        roomNameRef.current = data.roomName ?? null;
         if (cancelled) return;
         if (!res.ok || !data.token) {
           setError(data.error ?? "No se pudo iniciar la llamada.");
@@ -154,7 +167,7 @@ export function CallRoom({ bookingId, durationMinutes, creditExempt, videoReques
         // La otra persona ya estaba en la sala antes de que nos uniéramos --
         // el evento ParticipantConnected no dispara para alguien que ya
         // estaba ahí, así que hay que marcarlo acá también.
-        if (alreadyThere) fetch(`/api/calls/${bookingId}/connected`, { method: "POST" }).catch(() => {});
+        if (alreadyThere) fetch(connectedUrl(), { method: "POST" }).catch(() => {});
       }
     }
     void join();
@@ -163,9 +176,10 @@ export function CallRoom({ bookingId, durationMinutes, creditExempt, videoReques
       cancelled = true;
       room.disconnect();
       // keepalive: el fetch debe salir aunque el componente ya se esté desmontando (navegación fuera de la página).
-      fetch(`/api/calls/${bookingId}/end`, { method: "POST", keepalive: true }).catch(() => {});
+      fetch(endUrl(), { method: "POST", keepalive: true }).catch(() => {});
     };
-  }, [bookingId, videoRequested]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- connectedUrl/endUrl leen roomNameRef (no estado), agregarlas re-dispararía el efecto sin cambiar el comportamiento.
+  }, [bookingId, walletTarotistaId, isWallet, videoRequested]);
 
   useEffect(() => {
     if (state !== "connected") return;
@@ -233,7 +247,7 @@ export function CallRoom({ bookingId, durationMinutes, creditExempt, videoReques
   function hangUp() {
     roomRef.current?.disconnect();
     setState("ended");
-    fetch(`/api/calls/${bookingId}/end`, { method: "POST", keepalive: true }).catch(() => {});
+    fetch(endUrl(), { method: "POST", keepalive: true }).catch(() => {});
   }
 
   const showVideoArea = cameraOn || remoteVideoOn;

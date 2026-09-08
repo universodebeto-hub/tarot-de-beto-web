@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { logoutUser } from "@/server/auth";
 import { getUserBookings } from "@/server/bookings";
 import { getCreditStatus } from "@/server/credit";
+import { prisma } from "@/lib/prisma";
 import { minutesInBusinessDay, formatMinutes, businessDateString } from "@/lib/timezone";
 import { fullDateLabel } from "@/lib/date-labels";
 import { BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL } from "@/lib/booking-labels";

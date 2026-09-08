@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { getTarotistaBySlug } from "@/server/tarotistas";
 import { getServices } from "@/server/services";
 import { getCurrentUser } from "@/lib/auth/session";
+import { prisma } from "@/lib/prisma";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { Button } from "@/components/ui/Button";
 import { ConsultationForm } from "@/components/tarotistas/ConsultationForm";
 import { AttentionRequestForm } from "@/components/tarotistas/AttentionRequestForm";
 import {
@@ -53,6 +55,10 @@ export default async function TarotistaProfilePage({ params }: TarotistaPageProp
   if (!tarotista || !tarotista.active) notFound();
 
   const isAvailable = tarotista.status === "DISPONIBLE";
+  const minutesBalance =
+    user?.role === "CLIENT"
+      ? ((await prisma.user.findUnique({ where: { id: user.id }, select: { minutesBalance: true } }))?.minutesBalance ?? 0)
+      : 0;
 
   return (
     <section className="py-[88px]">
@@ -91,6 +97,19 @@ export default async function TarotistaProfilePage({ params }: TarotistaPageProp
             <p className="mx-auto mt-5 max-w-[46ch] text-[15.5px] leading-relaxed text-bone-dim">{tarotista.bio}</p>
           ) : null}
         </div>
+
+        {isAvailable && minutesBalance > 0 ? (
+          <GlassCard className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <span className="eyebrow mb-0">Ya tenés minutos disponibles</span>
+              <p className="mb-0 text-sm text-bone-dim">
+                Te quedan <span className="text-gold-soft">{minutesBalance} min</span> de una consulta anterior --
+                usalos con este tarotista ahora, sin pagar de nuevo.
+              </p>
+            </div>
+            <Button href={`/tarotistas/${tarotista.slug}/llamada-minutos`}>Llamar con mis minutos</Button>
+          </GlassCard>
+        ) : null}
 
         <GlassCard>
           {isAvailable ? (

@@ -421,6 +421,12 @@ model Booking {
   status          BookingStatus @default(PENDING_PAYMENT)
   paymentStatus   PaymentStatus @default(UNPAID)
   paymentDeadline DateTime
+  /// Momento exacto en que paymentStatus pasó a PAID -- para el panel de
+  /// contabilidad (server/admin/accounting.ts), que agrupa ingresos por
+  /// mes/año usando ESTA fecha, nunca `startsAt` (que para un informe es la
+  /// fecha de la solicitud, no de pago). Null en reservas que todavía no
+  /// se pagaron.
+  paidAt          DateTime?
   paypalOrderId   String?       @unique
   paypalCaptureId String?
   /// Método de pago elegido — null mientras la reserva sigue pendiente y
@@ -570,10 +576,31 @@ model PaypalTransaction {
   amount          Decimal  @db.Decimal(10, 2)
   currency        String
   rawPayload      Json?
+  /// Comisión que PayPal cobra por esta captura (seller_receivable_breakdown.paypal_fee
+  /// de la respuesta de captura) -- para el panel de contabilidad
+  /// (server/admin/accounting.ts). Null en órdenes viejas, capturadas antes
+  /// de guardar este dato.
+  paypalFeeAmount Decimal? @db.Decimal(10, 2)
+  /// Lo que efectivamente queda disponible después de la comisión (net_amount).
+  netAmount       Decimal? @db.Decimal(10, 2)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   @@index([bookingId])
+}
+
+/// Gasto del negocio (suscripciones, dominio, LiveKit, etc.) -- cargado a
+/// mano por el admin desde /admin/contabilidad, para que el panel calcule
+/// una ganancia real (ingresos - comisiones - gastos), no solo ingresos.
+model BusinessExpense {
+  id          String   @id @default(cuid())
+  description String
+  amountUsd   Decimal  @db.Decimal(10, 2)
+  category    String?
+  incurredAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([incurredAt])
 }
 
 /// Deduplicación de eventos de webhook de PayPal: PayPal puede reenviar el

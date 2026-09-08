@@ -77,7 +77,18 @@ export interface PaypalOrder {
   purchase_units?: Array<{
     amount?: { value: string; currency_code: string };
     payments?: {
-      captures?: Array<{ id: string; status: string; amount?: { value: string; currency_code: string } }>;
+      captures?: Array<{
+        id: string;
+        status: string;
+        amount?: { value: string; currency_code: string };
+        /// Desglose de la comisión que PayPal se queda -- para el panel de
+        /// contabilidad (server/admin/accounting.ts). No siempre viene (ej.
+        /// capturas viejas ya sincronizadas antes de leer esto).
+        seller_receivable_breakdown?: {
+          paypal_fee?: { value: string; currency_code: string };
+          net_amount?: { value: string; currency_code: string };
+        };
+      }>;
     };
   }>;
 }
