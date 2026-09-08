@@ -154,42 +154,66 @@ export function ManualPaymentPanel({
     );
   }
 
-  const pickableMethods: PickableMethod[] = [
-    ...MANUAL_METHODS,
-    ...(paypal ? (["PAYPAL"] as const) : []),
-    ...(creditEnabled ? (["CREDITO_BETO"] as const) : []),
-  ];
+  const manualMethods: PickableMethod[] = [...MANUAL_METHODS, ...(creditEnabled ? (["CREDITO_BETO"] as const) : [])];
 
   return (
-    <div className="flex flex-col gap-3">
-      <span className="eyebrow">Elige un método de pago</span>
-      <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-        {pickableMethods.map((m) => (
+    <div className="flex flex-col gap-5">
+      {paypal ? (
+        <div className="flex flex-col gap-3">
+          <span className="eyebrow">Pago con tarjeta</span>
           <button
-            key={m}
             type="button"
-            onClick={() => setMethod(m)}
-            aria-label={PAYMENT_METHOD_LABEL[m]}
-            className="flex flex-col items-center gap-1.5"
+            onClick={() => setMethod("PAYPAL")}
+            className={`flex items-center gap-4 rounded-xl border px-4 py-3.5 text-left transition-colors ${
+              method === "PAYPAL" ? "border-gold/60 bg-gold/[0.08]" : "border-white/10 bg-white/[0.02] hover:border-gold/25"
+            }`}
           >
-            <span
-              className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl transition-all ${
-                method === m ? "ring-2 ring-gold ring-offset-2 ring-offset-obsidian" : "hover:brightness-110"
-              }`}
-            >
-              <Image
-                src={`/assets/payment-logos/${PAYMENT_METHOD_LOGO_SLUG[m]}.png`}
-                alt={PAYMENT_METHOD_LABEL[m]}
-                fill
-                sizes="80px"
-                className="object-cover"
-              />
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/10 text-gold-soft">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className="h-6 w-6">
+                <rect x="2.5" y="5" width="19" height="14" rx="2" />
+                <path d="M2.5 10h19" strokeLinecap="round" />
+              </svg>
             </span>
-            <span className="text-center font-mono text-[9.5px] uppercase leading-tight tracking-wide text-ash">
-              {PAYMENT_METHOD_LABEL[m]}
+            <span>
+              <span className="block text-bone">Tarjeta de crédito o débito</span>
+              <span className="block text-xs text-bone-dim">
+                Visa, Mastercard u otra — no necesitás cuenta de PayPal, pagás como invitado
+              </span>
             </span>
           </button>
-        ))}
+        </div>
+      ) : null}
+
+      <div className="flex flex-col gap-3">
+        <span className="eyebrow">Pago manual (transferencia)</span>
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+          {manualMethods.map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMethod(m)}
+              aria-label={PAYMENT_METHOD_LABEL[m]}
+              className="flex flex-col items-center gap-1.5"
+            >
+              <span
+                className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl transition-all ${
+                  method === m ? "ring-2 ring-gold ring-offset-2 ring-offset-obsidian" : "hover:brightness-110"
+                }`}
+              >
+                <Image
+                  src={`/assets/payment-logos/${PAYMENT_METHOD_LOGO_SLUG[m]}.png`}
+                  alt={PAYMENT_METHOD_LABEL[m]}
+                  fill
+                  sizes="80px"
+                  className="object-cover"
+                />
+              </span>
+              <span className="text-center font-mono text-[9.5px] uppercase leading-tight tracking-wide text-ash">
+                {PAYMENT_METHOD_LABEL[m]}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {method === "PAYPAL" && paypal ? (
