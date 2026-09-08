@@ -6,6 +6,7 @@ import { expireStaleBookings } from "@/server/availability";
 import { notifyPaymentConfirmed, notifyCancelled } from "@/server/notifications/send";
 import { sendPushToTarotista } from "@/server/push-notifications";
 import { sendExpoPushToUser } from "@/server/expo-push";
+import { calculateOverage, CREDIT_MINUTES_CAP } from "@/server/credit-overage";
 import type { BookingStatus, PaymentStatus } from "@prisma/client";
 import type { CurrentUser } from "@/lib/auth/session";
 
@@ -76,7 +77,7 @@ export async function setBookingStatus(
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
-    include: { service: true, user: true },
+    include: { service: true, user: true, callLogs: true },
   });
   if (!booking) return { error: "Reserva no encontrada." };
 
@@ -98,6 +99,44 @@ export async function setBookingStatus(
       paymentStatus: willMarkPaid ? "PAID" : undefined,
     },
   });
+
+  // Liquidación de "Créditos Beto": recién al marcar la consulta como
+  // terminada se sabe cuánto duró de verdad la llamada, así que es acá
+  // donde se suman los minutos consumidos y se cobra el excedente (si lo
+  // hubo) a la cuenta corriente del cliente -- ver server/credit-overage.ts.
+  // Nunca se re-liquida: COMPLETED no tiene transición de salida en
+  // ALLOWED_TRANSITIONS, así que esto corre una sola vez por reserva.
+  if (next === "COMPLETED" && booking.paymentMethod === "CREDITO_BETO" && booking.userId) {
+    const totalMinutes = Math.round(
+      booking.callLogs.reduce(
+        (sum, log) =>
+          sum + (log.connectedAt && log.endedAt ? Math.max(0, (log.endedAt.getTime() - log.connectedAt.getTime()) / 60000) : 0),
+        0,
+      ),
+    );
+    const { overageMinutes, overageCost } = await calculateOverage(booking.service.durationMinutes, totalMinutes);
+    const minutesToAdd = booking.service.durationMinutes + overageMinutes;
+    const amountToAdd = Number(booking.service.price) + overageCost;
+
+    const updatedUser = await prisma.user.update({
+      where: { id: booking.userId },
+      data: {
+        creditMinutesAccumulated: { increment: minutesToAdd },
+        creditAmountOwed: { increment: amountToAdd },
+      },
+    });
+
+    if (updatedUser.creditMinutesAccumulated >= CREDIT_MINUTES_CAP && !updatedUser.creditPaused) {
+      await prisma.user.update({ where: { id: booking.userId }, data: { creditPaused: true } });
+      await logAdminAction({
+        adminId: admin.id,
+        action: "client.credit_auto_paused",
+        targetType: "User",
+        targetId: booking.userId,
+        details: `${updatedUser.creditMinutesAccumulated} min acumulados`,
+      });
+    }
+  }
 
   await logAdminAction({
     adminId: admin.id,

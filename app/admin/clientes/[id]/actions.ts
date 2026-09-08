@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { setUserCreditApproval, updateClientInfo, promoteToAdmin, deleteClientAdmin } from "@/server/admin/clients";
 import { grantComplimentaryConsultation } from "@/server/admin/gifts";
+import { pauseUserCredit, resumeUserCredit, markUserCreditPaid } from "@/server/credit";
 import type { AdminFormState } from "@/server/admin/services";
 
 export async function setUserCreditApprovalFormAction(userId: string, approved: boolean): Promise<void> {
@@ -41,6 +42,24 @@ export async function deleteClientAction(userId: string): Promise<AdminFormState
 export async function deleteClientFromListAction(userId: string): Promise<AdminFormState> {
   const result = await deleteClientAdmin(userId);
   if (!result.error) revalidatePath("/admin/clientes");
+  return result;
+}
+
+export async function pauseUserCreditAction(userId: string): Promise<{ error?: string }> {
+  const result = await pauseUserCredit(userId);
+  if (!result.error) revalidatePath(`/admin/clientes/${userId}`);
+  return result;
+}
+
+export async function resumeUserCreditAction(userId: string): Promise<{ error?: string }> {
+  const result = await resumeUserCredit(userId);
+  if (!result.error) revalidatePath(`/admin/clientes/${userId}`);
+  return result;
+}
+
+export async function markUserCreditPaidAction(userId: string): Promise<{ error?: string }> {
+  const result = await markUserCreditPaid(userId);
+  if (!result.error) revalidatePath(`/admin/clientes/${userId}`);
   return result;
 }
 

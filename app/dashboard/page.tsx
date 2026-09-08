@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { logoutUser } from "@/server/auth";
 import { getUserBookings } from "@/server/bookings";
+import { getCreditStatus } from "@/server/credit";
 import { minutesInBusinessDay, formatMinutes, businessDateString } from "@/lib/timezone";
 import { fullDateLabel } from "@/lib/date-labels";
 import { BOOKING_STATUS_LABEL, PAYMENT_STATUS_LABEL } from "@/lib/booking-labels";
@@ -22,6 +23,8 @@ export default async function DashboardPage() {
   if (!user) redirect("/login?callbackUrl=/dashboard");
 
   const bookings = await getUserBookings(user.id);
+  const creditStatus = user.canUseCredit ? await getCreditStatus(user.id) : null;
+  const hasPendingCredit = Boolean(creditStatus && (creditStatus.amountOwed > 0 || creditStatus.paused));
 
   return (
     <section className="py-[88px]">
@@ -60,6 +63,22 @@ export default async function DashboardPage() {
               </div>
             </dl>
           </GlassCard>
+
+          {hasPendingCredit && creditStatus ? (
+            <GlassCard className="lg:col-span-2">
+              <span className="eyebrow mb-3">Pagos pendientes</span>
+              <p className="mb-2 text-sm text-bone-dim">
+                Tenés un saldo pendiente de <span className="text-gold-soft">${creditStatus.amountOwed.toFixed(2)}</span> por
+                consultas atendidas a crédito ({creditStatus.minutesAccumulated} de {creditStatus.minutesCap} minutos usados).
+              </p>
+              {creditStatus.paused ? (
+                <p className="mb-0 text-sm text-ember">
+                  Tu crédito está pausado por ahora -- escribinos por WhatsApp para regularizar el pago y volver a pedir
+                  consultas a crédito.
+                </p>
+              ) : null}
+            </GlassCard>
+          ) : null}
 
           <div>
             <span className="eyebrow mb-4">Mis reservas</span>

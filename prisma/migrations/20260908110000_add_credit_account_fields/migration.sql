@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN "creditMinutesAccumulated" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "User" ADD COLUMN "creditAmountOwed" DECIMAL(10,2) NOT NULL DEFAULT 0;
+ALTER TABLE "User" ADD COLUMN "creditPaused" BOOLEAN NOT NULL DEFAULT false;

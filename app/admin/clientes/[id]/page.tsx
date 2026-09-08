@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import { getClientAdminById } from "@/server/admin/clients";
 import { listTarotistasAdmin } from "@/server/admin/tarotistas";
 import { getServices } from "@/server/services";
+import { getCreditStatus } from "@/server/credit";
 import {
   setUserCreditApprovalFormAction,
   deleteClientAction,
 } from "@/app/admin/clientes/[id]/actions";
+import { CreditAccountPanel } from "@/components/admin/CreditAccountPanel";
 import { minutesInBusinessDay, formatMinutes, businessDateString } from "@/lib/timezone";
 import { fullDateLabel } from "@/lib/date-labels";
 import { BOOKING_STATUS_LABEL, PAYMENT_METHOD_LABEL } from "@/lib/booking-labels";
@@ -31,6 +33,7 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
   ]);
   if (!clientOrNull) notFound();
   const client = clientOrNull;
+  const creditStatus = await getCreditStatus(client.id);
 
   const tabs: TabItem[] = [
     {
@@ -62,6 +65,12 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
               </button>
             </form>
           </div>
+
+          {client.canUseCredit ? (
+            <div className="border-t border-white/10 pt-6">
+              <CreditAccountPanel clientId={client.id} status={creditStatus} />
+            </div>
+          ) : null}
 
           <div className="flex flex-col gap-3 border-t border-white/10 pt-6">
             <span className="eyebrow">Regalar consulta</span>

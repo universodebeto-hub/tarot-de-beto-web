@@ -102,6 +102,20 @@ model User {
   /// persona para atenderla antes de que pague".
   canUseCredit Boolean @default(false)
 
+  /// Cuenta corriente de "Créditos Beto" -- se suma al marcar una consulta a
+  /// crédito como COMPLETED (ver server/admin/bookings.ts::setBookingStatus):
+  /// minutos totales usados en esa consulta (paquete + excedente) y el monto
+  /// que Beto todavía no cobró (precio del servicio + excedente a $0.60/min
+  /// hasta 1h, $0.68/min pasada la hora -- ver server/credit-overage.ts).
+  /// `creditPaused` bloquea nuevas consultas a crédito (aunque canUseCredit
+  /// siga en true) sin tocar las que ya están confirmadas -- se activa solo
+  /// al llegar a 300 min acumulados, o Beto lo activa a mano en cualquier
+  /// momento. `markUserCreditPaid` (server/credit.ts) resetea ambos
+  /// contadores a cero y reactiva.
+  creditMinutesAccumulated Int     @default(0)
+  creditAmountOwed         Decimal @default(0) @db.Decimal(10, 2)
+  creditPaused             Boolean @default(false)
+
   passwordResets  PasswordReset[]
   bookings        Booking[]
   auditLogs       AuditLog[]
