@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { deleteBookingsWithDependents } from "@/server/booking-cleanup";
 
 /**
  * Elimina cualquier reserva PENDING_PAYMENT cuyo plazo ya venció -- nunca
@@ -16,7 +17,9 @@ import { prisma } from "@/lib/prisma";
  * desde rutas explícitas (botón del panel admin, endpoint de cron).
  */
 export async function expireStaleBookings(): Promise<void> {
-  await prisma.booking.deleteMany({
+  const stale = await prisma.booking.findMany({
     where: { status: "PENDING_PAYMENT", paymentDeadline: { lt: new Date() } },
+    select: { id: true },
   });
+  await deleteBookingsWithDependents(stale.map((b) => b.id));
 }

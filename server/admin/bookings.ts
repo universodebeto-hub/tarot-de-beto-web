@@ -8,6 +8,7 @@ import { sendPushToTarotista } from "@/server/push-notifications";
 import { sendExpoPushToUser } from "@/server/expo-push";
 import { calculateOverage, CREDIT_MINUTES_CAP } from "@/server/credit-overage";
 import { assignBookingNumberIfMissing } from "@/server/booking-number";
+import { deleteBookingsWithDependents } from "@/server/booking-cleanup";
 import type { BookingStatus, PaymentStatus } from "@prisma/client";
 import type { CurrentUser } from "@/lib/auth/session";
 
@@ -316,7 +317,7 @@ export async function cleanupIncompleteBookings(
 ): Promise<CleanupIncompleteBookingsResult> {
   const admin = await requireAdmin(currentUser);
 
-  const result = await prisma.booking.deleteMany({
+  const toDelete = await prisma.booking.findMany({
     where: {
       OR: [
         { status: "EXPIRED" },
@@ -324,17 +325,19 @@ export async function cleanupIncompleteBookings(
         { status: "CANCELLED", paymentStatus: { not: "PAID" } },
       ],
     },
+    select: { id: true },
   });
+  const deletedCount = await deleteBookingsWithDependents(toDelete.map((b) => b.id));
 
   await logAdminAction({
     adminId: admin.id,
     action: "booking.cleanup_incomplete",
     targetType: "Booking",
     targetId: "bulk",
-    details: `${result.count} reservas eliminadas`,
+    details: `${deletedCount} reservas eliminadas`,
   });
 
-  return { deleted: result.count };
+  return { deleted: deletedCount };
 }
 
 export async function addBookingNote(

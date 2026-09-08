@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { notifyExpired } from "@/server/notifications/send";
+import { deleteBookingsWithDependents } from "@/server/booking-cleanup";
 
 /**
  * Versión "con aviso" de la expiración perezosa: manda el correo
@@ -23,9 +24,7 @@ export async function expireAndNotify(): Promise<{ expired: number }> {
     await notifyExpired(booking).catch((err) => console.error("[notify] expired:", err));
   }
 
-  await prisma.booking.deleteMany({
-    where: { id: { in: stale.map((b) => b.id) } },
-  });
+  await deleteBookingsWithDependents(stale.map((b) => b.id));
 
   return { expired: stale.length };
 }
