@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { LegalArticle } from "@/components/legal/LegalArticle";
-import { getSetting } from "@/server/settings";
+import { PAYMENT_WINDOW_MINUTES } from "@/lib/booking-window";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/politica-de-reservas" },
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function PoliticaDeReservasPage() {
-  const paymentWindowMinutes = await getSetting<number>("booking_payment_window_minutes", 30);
+  const paymentWindowMinutes = PAYMENT_WINDOW_MINUTES;
 
   return (
     <LegalArticle

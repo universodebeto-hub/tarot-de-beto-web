@@ -6,7 +6,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import type { CurrentUser } from "@/lib/auth/session";
 import { getServiceById } from "@/server/services";
 import { expireStaleBookings } from "@/server/availability";
-import { getSetting } from "@/server/settings";
+import { PAYMENT_WINDOW_MINUTES } from "@/lib/booking-window";
 import { notifyBookingReceived } from "@/server/notifications/send";
 import { hasRequiredIntakeData } from "@/lib/service-intake";
 import { isReportOnlyService } from "@/lib/service-fulfillment";
@@ -81,8 +81,7 @@ export async function createReportRequest(
   }
 
   const now = new Date();
-  const paymentWindowMinutes = await getSetting("booking_payment_window_minutes", 30);
-  const paymentDeadline = new Date(Date.now() + paymentWindowMinutes * 60_000);
+  const paymentDeadline = new Date(Date.now() + PAYMENT_WINDOW_MINUTES * 60_000);
   const bookingNumber = await nextBookingNumber();
 
   const booking = await prisma.booking.create({
