@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
 
 /**
- * Pasa a EXPIRED cualquier reserva PENDING_PAYMENT cuyo plazo ya venció.
- * Verificación perezosa (no hay cron todavía): se llama antes de cualquier
- * lectura/creación de reservas.
+ * Elimina cualquier reserva PENDING_PAYMENT cuyo plazo ya venció -- nunca
+ * llegó a pagarse, así que no queda nada que conservar (no se guardan
+ * reservas incompletas). Verificación perezosa (no hay cron todavía): se
+ * llama antes de cualquier lectura/creación de reservas.
  *
  * A propósito NO envía notificaciones acá: esta función se invoca desde
  * cualquier lectura (getBookingById, listBookingsAdmin, ...) y Next.js
@@ -15,8 +16,7 @@ import { prisma } from "@/lib/prisma";
  * desde rutas explícitas (botón del panel admin, endpoint de cron).
  */
 export async function expireStaleBookings(): Promise<void> {
-  await prisma.booking.updateMany({
+  await prisma.booking.deleteMany({
     where: { status: "PENDING_PAYMENT", paymentDeadline: { lt: new Date() } },
-    data: { status: "EXPIRED" },
   });
 }

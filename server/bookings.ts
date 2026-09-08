@@ -81,7 +81,7 @@ export async function createReportRequest(
   }
 
   const now = new Date();
-  const paymentWindowMinutes = await getSetting("booking_payment_window_minutes", 15);
+  const paymentWindowMinutes = await getSetting("booking_payment_window_minutes", 30);
   const paymentDeadline = new Date(Date.now() + paymentWindowMinutes * 60_000);
   const bookingNumber = await nextBookingNumber();
 

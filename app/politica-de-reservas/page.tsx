@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function PoliticaDeReservasPage() {
-  const paymentWindowMinutes = await getSetting<number>("booking_payment_window_minutes", 15);
+  const paymentWindowMinutes = await getSetting<number>("booking_payment_window_minutes", 30);
 
   return (
     <LegalArticle
