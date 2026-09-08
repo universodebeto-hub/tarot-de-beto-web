@@ -7,6 +7,7 @@ import { notifyPaymentConfirmed, notifyCancelled } from "@/server/notifications/
 import { sendPushToTarotista } from "@/server/push-notifications";
 import { sendExpoPushToUser } from "@/server/expo-push";
 import { calculateOverage, CREDIT_MINUTES_CAP } from "@/server/credit-overage";
+import { assignBookingNumberIfMissing } from "@/server/booking-number";
 import type { BookingStatus, PaymentStatus } from "@prisma/client";
 import type { CurrentUser } from "@/lib/auth/session";
 
@@ -99,6 +100,17 @@ export async function setBookingStatus(
       paymentStatus: willMarkPaid ? "PAID" : undefined,
     },
   });
+
+  // El número correlativo (BETO-<año>-NNNNN) recién se asigna acá -- ver
+  // server/booking-number.ts. Antes de esto la reserva tenía un marcador
+  // temporal que no consume ningún valor de la serie, para que ese
+  // correlativo solo cuente reservas que de verdad se pagaron.
+  if (willMarkPaid) {
+    // Se pisa en el objeto en memoria para que las notificaciones de abajo
+    // (que ya usan esta misma variable `booking`) muestren el número real,
+    // no el marcador temporal con el que se creó la reserva.
+    booking.bookingNumber = await assignBookingNumberIfMissing(bookingId, booking.bookingNumber);
+  }
 
   // Liquidación de "Créditos Beto": recién al marcar la consulta como
   // terminada se sabe cuánto duró de verdad la llamada, así que es acá

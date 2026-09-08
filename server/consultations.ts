@@ -8,7 +8,7 @@ import { hasRequiredIntakeData } from "@/lib/service-intake";
 import { isReportOnlyService } from "@/lib/service-fulfillment";
 import { notifyBookingReceived } from "@/server/notifications/send";
 import { sendExpoPushToUser } from "@/server/expo-push";
-import { nextBookingNumber } from "@/server/booking-number";
+import { pendingBookingNumber } from "@/server/booking-number";
 import type { Booking } from "@prisma/client";
 import type { CurrentUser } from "@/lib/auth/session";
 
@@ -83,7 +83,7 @@ export async function createInstantConsultation(
 
   const now = new Date();
   const paymentDeadline = new Date(Date.now() + PAYMENT_WINDOW_MINUTES * 60_000);
-  const bookingNumber = await nextBookingNumber();
+  const bookingNumber = pendingBookingNumber();
 
   const booking = await prisma.booking.create({
     data: {

@@ -10,7 +10,7 @@ import { PAYMENT_WINDOW_MINUTES } from "@/lib/booking-window";
 import { notifyBookingReceived } from "@/server/notifications/send";
 import { hasRequiredIntakeData } from "@/lib/service-intake";
 import { isReportOnlyService } from "@/lib/service-fulfillment";
-import { nextBookingNumber } from "@/server/booking-number";
+import { pendingBookingNumber } from "@/server/booking-number";
 
 export interface CreateBookingResult {
   /** Solo el id: el registro completo (con service/user incluidos para la
@@ -67,7 +67,7 @@ export async function createReportRequest(
 
   const now = new Date();
   const paymentDeadline = new Date(Date.now() + PAYMENT_WINDOW_MINUTES * 60_000);
-  const bookingNumber = await nextBookingNumber();
+  const bookingNumber = pendingBookingNumber();
 
   const booking = await prisma.booking.create({
     data: {

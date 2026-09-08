@@ -5,6 +5,7 @@ import { effectivePrice } from "@/lib/booking-price";
 import { expireStaleBookings } from "@/server/availability";
 import { notifyPaymentConfirmed } from "@/server/notifications/send";
 import { sendPushToTarotista } from "@/server/push-notifications";
+import { assignBookingNumberIfMissing } from "@/server/booking-number";
 
 export interface OrderResult {
   orderId?: string;
@@ -133,6 +134,11 @@ export async function captureOrderForBooking(orderId: string): Promise<CaptureRe
       },
     }),
   ]);
+
+  // El número correlativo real recién se asigna acá (ver
+  // server/booking-number.ts) -- hasta ahora tenía un marcador temporal que
+  // no consumía ningún valor de la serie BETO-<año>-NNNNN.
+  booking.bookingNumber = await assignBookingNumberIfMissing(booking.id, booking.bookingNumber);
 
   await notifyPaymentConfirmed(booking).catch((err) => console.error("[notify] payment_confirmed:", err));
   if (booking.tarotistaId) {
