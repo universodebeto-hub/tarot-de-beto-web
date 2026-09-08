@@ -116,6 +116,22 @@ model User {
   creditAmountOwed         Decimal @default(0) @db.Decimal(10, 2)
   creditPaused             Boolean @default(false)
 
+  /// Minutos que el cliente ya pagó (paquetes de consultas en vivo, no
+  /// informes ni rituales) y todavía no gastó -- una sola bolsa, usable con
+  /// CUALQUIER tarotista, no solo con el que pagó originalmente (ver
+  /// server/wallet.ts). Se descuenta con el tiempo REAL de cada llamada
+  /// (desde que contesta la otra persona, no desde que se pide el token).
+  /// Aparte de Créditos Beto (que tiene su propio tope de 300 min) y de
+  /// Cortesía (que queda atada solo al tarotista que la regaló).
+  minutesBalance Int @default(0)
+
+  /// Bitácora de seguimiento de un cliente (solo si role=CLIENT) --
+  /// entradas con fecha/autor que agrega cualquier tarotista que lo haya
+  /// atendido, o el admin, desde su propio panel (ver
+  /// server/client-notes.ts). Mismo formato de texto con líneas
+  /// [fecha] autor: nota que ya usa Booking.notes.
+  clientNotes String?
+
   passwordResets  PasswordReset[]
   bookings        Booking[]
   auditLogs       AuditLog[]
@@ -529,6 +545,13 @@ model CallLog {
   connectedAt DateTime?
   endedAt   DateTime?
   status    CallLogStatus @default(STARTED)
+
+  /// Solo para llamadas de la bolsa de minutos (bookingId null, no atadas a
+  /// ninguna reserva puntual) -- quién llamó y a qué tarotista, para poder
+  /// descontarle el tiempo real a `User.minutesBalance` al colgar. Ver
+  /// server/wallet.ts.
+  walletClientId    String?
+  walletTarotistaId String?
 
   @@index([bookingId])
 }

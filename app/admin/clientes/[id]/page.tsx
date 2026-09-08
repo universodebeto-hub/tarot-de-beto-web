@@ -21,6 +21,7 @@ import { EditClientInfoForm } from "@/components/admin/EditClientInfoForm";
 import { PromoteToAdminButton } from "@/components/admin/PromoteToAdminButton";
 import { ConfirmActionButton } from "@/components/admin/ConfirmActionButton";
 import { GiftConsultationForm } from "@/components/admin/GiftConsultationForm";
+import { ClientNotesPanel } from "@/components/ClientNotesPanel";
 
 export const metadata: Metadata = { title: "Panel — Cliente", robots: { index: false } };
 
@@ -98,6 +99,17 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
       ),
     },
     {
+      id: "notas",
+      label: "Notas de seguimiento",
+      content: (
+        <ClientNotesPanel
+          clientId={client.id}
+          notes={client.clientNotes}
+          revalidatePaths={[`/admin/clientes/${client.id}`]}
+        />
+      ),
+    },
+    {
       id: "historial",
       label: "Historial",
       badge: client.bookings.length > 0 ? <span className="text-ash">({client.bookings.length})</span> : null,
@@ -137,6 +149,9 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
           <p className="mb-0 text-sm text-bone-dim">{client.email}</p>
           <p className="mb-0 text-sm text-bone-dim">{client.phone ?? "Sin WhatsApp"}</p>
           <p className="mb-0 text-sm text-bone-dim">{client.country ?? ""}</p>
+          <p className="mb-0 text-sm text-bone-dim">
+            Minutos disponibles: <span className="text-gold-soft">{client.minutesBalance}</span>
+          </p>
         </div>
       </GlassCard>
 

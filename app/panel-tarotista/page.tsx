@@ -130,6 +130,11 @@ export default async function PanelTarotistaPage() {
                     </p>
                   </div>
                   <div className="flex gap-2">
+                    {c.user ? (
+                      <Link href={`/panel-tarotista/clientes/${c.user.id}`} className="btn btn-ghost">
+                        Notas del cliente
+                      </Link>
+                    ) : null}
                     <Link href={`/reservas/${c.id}`} className="btn btn-ghost">
                       Abrir chat
                     </Link>
