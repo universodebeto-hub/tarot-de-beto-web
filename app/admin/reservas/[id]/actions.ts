@@ -53,7 +53,10 @@ export async function setManualMinutesAdjustmentAction(
   minutes: number,
 ): Promise<{ error?: string }> {
   const result = await setManualMinutesAdjustment(bookingId, minutes);
-  if (!result.error) revalidatePath(`/admin/reservas/${bookingId}`);
+  if (!result.error) {
+    revalidatePath(`/admin/reservas/${bookingId}`);
+    revalidatePath("/admin/consumo");
+  }
   return result;
 }
 

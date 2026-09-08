@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getCallUsageReport } from "@/server/admin/call-usage";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { InlineMinutesAdjustment } from "@/components/admin/InlineMinutesAdjustment";
 import { fullDateLabel } from "@/lib/date-labels";
 import { businessDateString } from "@/lib/timezone";
 
@@ -16,7 +17,9 @@ export default async function AdminCallUsagePage() {
       <GlassCard>
         <p className="mb-0 text-sm text-bone-dim">
           Minutos pagados por cada cliente (según la duración del servicio que compró) contra los minutos que
-          realmente consumió en llamada -- útil para detectar consultas donde se pagó más tiempo del que se usó.
+          realmente consumió en llamada -- útil para detectar consultas donde se pagó más tiempo del que se usó. Si
+          atendiste a alguien por WhatsApp en vez de por la app, no queda ninguna llamada registrada -- usá el ajuste
+          manual de esa fila para cargar los minutos que realmente usaste.
         </p>
       </GlassCard>
 
@@ -50,7 +53,7 @@ export default async function AdminCallUsagePage() {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[560px] border-collapse text-sm">
+                  <table className="w-full min-w-[760px] border-collapse text-sm">
                     <thead>
                       <tr className="border-b border-white/10 text-left font-mono text-[10.5px] uppercase tracking-wide text-ash">
                         <th className="py-1.5 pr-4">#</th>
@@ -59,6 +62,7 @@ export default async function AdminCallUsagePage() {
                         <th className="py-1.5 pr-4">Llamadas</th>
                         <th className="py-1.5 pr-4">Pagado</th>
                         <th className="py-1.5 pr-4">Consumido</th>
+                        <th className="py-1.5 pr-4">Ajuste manual (WhatsApp, etc.)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -74,6 +78,9 @@ export default async function AdminCallUsagePage() {
                           <td className="py-2 pr-4 text-bone-dim">{b.callCount}</td>
                           <td className="py-2 pr-4 text-bone-dim">{b.minutesPaid} min</td>
                           <td className="py-2 pr-4 text-bone-dim">{b.minutesConsumed} min</td>
+                          <td className="py-2 pr-4">
+                            <InlineMinutesAdjustment bookingId={b.id} initial={b.manualAdjustmentMinutes} />
+                          </td>
                         </tr>
                       ))}
                     </tbody>
