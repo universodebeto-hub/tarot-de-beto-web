@@ -7,7 +7,7 @@ import type { CurrentUser } from "@/lib/auth/session";
 import type { AdminFormState } from "@/server/admin/services";
 import { isClientActive } from "@/lib/client-activity";
 
-export async function listClientsAdmin(q?: string) {
+export async function listClientsAdmin(q?: string, range?: { from?: Date; to?: Date }) {
   // Cada palabra buscada por separado (AND entre palabras, OR entre campos
   // por palabra) -- así "victor bracho" encuentra a alguien con
   // firstName="Victor" y lastName="Bracho" en filas distintas, que un solo
@@ -17,6 +17,7 @@ export async function listClientsAdmin(q?: string) {
   const users = await prisma.user.findMany({
     where: {
       role: "CLIENT",
+      createdAt: range?.from || range?.to ? { gte: range?.from, lte: range?.to } : undefined,
       AND: words.map((word) => ({
         OR: [
           { firstName: { contains: word, mode: "insensitive" } },

@@ -9,10 +9,17 @@ function csvCell(value: string | number): string {
   return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
-function rangeFor(key: string): { from?: Date; to?: Date } {
+function parseDateParam(value: string | null, endOfDay = false): Date | undefined {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+  const [y, m, d] = value.split("-").map(Number);
+  return endOfDay ? new Date(y, m - 1, d, 23, 59, 59, 999) : new Date(y, m - 1, d);
+}
+
+function rangeFor(key: string, from: string | null, to: string | null): { from?: Date; to?: Date } {
   const now = new Date();
   if (key === "mes") return { from: new Date(now.getFullYear(), now.getMonth(), 1) };
   if (key === "anio") return { from: new Date(now.getFullYear(), 0, 1) };
+  if (key === "personalizado") return { from: parseDateParam(from), to: parseDateParam(to, true) };
   return {};
 }
 
@@ -25,7 +32,7 @@ export async function GET(req: NextRequest) {
   }
 
   const range = req.nextUrl.searchParams.get("range") ?? "mes";
-  const { from, to } = rangeFor(range);
+  const { from, to } = rangeFor(range, req.nextUrl.searchParams.get("from"), req.nextUrl.searchParams.get("to"));
   const [report, expenses] = await Promise.all([getAccountingReport({ from, to }), listExpenses({ from, to })]);
 
   const lines: string[] = [];

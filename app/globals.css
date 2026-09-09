@@ -368,3 +368,47 @@ p {
     transition: none;
   }
 }
+
+/* ---------- impresión de informes (contabilidad/clientes) ---------- */
+/* El sitio es oscuro por diseño, pero eso desperdicia tinta y es difícil de
+   leer en papel -- al imprimir, ".no-print" (navbar, sidebar, filtros,
+   botones) desaparece y ".print-area" (la tabla/resumen del informe) pasa a
+   blanco y negro plano, sin las tarjetas "glass" ni bordes dorados. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  .print-area,
+  .print-area * {
+    color: #000 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  .print-area {
+    border: none !important;
+  }
+
+  .print-area table {
+    border-collapse: collapse !important;
+  }
+
+  .print-area th,
+  .print-area td {
+    border-bottom: 1px solid #ccc !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+}
+
+.print-only {
+  display: none;
+}

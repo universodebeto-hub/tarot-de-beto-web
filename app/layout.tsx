@@ -96,21 +96,27 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       className={`${fraunces.variable} ${workSans.variable} ${spaceMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <LocalBusinessJsonLd />
-        <StarsField />
+        <div className="no-print">
+          <LocalBusinessJsonLd />
+          <StarsField />
+        </div>
         <ToastProvider>
-          <Navbar
-            whatsappNumber={siteConfig.contact.whatsappNumber}
-            userFirstName={user?.firstName}
-            accountHref={ownTarotista ? "/panel-tarotista" : "/dashboard"}
-            isAdmin={user?.role === "ADMIN"}
-          />
+          <div className="no-print">
+            <Navbar
+              whatsappNumber={siteConfig.contact.whatsappNumber}
+              userFirstName={user?.firstName}
+              accountHref={ownTarotista ? "/panel-tarotista" : "/dashboard"}
+              isAdmin={user?.role === "ADMIN"}
+            />
+          </div>
           <main className="relative z-10 flex-1">{children}</main>
-          <Footer />
-          <WhatsAppButton
-            whatsappNumber={siteConfig.contact.whatsappNumber}
-            isOnline={presence.isOnline}
-          />
+          <div className="no-print">
+            <Footer />
+            <WhatsAppButton
+              whatsappNumber={siteConfig.contact.whatsappNumber}
+              isOnline={presence.isOnline}
+            />
+          </div>
         </ToastProvider>
         <Analytics
           gaId={siteConfig.analytics.gaId}

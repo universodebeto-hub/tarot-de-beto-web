@@ -12,14 +12,16 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   return (
     <section className="py-16">
       <div className="container mx-auto max-w-[1180px] px-7">
-        <div className="mb-8">
+        <div className="mb-8 no-print">
           <span className="eyebrow">Panel administrativo</span>
           <h1 className="mt-3 mb-0">
             Hola, <em>{user.firstName}</em>
           </h1>
         </div>
         <div className="flex flex-col gap-8 lg:flex-row">
-          <AdminSidebar />
+          <div className="no-print lg:w-56 lg:shrink-0">
+            <AdminSidebar />
+          </div>
           <div className="min-w-0 flex-1">{children}</div>
         </div>
       </div>
