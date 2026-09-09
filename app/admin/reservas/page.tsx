@@ -8,6 +8,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SummaryBar } from "@/components/admin/SummaryBar";
 import { BookingsTable, type BookingRow } from "@/components/admin/BookingsTable";
+import { PrintButton } from "@/components/admin/PrintButton";
 import type { BookingStatus, PaymentStatus } from "@prisma/client";
 
 export const metadata: Metadata = { title: "Panel — Reservas", robots: { index: false } };
@@ -74,36 +75,22 @@ export default async function AdminBookingsPage({ searchParams }: PageProps) {
     paymentStatus: b.paymentStatus,
   }));
 
+  const rangeDescription =
+    params.from && params.to
+      ? `${fullDateLabel(params.from)} – ${fullDateLabel(params.to)}`
+      : params.from
+        ? `Desde ${fullDateLabel(params.from)}`
+        : params.to
+          ? `Hasta ${fullDateLabel(params.to)}`
+          : "Todas las fechas";
+
   return (
     <div className="flex flex-col gap-6">
-      <SummaryBar
-        stats={[
-          { label: "Resultados", value: bookings.length, href: hrefForStatus(""), active: !params.status },
-          {
-            label: "Pendientes de pago",
-            value: pendingCount,
-            tone: "warning",
-            href: hrefForStatus("PENDING_PAYMENT"),
-            active: params.status === "PENDING_PAYMENT",
-          },
-          {
-            label: "Confirmadas",
-            value: confirmedCount,
-            tone: "success",
-            href: hrefForStatus("CONFIRMED"),
-            active: params.status === "CONFIRMED",
-          },
-          {
-            label: "Canceladas / expiradas",
-            value: expiredCount,
-            tone: "danger",
-            href: hrefForStatus("CANCELLED"),
-            active: params.status === "CANCELLED" || params.status === "EXPIRED",
-          },
-        ]}
-      />
+      <div className="flex justify-end no-print">
+        <PrintButton />
+      </div>
 
-      <GlassCard>
+      <GlassCard className="no-print">
         <form method="get" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div>
             <label className="mb-1.5 block font-mono text-[11px] uppercase tracking-wide text-ash">Estado</label>
@@ -171,7 +158,43 @@ export default async function AdminBookingsPage({ searchParams }: PageProps) {
         </form>
       </GlassCard>
 
-      {rows.length === 0 ? <EmptyState title="No hay reservas con esos filtros" /> : <BookingsTable rows={rows} />}
+      <div className="print-area flex flex-col gap-6">
+        <div className="print-only">
+          <h1 className="mb-0">Informe de reservas — Tarot de Beto</h1>
+          <p className="mb-0">
+            Período: {rangeDescription} · Generado el {fullDateLabel(businessDateString(new Date()))}
+          </p>
+        </div>
+
+        <SummaryBar
+          stats={[
+            { label: "Resultados", value: bookings.length, href: hrefForStatus(""), active: !params.status },
+            {
+              label: "Pendientes de pago",
+              value: pendingCount,
+              tone: "warning",
+              href: hrefForStatus("PENDING_PAYMENT"),
+              active: params.status === "PENDING_PAYMENT",
+            },
+            {
+              label: "Confirmadas",
+              value: confirmedCount,
+              tone: "success",
+              href: hrefForStatus("CONFIRMED"),
+              active: params.status === "CONFIRMED",
+            },
+            {
+              label: "Canceladas / expiradas",
+              value: expiredCount,
+              tone: "danger",
+              href: hrefForStatus("CANCELLED"),
+              active: params.status === "CANCELLED" || params.status === "EXPIRED",
+            },
+          ]}
+        />
+
+        {rows.length === 0 ? <EmptyState title="No hay reservas con esos filtros" /> : <BookingsTable rows={rows} />}
+      </div>
     </div>
   );
 }

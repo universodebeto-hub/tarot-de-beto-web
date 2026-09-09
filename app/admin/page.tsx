@@ -10,6 +10,8 @@ import { businessDateString } from "@/lib/timezone";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CleanupBookingsButton } from "@/components/admin/CleanupBookingsButton";
+import { CollapsibleSection } from "@/components/admin/CollapsibleSection";
+import { VALUE_TONE } from "@/components/admin/SummaryBar";
 
 export const metadata: Metadata = { title: "Panel — Resumen", robots: { index: false } };
 
@@ -54,13 +56,6 @@ export default async function AdminDashboardPage() {
     { label: "Ingresos totales", value: `$${stats.revenue.toFixed(2)}`, tone: "success" as const, href: "/admin/reservas?paymentStatus=PAID" },
   ];
 
-  const cardValueClass = {
-    success: "text-emerald",
-    warning: "text-gold-soft",
-    danger: "text-ember",
-    neutral: "text-gold-soft",
-  };
-
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -68,7 +63,7 @@ export default async function AdminDashboardPage() {
           <Link key={c.label} href={c.href} className="block">
             <GlassCard className="transition-colors hover:border-gold/30">
               <span className="mb-2 block font-mono text-[11px] uppercase tracking-wide text-ash">{c.label}</span>
-              <span className={`text-2xl font-semibold ${cardValueClass[c.tone]}`}>{c.value}</span>
+              <span className={`text-2xl font-semibold ${VALUE_TONE[c.tone]}`}>{c.value}</span>
             </GlassCard>
           </Link>
         ))}
@@ -88,28 +83,30 @@ export default async function AdminDashboardPage() {
         </form>
       </GlassCard>
 
-      <GlassCard className="flex flex-wrap items-center justify-between gap-3">
-        <p className="mb-0 text-sm text-bone-dim">
-          Sin cron configurado, expirar reservas vencidas (con aviso) y los recordatorios de consulta
-          (24h/2h antes) no ocurren solos — dispáralos manualmente aquí, o configura{" "}
-          <code className="rounded bg-white/10 px-1.5 py-0.5 text-xs">CRON_SECRET</code> y un cron externo
-          contra <code className="rounded bg-white/10 px-1.5 py-0.5 text-xs">/api/cron/maintenance</code>.
-        </p>
-        <form action={runMaintenanceAction}>
-          <button type="submit" className="btn btn-ghost">
-            Ejecutar mantenimiento ahora
-          </button>
-        </form>
-      </GlassCard>
+      <CollapsibleSection label="Herramientas avanzadas">
+        <GlassCard className="flex flex-wrap items-center justify-between gap-3">
+          <p className="mb-0 text-sm text-bone-dim">
+            Sin cron configurado, expirar reservas vencidas (con aviso) y los recordatorios de consulta
+            (24h/2h antes) no ocurren solos — dispáralos manualmente aquí, o configura{" "}
+            <code className="rounded bg-white/10 px-1.5 py-0.5 text-xs">CRON_SECRET</code> y un cron externo
+            contra <code className="rounded bg-white/10 px-1.5 py-0.5 text-xs">/api/cron/maintenance</code>.
+          </p>
+          <form action={runMaintenanceAction}>
+            <button type="submit" className="btn btn-ghost">
+              Ejecutar mantenimiento ahora
+            </button>
+          </form>
+        </GlassCard>
 
-      <GlassCard className="flex flex-wrap items-center justify-between gap-3">
-        <p className="mb-0 text-sm text-bone-dim">
-          Borra de una vez las reservas que nunca se concretaron (expiradas, vencidas sin pagar, o canceladas sin
-          pago) — útil para limpiar datos de prueba. En producción esto ya queda al día solo: cualquier reserva sin
-          pagar se borra sola a los 30 minutos.
-        </p>
-        <CleanupBookingsButton />
-      </GlassCard>
+        <GlassCard className="flex flex-wrap items-center justify-between gap-3">
+          <p className="mb-0 text-sm text-bone-dim">
+            Borra de una vez las reservas que nunca se concretaron (expiradas, vencidas sin pagar, o canceladas sin
+            pago) — útil para limpiar datos de prueba. En producción esto ya queda al día solo: cualquier reserva sin
+            pagar se borra sola a los 30 minutos.
+          </p>
+          <CleanupBookingsButton />
+        </GlassCard>
+      </CollapsibleSection>
     </div>
   );
 }

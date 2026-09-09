@@ -111,7 +111,7 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
   return (
     <div className="flex flex-col gap-4">
       {selected.size > 0 ? (
-        <div className="glass flex flex-wrap items-center gap-3 rounded-xl px-4 py-3">
+        <div className="glass no-print flex flex-wrap items-center gap-3 rounded-xl px-4 py-3">
           <span className="text-sm text-bone">{selected.size} seleccionada{selected.size === 1 ? "" : "s"}</span>
           {selectedCancellable.length > 0 ? (
             <ConfirmActionButton
@@ -148,12 +148,12 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
         <p className="mb-0 text-sm text-bone-dim">{bulkMessage}</p>
       ) : null}
 
-      {/* Tabla -- pantallas medianas en adelante */}
-      <div className="hidden overflow-x-auto md:block">
+      {/* Tabla -- pantallas medianas en adelante (y siempre al imprimir, sin importar el ancho de página). */}
+      <div className="hidden overflow-x-auto md:block print:block">
         <table className="w-full min-w-[760px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-white/10 text-left">
-              <th className="w-8 py-2 pr-2">
+              <th className="w-8 py-2 pr-2 no-print">
                 <input
                   type="checkbox"
                   checked={selected.size > 0 && selected.size === sorted.length}
@@ -174,13 +174,13 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
                 <SortHeader label="Estado" sortKey="estado" active={sortKey === "estado"} dir={sortDir} onSort={handleSort} />
               </th>
               <th className="py-2 pr-4 font-mono text-[11px] uppercase tracking-wide text-ash">Pago</th>
-              <th className="py-2 pr-4 font-mono text-[11px] uppercase tracking-wide text-ash">Acciones</th>
+              <th className="py-2 pr-4 font-mono text-[11px] uppercase tracking-wide text-ash no-print">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {sorted.map((b) => (
               <tr key={b.id} className={`border-b border-white/5 hover:bg-white/5 ${selected.has(b.id) ? "bg-gold/[0.04]" : ""}`}>
-                <td className="py-2.5 pr-2">
+                <td className="py-2.5 pr-2 no-print">
                   <input
                     type="checkbox"
                     checked={selected.has(b.id)}
@@ -206,7 +206,7 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
                 <td className="py-2.5 pr-4">
                   <StatusBadge label={PAYMENT_STATUS_LABEL[b.paymentStatus]} tone={PAYMENT_STATUS_TONE[b.paymentStatus]} />
                 </td>
-                <td className="py-2.5 pr-4">
+                <td className="py-2.5 pr-4 no-print">
                   <div className="flex flex-wrap items-center gap-2">
                     {CANCELLABLE_STATUSES.includes(b.status) ? (
                       <ConfirmActionButton
@@ -239,8 +239,8 @@ export function BookingsTable({ rows }: { rows: BookingRow[] }) {
         </table>
       </div>
 
-      {/* Tarjetas -- pantallas chicas (celular) */}
-      <div className="flex flex-col gap-3 md:hidden">
+      {/* Tarjetas -- pantallas chicas (celular); nunca en la vista de impresión, siempre se imprime la tabla. */}
+      <div className="no-print flex flex-col gap-3 md:hidden">
         {sorted.map((b) => (
           <div key={b.id} className={`glass flex flex-col gap-3 rounded-xl p-4 ${selected.has(b.id) ? "border border-gold/30" : ""}`}>
             <div className="flex items-start justify-between gap-3">

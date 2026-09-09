@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { Tone } from "@/lib/status-tone";
 
-const VALUE_TONE: Record<Tone, string> = {
+/** Los 4 tonos semánticos del sitio (ver lib/status-tone.ts) mapeados a la clase de color de texto -- se exporta para que cualquier otra tarjeta de número (ej. app/admin/page.tsx) use siempre el mismo dorado=atención/hueso=neutral, en vez de inventar su propio mapeo. */
+export const VALUE_TONE: Record<Tone, string> = {
   success: "text-emerald",
   warning: "text-gold-soft",
   danger: "text-ember",
