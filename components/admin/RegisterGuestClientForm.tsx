@@ -3,13 +3,27 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { registerGuestAsClientAction } from "@/app/admin/reservas/[id]/actions";
+import { COUNTRIES } from "@/lib/countries";
 
 interface GuestData {
   firstName: string;
   lastName: string;
   email: string;
-  phone: string;
+  phoneNumber: string;
   country: string;
+}
+
+/** Si guestPhone ya trae un código de país reconocido adelante (ej. "+52 4281126618"), lo separa -- si no, todo va al número y queda el código por defecto. */
+function splitPhone(guestPhone: string | null): { dialCode: string; number: string } {
+  const trimmed = (guestPhone ?? "").trim();
+  if (trimmed) {
+    const match = [...COUNTRIES]
+      .filter((c) => c.dialCode !== "+")
+      .sort((a, b) => b.dialCode.length - a.dialCode.length)
+      .find((c) => trimmed.startsWith(c.dialCode));
+    if (match) return { dialCode: match.dialCode, number: trimmed.slice(match.dialCode.length).trim() };
+  }
+  return { dialCode: "+57", number: trimmed };
 }
 
 /**
@@ -33,10 +47,11 @@ export function RegisterGuestClientForm({ bookingId, guestName, guestEmail, gues
       firstName: firstName ?? "",
       lastName: rest.join(" "),
       email: guestEmail ?? "",
-      phone: guestPhone ?? "",
+      phoneNumber: splitPhone(guestPhone).number,
       country: "",
     };
   });
+  const [dialCode, setDialCode] = useState(() => splitPhone(guestPhone).dialCode);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -47,7 +62,13 @@ export function RegisterGuestClientForm({ bookingId, guestName, guestEmail, gues
   function handleSave() {
     setError(null);
     startTransition(async () => {
-      const result = await registerGuestAsClientAction(bookingId, data);
+      const result = await registerGuestAsClientAction(bookingId, {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        country: data.country,
+        phone: data.phoneNumber.trim() ? `${dialCode} ${data.phoneNumber.trim()}` : "",
+      });
       if (result.error) {
         setError(result.error);
       } else {
@@ -90,18 +111,41 @@ export function RegisterGuestClientForm({ bookingId, guestName, guestEmail, gues
           type="email"
           className="col-span-2 rounded-md border border-white/15 bg-obsidian/60 px-2.5 py-1.5 text-xs text-bone"
         />
-        <input
-          value={data.phone}
-          onChange={(e) => update("phone", e.target.value)}
-          placeholder="WhatsApp (opcional)"
-          className="rounded-md border border-white/15 bg-obsidian/60 px-2.5 py-1.5 text-xs text-bone"
-        />
-        <input
+        <div className="col-span-2 flex gap-2">
+          <select
+            value={dialCode}
+            onChange={(e) => setDialCode(e.target.value)}
+            aria-label="Código de país del teléfono"
+            className="w-20 shrink-0 rounded-md border border-white/15 bg-obsidian/60 px-1.5 py-1.5 text-xs text-bone"
+          >
+            {COUNTRIES.map((c) => (
+              <option key={`${c.iso2}-${c.dialCode}`} value={c.dialCode} className="bg-obsidian">
+                {c.dialCode}
+              </option>
+            ))}
+          </select>
+          <input
+            value={data.phoneNumber}
+            onChange={(e) => update("phoneNumber", e.target.value)}
+            placeholder="WhatsApp (opcional)"
+            type="tel"
+            className="min-w-0 flex-1 rounded-md border border-white/15 bg-obsidian/60 px-2.5 py-1.5 text-xs text-bone"
+          />
+        </div>
+        <select
           value={data.country}
           onChange={(e) => update("country", e.target.value)}
-          placeholder="País (opcional)"
-          className="rounded-md border border-white/15 bg-obsidian/60 px-2.5 py-1.5 text-xs text-bone"
-        />
+          className="col-span-2 rounded-md border border-white/15 bg-obsidian/60 px-2.5 py-1.5 text-xs text-bone"
+        >
+          <option value="" className="bg-obsidian">
+            País (opcional)
+          </option>
+          {COUNTRIES.filter((c) => c.iso2 !== "XX").map((c) => (
+            <option key={c.iso2} value={c.name} className="bg-obsidian">
+              {c.name}
+            </option>
+          ))}
+        </select>
       </div>
       {error ? <p className="mb-0 text-xs text-ember">{error}</p> : null}
       <div className="flex gap-2">
