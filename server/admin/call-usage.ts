@@ -91,5 +91,16 @@ export async function getCallUsageReport(tarotistaId?: string): Promise<CallUsag
     }
   }
 
-  return Array.from(groups.values()).sort((a, b) => b.totalMinutesPaid - a.totalMinutesPaid);
+  // Primero los clientes que todavía tienen minutos sin usar (para ver de
+  // entrada a quién le falta su consulta), del más nuevo al más viejo; los
+  // que ya consumieron todo lo pagado quedan al final, en el mismo orden
+  // por recencia. `bookings[0]` es la reserva más nueva de cada grupo
+  // porque `bookings` se llenó a partir de la lista ya ordenada desc por
+  // `startsAt` de arriba.
+  return Array.from(groups.values()).sort((a, b) => {
+    const aPending = a.totalMinutesPaid > a.totalMinutesConsumed;
+    const bPending = b.totalMinutesPaid > b.totalMinutesConsumed;
+    if (aPending !== bPending) return aPending ? -1 : 1;
+    return b.bookings[0].startsAt.getTime() - a.bookings[0].startsAt.getTime();
+  });
 }
