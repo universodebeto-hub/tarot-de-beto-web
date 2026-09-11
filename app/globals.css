@@ -30,11 +30,7 @@
   --glass-border: rgba(232, 163, 61, 0.16);
   --glass-border-strong: rgba(232, 163, 61, 0.32);
 
-  /* 96px (antes 84px): el logo del navbar creció (ver Navbar.tsx) y ahora
-     empuja la altura real del header un poco más -- si esta variable no
-     sigue ese cambio, el menú móvil y las barras laterales (SideBanners)
-     quedan desalineadas contra el header real. */
-  --header-h: 96px;
+  --header-h: 84px;
 }
 
 @theme inline {
