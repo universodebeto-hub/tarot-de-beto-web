@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import type { PromoBanner } from "@prisma/client";
 import type { TikTokVideo } from "@/server/tiktok";
+import { TikTokIcon } from "@/components/ui/social-icons";
 
 /** Rutas "de aplicación" (paneles con su propio menú lateral) donde estas barras no deben mostrarse -- se superponen con el menú del panel, no con contenido de la página pública. */
 const HIDDEN_PREFIXES = ["/admin", "/panel-tarotista", "/dashboard"];
@@ -20,9 +21,14 @@ function TikTokWidget({ tiktok }: { tiktok: TikTokWidgetData }) {
   return (
     <div className="glass flex w-[160px] flex-col items-center gap-2.5 rounded-xl p-3">
       <a href={tiktok.profileDeepLink} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1.5">
+        <span className="flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-[0.15em] text-ash">
+          <TikTokIcon className="h-2.5 w-2.5 shrink-0" />
+          TikTok
+        </span>
         {/* eslint-disable-next-line @next/next/no-img-element -- foto externa de TikTok. */}
         <img src={tiktok.avatarUrl} alt={tiktok.displayName} className="h-11 w-11 rounded-full object-cover" />
-        <span className="font-mono text-[11px] uppercase tracking-wide text-gold-soft">
+        <span className="flex items-center gap-1 font-mono text-[11px] uppercase tracking-wide text-gold-soft">
+          <TikTokIcon className="h-3 w-3 shrink-0" />
           {tiktok.followerCount.toLocaleString("es")} seguidores
         </span>
       </a>
@@ -92,7 +98,8 @@ export function SideBannersClient({
   return (
     <>
       <Rail side="left" banners={left} tiktok={tiktok} />
-      <Rail side="right" banners={right} tiktok={tiktok} />
+      {/* Solo un lado muestra el widget de TikTok -- mostrarlo en los dos era repetir la misma info dos veces. */}
+      <Rail side="right" banners={right} tiktok={null} />
     </>
   );
 }
