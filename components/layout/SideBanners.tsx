@@ -46,9 +46,9 @@ function Rail({ side, banners }: { side: "left" | "right"; banners: PromoBanner[
           href={b.linkUrl}
           target={b.linkUrl.startsWith("/") ? undefined : "_blank"}
           rel={b.linkUrl.startsWith("/") ? undefined : "noopener noreferrer"}
-          className="glass block w-[84px] overflow-hidden rounded-xl transition-opacity hover:opacity-90"
+          className="glass block h-[220px] w-[80px] overflow-hidden rounded-xl transition-opacity hover:opacity-90"
         >
-          <Image src={b.imageUrl} alt="" width={84} height={280} className="h-auto w-full object-cover" />
+          <Image src={b.imageUrl} alt="" width={80} height={220} className="h-full w-full object-cover" />
         </a>
       ))}
     </aside>
