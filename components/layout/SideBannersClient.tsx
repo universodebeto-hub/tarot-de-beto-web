@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import type { PromoBanner } from "@prisma/client";
 import type { TikTokVideo } from "@/server/tiktok";
-import { TikTokIcon } from "@/components/ui/social-icons";
+import { TikTokLogoMark } from "@/components/ui/social-icons";
 
 /** Rutas "de aplicación" (paneles con su propio menú lateral) donde estas barras no deben mostrarse -- se superponen con el menú del panel, no con contenido de la página pública. */
 const HIDDEN_PREFIXES = ["/admin", "/panel-tarotista", "/dashboard"];
@@ -20,9 +20,9 @@ export interface TikTokWidgetData {
 function TikTokWidget({ tiktok }: { tiktok: TikTokWidgetData }) {
   return (
     <div className="glass arcana flex w-[160px] flex-col items-center gap-3 rounded-xl border border-gold/20 p-3.5 shadow-[0_0_24px_rgba(232,163,61,0.12)]">
-      <span className="flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[0.2em] text-ash">
-        <TikTokIcon className="h-3 w-3 shrink-0 text-gold-soft" />
-        TikTok
+      <span className="flex items-center gap-1.5">
+        <TikTokLogoMark className="h-5 w-5 shrink-0" />
+        <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-bone">TikTok</span>
       </span>
 
       <a href={tiktok.profileDeepLink} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1">
@@ -35,8 +35,8 @@ function TikTokWidget({ tiktok }: { tiktok: TikTokWidgetData }) {
               className="h-14 w-14 rounded-full border-2 border-obsidian object-cover"
             />
           </div>
-          <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-obsidian bg-obsidian text-gold-soft">
-            <TikTokIcon className="h-2.5 w-2.5" />
+          <span className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full border-2 border-obsidian bg-black">
+            <TikTokLogoMark className="h-4 w-4" />
           </span>
         </div>
         <span className="mt-1 max-w-[130px] truncate text-[12px] text-bone">{tiktok.displayName}</span>

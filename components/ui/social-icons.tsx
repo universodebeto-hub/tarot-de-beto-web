@@ -8,6 +8,19 @@ export function TikTokIcon({ className }: { className?: string }) {
   );
 }
 
+const TIKTOK_MARK_PATH = "M16.5 3c.4 2 2 3.5 4 3.9v2.6a7 7 0 0 1-4-1.2v6.4a5.4 5.4 0 1 1-5.4-5.4c.2 0 .4 0 .6.03v2.7a2.7 2.7 0 1 0 2.1 2.63V3h2.7Z";
+
+/** Versión "a color" del logo -- las tres copias del trazo, apenas corridas en cian/magenta detrás del trazo negro de arriba, son el efecto que hace reconocible al logo real de TikTok (a diferencia de TikTokIcon, que es monocromo para íconos chicos de línea). Usar donde el logo necesita tener presencia propia, no solo indicar "esto es de TikTok" de pasada. */
+export function TikTokLogoMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className}>
+      <path d={TIKTOK_MARK_PATH} fill="#25F4EE" transform="translate(-0.9, 0.6)" />
+      <path d={TIKTOK_MARK_PATH} fill="#FE2C55" transform="translate(0.9, -0.6)" />
+      <path d={TIKTOK_MARK_PATH} fill="#0a0a0a" />
+    </svg>
+  );
+}
+
 export function InstagramIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} className={className}>

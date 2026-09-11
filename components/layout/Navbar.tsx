@@ -36,26 +36,26 @@ export function Navbar({ whatsappNumber, userFirstName, accountHref = "/dashboar
         <Link
           href="/"
           aria-label="Ir al inicio — Tarot de Beto"
-          className="group flex shrink-0 items-center gap-3"
+          className="group -ml-1.5 flex shrink-0 items-center gap-2.5"
           onClick={() => setOpen(false)}
         >
-          <span className="relative flex h-[64px] w-[64px] shrink-0 items-center justify-center">
+          <span className="relative flex h-[76px] w-[76px] shrink-0 items-center justify-center">
             <span
-              className="absolute -inset-2 rounded-full bg-[radial-gradient(circle,rgba(232,163,61,0.45)_0%,rgba(232,163,61,0)_72%)] transition-opacity group-hover:opacity-80"
+              className="absolute -inset-2.5 rounded-full bg-[radial-gradient(circle,rgba(232,163,61,0.45)_0%,rgba(232,163,61,0)_72%)] transition-opacity group-hover:opacity-80"
               aria-hidden="true"
             />
             <Image
               src="/assets/logo/emblem.png"
               alt=""
-              width={64}
-              height={64}
-              className="relative rounded-[14px] drop-shadow-[0_0_14px_rgba(232,163,61,0.55)]"
+              width={76}
+              height={76}
+              className="relative rounded-[16px] drop-shadow-[0_0_18px_rgba(232,163,61,0.6)]"
               priority
             />
           </span>
           <span className="flex flex-col items-start leading-none">
-            <span className="font-mono text-[10.5px] uppercase tracking-[0.55em] text-ash">Tarot de</span>
-            <span className="bg-gradient-to-br from-gold-soft via-gold to-ember bg-clip-text font-display text-[42px] font-semibold tracking-wide text-transparent drop-shadow-[0_0_22px_rgba(232,163,61,0.35)]">
+            <span className="font-mono text-[11px] uppercase tracking-[0.5em] text-ash">Tarot de</span>
+            <span className="bg-gradient-to-br from-gold-soft via-gold to-ember bg-clip-text font-display text-[50px] font-semibold tracking-wide text-transparent drop-shadow-[0_0_24px_rgba(232,163,61,0.4)]">
               Beto
             </span>
             <span className="mt-1 h-px w-full bg-gradient-to-r from-gold/70 via-gold/25 to-transparent" aria-hidden="true" />
@@ -77,7 +77,7 @@ export function Navbar({ whatsappNumber, userFirstName, accountHref = "/dashboar
         </button>
 
         <nav
-          className={`main-nav flex flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-center lg:justify-end lg:gap-2.5
+          className={`main-nav flex flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-center lg:justify-end lg:gap-3
             ${open ? "flex" : "hidden"} lg:flex
             fixed lg:static left-0 right-0 top-(--header-h) lg:top-auto
             border-b lg:border-b-0 border-white/10 bg-carbon/95 lg:bg-transparent backdrop-blur-2xl lg:backdrop-blur-none
@@ -91,10 +91,10 @@ export function Navbar({ whatsappNumber, userFirstName, accountHref = "/dashboar
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className={`rounded-full border px-5 py-2.5 text-center font-mono text-[12.5px] uppercase tracking-[0.14em] transition-all
+                className={`rounded-full border px-6 py-3 text-center font-mono text-[13px] font-medium uppercase tracking-[0.16em] transition-all hover:-translate-y-px
                   ${active
-                    ? "border-transparent bg-gradient-to-br from-gold-soft to-gold text-obsidian"
-                    : "border-transparent text-bone-dim hover:border-gold/30 hover:bg-gold/6 hover:text-gold-soft"}`}
+                    ? "border-transparent bg-gradient-to-br from-gold-soft to-gold text-obsidian shadow-[0_4px_18px_rgba(232,163,61,0.35)]"
+                    : "border-white/10 text-bone-dim hover:border-gold/40 hover:bg-gold/8 hover:text-gold-soft hover:shadow-[0_4px_16px_rgba(232,163,61,0.18)]"}`}
               >
                 {link.label}
               </Link>
@@ -113,7 +113,7 @@ export function Navbar({ whatsappNumber, userFirstName, accountHref = "/dashboar
               <Link
                 href="/login"
                 onClick={() => setOpen(false)}
-                className="rounded-full border border-transparent px-5 py-2.5 text-center font-mono text-[12.5px] uppercase tracking-[0.14em] text-bone-dim transition-all hover:border-gold/30 hover:bg-gold/6 hover:text-gold-soft"
+                className="rounded-full border border-white/10 px-6 py-3 text-center font-mono text-[13px] font-medium uppercase tracking-[0.16em] text-bone-dim transition-all hover:-translate-y-px hover:border-gold/40 hover:bg-gold/8 hover:text-gold-soft hover:shadow-[0_4px_16px_rgba(232,163,61,0.18)]"
               >
                 Iniciar sesión
               </Link>
