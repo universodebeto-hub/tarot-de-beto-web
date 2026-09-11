@@ -51,7 +51,7 @@ function Rail({
 }) {
   return (
     <aside
-      className={`no-print fixed top-1/2 z-20 hidden -translate-y-1/2 flex-col items-center gap-3 2xl:flex ${
+      className={`no-print fixed top-[calc(var(--header-h)+16px)] z-20 hidden max-h-[calc(100vh-var(--header-h)-32px)] flex-col items-center gap-3 overflow-hidden 2xl:flex ${
         side === "left" ? "left-4" : "right-4"
       }`}
     >
