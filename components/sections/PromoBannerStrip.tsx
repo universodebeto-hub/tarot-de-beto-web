@@ -16,9 +16,13 @@ export async function PromoBannerStrip() {
               href={b.linkUrl}
               target={b.linkUrl.startsWith("/") ? undefined : "_blank"}
               rel={b.linkUrl.startsWith("/") ? undefined : "noopener noreferrer"}
-              className="glass block h-[300px] w-[110px] shrink-0 overflow-hidden rounded-xl"
+              className="glass block h-[525px] w-[140px] shrink-0 overflow-hidden rounded-xl"
             >
-              <Image src={b.imageUrl} alt="" width={110} height={300} className="h-full w-full object-cover" />
+              {b.mediaType === "VIDEO" ? (
+                <video src={b.imageUrl} className="h-full w-full object-cover" muted autoPlay loop playsInline />
+              ) : (
+                <Image src={b.imageUrl} alt="" width={140} height={525} className="h-full w-full object-cover" />
+              )}
             </a>
           ))}
         </div>

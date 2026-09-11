@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { upload } from "@vercel/blob/client";
 import Image from "next/image";
 import {
   createPromoBannerAction,
@@ -11,21 +12,38 @@ import {
 import { ConfirmActionButton } from "@/components/admin/ConfirmActionButton";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { TrashIcon } from "@/components/ui/icons";
-import type { PromoBannerPosition } from "@prisma/client";
+import type { PromoBannerPosition, PromoBannerMediaType } from "@prisma/client";
 
 export interface PromoBannerItem {
   id: string;
   imageUrl: string;
+  mediaType: PromoBannerMediaType;
   linkUrl: string;
   position: PromoBannerPosition;
   active: boolean;
 }
 
-async function uploadBannerImage(file: File): Promise<{ url?: string; error?: string }> {
-  const form = new FormData();
-  form.set("file", file);
-  const res = await fetch("/api/uploads/promo-banner", { method: "POST", body: form });
-  return res.json().catch(() => ({ error: "No se pudo subir la imagen." }));
+const ACCEPT = "image/jpeg,image/png,image/webp,video/mp4,video/webm";
+
+/** Sube directo del navegador a Vercel Blob (no pasa por nuestro servidor) -- necesario para que un video de varios MB no choque con el límite de tamaño de body de las funciones serverless. Ver app/api/uploads/promo-banner/route.ts. */
+async function uploadBannerFile(file: File): Promise<{ url?: string; mediaType?: PromoBannerMediaType; error?: string }> {
+  const mediaType: PromoBannerMediaType = file.type.startsWith("video/") ? "VIDEO" : "IMAGE";
+  try {
+    const blob = await upload(`promo-banners/${Date.now()}-${file.name}`, file, {
+      access: "public",
+      handleUploadUrl: "/api/uploads/promo-banner",
+    });
+    return { url: blob.url, mediaType };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "No se pudo subir el archivo." };
+  }
+}
+
+function BannerPreview({ url, mediaType, className }: { url: string; mediaType: PromoBannerMediaType; className: string }) {
+  if (mediaType === "VIDEO") {
+    return <video src={url} className={`absolute inset-0 ${className}`} muted autoPlay loop playsInline />;
+  }
+  return <Image src={url} alt="" fill sizes="40px" className={className} />;
 }
 
 function AddBannerForm() {
@@ -37,17 +55,17 @@ function AddBannerForm() {
 
   function handleSubmit() {
     if (!linkUrl.trim() || !file) {
-      setMessage("Elegí una imagen y escribí a dónde va a llevar el link.");
+      setMessage("Elegí una imagen o video y escribí a dónde va a llevar el link.");
       return;
     }
     setMessage(null);
     startTransition(async () => {
-      const uploaded = await uploadBannerImage(file);
-      if (!uploaded.url) {
-        setMessage(uploaded.error ?? "No se pudo subir la imagen.");
+      const uploaded = await uploadBannerFile(file);
+      if (!uploaded.url || !uploaded.mediaType) {
+        setMessage(uploaded.error ?? "No se pudo subir el archivo.");
         return;
       }
-      const result = await createPromoBannerAction({ imageUrl: uploaded.url, linkUrl, position });
+      const result = await createPromoBannerAction({ imageUrl: uploaded.url, mediaType: uploaded.mediaType, linkUrl, position });
       if (result.error) {
         setMessage(result.error);
         return;
@@ -83,16 +101,16 @@ function AddBannerForm() {
         />
       </label>
       <label className="flex flex-col gap-1 text-sm">
-        Imagen del banner
+        Imagen o video del banner (video: corto, mudo, en loop -- hasta 30 MB)
         <input
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept={ACCEPT}
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           className="rounded-lg border border-white/15 bg-obsidian/60 px-3 py-2 text-sm text-bone file:mr-3 file:rounded-md file:border-0 file:bg-gold file:px-3 file:py-1.5 file:font-mono file:text-xs file:font-semibold file:uppercase file:tracking-wide file:text-obsidian"
         />
       </label>
       <button type="button" onClick={handleSubmit} disabled={pending} className="btn btn-gold self-start disabled:opacity-60">
-        {pending ? "Agregando…" : "Agregar banner"}
+        {pending ? "Subiendo…" : "Agregar banner"}
       </button>
       {message ? <p className="mb-0 text-sm text-bone-dim">{message}</p> : null}
     </div>
@@ -103,23 +121,28 @@ function BannerRow({ banner }: { banner: PromoBannerItem }) {
   const [linkUrl, setLinkUrl] = useState(banner.linkUrl);
   const [position, setPosition] = useState<PromoBannerPosition>(banner.position);
   const [imageUrl, setImageUrl] = useState(banner.imageUrl);
+  const [mediaType, setMediaType] = useState<PromoBannerMediaType>(banner.mediaType);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     startTransition(async () => {
-      const uploaded = await uploadBannerImage(file);
-      if (uploaded.url) setImageUrl(uploaded.url);
-      else setMessage(uploaded.error ?? "No se pudo subir la imagen.");
+      const uploaded = await uploadBannerFile(file);
+      if (uploaded.url && uploaded.mediaType) {
+        setImageUrl(uploaded.url);
+        setMediaType(uploaded.mediaType);
+      } else {
+        setMessage(uploaded.error ?? "No se pudo subir el archivo.");
+      }
     });
   }
 
   function handleSave() {
     setMessage(null);
     startTransition(async () => {
-      const result = await updatePromoBannerAction(banner.id, { linkUrl, position, imageUrl });
+      const result = await updatePromoBannerAction(banner.id, { linkUrl, position, imageUrl, mediaType });
       setMessage(result.error ?? "Guardado.");
     });
   }
@@ -129,9 +152,10 @@ function BannerRow({ banner }: { banner: PromoBannerItem }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative h-16 w-10 overflow-hidden rounded-lg bg-white">
-            <Image src={imageUrl} alt="" fill sizes="40px" className="object-cover" />
+            <BannerPreview url={imageUrl} mediaType={mediaType} className="h-full w-full object-cover" />
           </div>
           <StatusBadge label={banner.active ? "Activo" : "Inactivo"} tone={banner.active ? "success" : "neutral"} />
+          <span className="font-mono text-[10px] uppercase tracking-wide text-ash">{mediaType === "VIDEO" ? "Video" : "Imagen"}</span>
         </div>
         <div className="flex items-center gap-2">
           <ConfirmActionButton
@@ -175,11 +199,11 @@ function BannerRow({ banner }: { banner: PromoBannerItem }) {
         />
       </label>
       <label className="flex flex-col gap-1 text-sm">
-        Cambiar imagen
+        Cambiar imagen o video
         <input
           type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={handleImageChange}
+          accept={ACCEPT}
+          onChange={handleFileChange}
           className="rounded-lg border border-white/15 bg-obsidian/60 px-3 py-2 text-sm text-bone file:mr-3 file:rounded-md file:border-0 file:bg-gold file:px-3 file:py-1.5 file:font-mono file:text-xs file:font-semibold file:uppercase file:tracking-wide file:text-obsidian"
         />
       </label>
@@ -194,7 +218,7 @@ function BannerRow({ banner }: { banner: PromoBannerItem }) {
   );
 }
 
-/** Banners promocionales de las barras laterales del sitio (solo pantallas anchas) -- Beto los sube/edita solo, sin tocar código. */
+/** Banners promocionales de las barras laterales del sitio (solo pantallas anchas) -- Beto los sube/edita solo, sin tocar código. Pueden ser imagen o video corto en loop. */
 export function PromoBannersManager({ banners }: { banners: PromoBannerItem[] }) {
   return (
     <div className="flex flex-col gap-4">

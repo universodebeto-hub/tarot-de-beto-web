@@ -385,18 +385,29 @@ enum PromoBannerPosition {
   RIGHT
 }
 
+enum PromoBannerMediaType {
+  IMAGE
+  VIDEO
+}
+
 /// Banner promocional en las barras laterales del sitio (pantallas anchas)
 /// -- Beto los sube/edita solo desde /admin/configuracion, sin tocar
-/// código, igual que los métodos de pago propios de arriba.
+/// código, igual que los métodos de pago propios de arriba. Puede ser una
+/// imagen o un video corto (mudo, en loop) -- ver
+/// app/api/uploads/promo-banner/route.ts, que sube directo del navegador a
+/// Vercel Blob (sin pasar el archivo por esta función) para permitir
+/// videos de varios MB sin chocar con el límite de tamaño de body de las
+/// funciones serverless.
 model PromoBanner {
-  id        String              @id @default(cuid())
+  id        String                @id @default(cuid())
   imageUrl  String
+  mediaType PromoBannerMediaType  @default(IMAGE)
   linkUrl   String
   position  PromoBannerPosition
-  sortOrder Int                 @default(0)
-  active    Boolean             @default(true)
-  createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
+  sortOrder Int                   @default(0)
+  active    Boolean               @default(true)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
 
   @@index([position, active])
 }

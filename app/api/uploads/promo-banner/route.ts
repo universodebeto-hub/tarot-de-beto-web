@@ -1,45 +1,44 @@
-import { NextRequest, NextResponse } from "next/server";
-import { put } from "@vercel/blob";
+import { NextResponse } from "next/server";
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { requireAdmin } from "@/lib/auth/session";
 
 export const runtime = "nodejs";
 
-const MAX_BYTES = 3_000_000;
-const ALLOWED_TYPES: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-};
-
-/** Sube la imagen de un banner promocional (barras laterales) a Vercel Blob -- solo el admin puede usar esto. */
-export async function POST(req: NextRequest) {
-  try {
-    await requireAdmin();
-  } catch {
-    return NextResponse.json({ error: "No autorizado." }, { status: 403 });
-  }
-
-  const form = await req.formData();
-  const file = form.get("file");
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: "Falta el archivo." }, { status: 400 });
-  }
-  const ext = ALLOWED_TYPES[file.type];
-  if (!ext) {
-    return NextResponse.json({ error: "Formato no soportado. Usa JPG, PNG o WEBP." }, { status: 400 });
-  }
-  if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "La imagen pesa demasiado (máximo 3 MB)." }, { status: 400 });
-  }
+/**
+ * Banners promocionales -- a diferencia de los otros uploads del sitio
+ * (payment-proof, payment-method-logo), este puede ser un video, que pesa
+ * mucho más que una imagen. Por eso acá el archivo va DIRECTO del
+ * navegador a Vercel Blob (ver components/admin/PromoBannersManager.tsx,
+ * usa `upload()` de @vercel/blob/client) -- esta ruta solo emite el token
+ * firmado, el archivo nunca pasa por esta función, así que no choca con el
+ * límite de tamaño de body de las funciones serverless (~4.5 MB).
+ */
+export async function POST(request: Request): Promise<NextResponse> {
+  const body = (await request.json()) as HandleUploadBody;
 
   try {
-    const blob = await put(`promo-banners/${Date.now()}.${ext}`, file, {
-      access: "public",
-      addRandomSuffix: true,
+    const jsonResponse = await handleUpload({
+      body,
+      request,
+      onBeforeGenerateToken: async () => {
+        try {
+          await requireAdmin();
+        } catch {
+          throw new Error("No autorizado.");
+        }
+        return {
+          allowedContentTypes: ["image/jpeg", "image/png", "image/webp", "video/mp4", "video/webm"],
+          addRandomSuffix: true,
+          maximumSizeInBytes: 30_000_000,
+        };
+      },
+      // Sin onUploadCompleted: no hace falta guardar nada acá -- el cliente
+      // llama a createPromoBannerAction con la URL final una vez que
+      // upload() termina, en el mismo flujo (ver PromoBannersManager.tsx).
     });
-    return NextResponse.json({ url: blob.url });
+    return NextResponse.json(jsonResponse);
   } catch (err) {
     console.error("[blob] error subiendo banner promocional:", err);
-    return NextResponse.json({ error: "No se pudo subir la imagen. Intenta de nuevo." }, { status: 503 });
+    return NextResponse.json({ error: (err as Error).message ?? "No se pudo subir el archivo." }, { status: 400 });
   }
 }

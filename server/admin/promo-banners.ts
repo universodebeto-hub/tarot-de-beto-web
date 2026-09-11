@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAdminAction } from "@/server/audit";
 import type { CurrentUser } from "@/lib/auth/session";
-import type { PromoBannerPosition } from "@prisma/client";
+import type { PromoBannerPosition, PromoBannerMediaType } from "@prisma/client";
 
 export async function listPromoBannersAdmin() {
   await requireAdmin();
@@ -15,14 +15,19 @@ export interface CreatePromoBannerResult {
 }
 
 export async function createPromoBanner(
-  input: { imageUrl: string; linkUrl: string; position: PromoBannerPosition },
+  input: { imageUrl: string; mediaType: PromoBannerMediaType; linkUrl: string; position: PromoBannerPosition },
   currentUser?: CurrentUser | null,
 ): Promise<CreatePromoBannerResult> {
   const admin = await requireAdmin(currentUser);
-  if (!input.imageUrl.trim() || !input.linkUrl.trim()) return { error: "Faltan la imagen o el link." };
+  if (!input.imageUrl.trim() || !input.linkUrl.trim()) return { error: "Faltan el archivo o el link." };
 
   await prisma.promoBanner.create({
-    data: { imageUrl: input.imageUrl, linkUrl: input.linkUrl.trim(), position: input.position },
+    data: {
+      imageUrl: input.imageUrl,
+      mediaType: input.mediaType,
+      linkUrl: input.linkUrl.trim(),
+      position: input.position,
+    },
   });
   await logAdminAction({ adminId: admin.id, action: "promo_banner.created", targetType: "PromoBanner", targetId: "new" });
   return {};
@@ -30,7 +35,7 @@ export async function createPromoBanner(
 
 export async function updatePromoBanner(
   id: string,
-  input: { imageUrl?: string; linkUrl?: string; position?: PromoBannerPosition },
+  input: { imageUrl?: string; mediaType?: PromoBannerMediaType; linkUrl?: string; position?: PromoBannerPosition },
   currentUser?: CurrentUser | null,
 ): Promise<CreatePromoBannerResult> {
   const admin = await requireAdmin(currentUser);
@@ -39,7 +44,12 @@ export async function updatePromoBanner(
 
   await prisma.promoBanner.update({
     where: { id },
-    data: { imageUrl: input.imageUrl, linkUrl: input.linkUrl?.trim(), position: input.position },
+    data: {
+      imageUrl: input.imageUrl,
+      mediaType: input.mediaType,
+      linkUrl: input.linkUrl?.trim(),
+      position: input.position,
+    },
   });
   await logAdminAction({ adminId: admin.id, action: "promo_banner.updated", targetType: "PromoBanner", targetId: id });
   return {};

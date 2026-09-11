@@ -23,7 +23,7 @@ import {
 } from "@/server/admin/promo-banners";
 import type { ManualPaymentInstructions } from "@/server/settings";
 import type { FaqItem } from "@/types/content";
-import type { PaymentMethod, PromoBannerPosition } from "@prisma/client";
+import type { PaymentMethod, PromoBannerPosition, PromoBannerMediaType } from "@prisma/client";
 
 export async function connectTikTokAction(): Promise<{ error?: string }> {
   const result = await getTikTokAuthorizeUrl();
@@ -44,6 +44,7 @@ function revalidatePromoBannerPages() {
 
 export async function createPromoBannerAction(input: {
   imageUrl: string;
+  mediaType: PromoBannerMediaType;
   linkUrl: string;
   position: PromoBannerPosition;
 }): Promise<{ error?: string }> {
@@ -54,7 +55,7 @@ export async function createPromoBannerAction(input: {
 
 export async function updatePromoBannerAction(
   id: string,
-  input: { imageUrl?: string; linkUrl?: string; position?: PromoBannerPosition },
+  input: { imageUrl?: string; mediaType?: PromoBannerMediaType; linkUrl?: string; position?: PromoBannerPosition },
 ): Promise<{ error?: string }> {
   const result = await updatePromoBanner(id, input);
   if (!result.error) revalidatePromoBannerPages();
