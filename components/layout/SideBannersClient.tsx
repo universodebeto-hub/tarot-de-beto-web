@@ -19,29 +19,62 @@ export interface TikTokWidgetData {
 
 function TikTokWidget({ tiktok }: { tiktok: TikTokWidgetData }) {
   return (
-    <div className="glass flex w-[160px] flex-col items-center gap-2.5 rounded-xl p-3">
-      <a href={tiktok.profileDeepLink} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1.5">
-        <span className="flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-[0.15em] text-ash">
-          <TikTokIcon className="h-2.5 w-2.5 shrink-0" />
-          TikTok
+    <div className="glass arcana flex w-[160px] flex-col items-center gap-3 rounded-xl border border-gold/20 p-3.5 shadow-[0_0_24px_rgba(232,163,61,0.12)]">
+      <span className="flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[0.2em] text-ash">
+        <TikTokIcon className="h-3 w-3 shrink-0 text-gold-soft" />
+        TikTok
+      </span>
+
+      <a href={tiktok.profileDeepLink} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1">
+        <div className="relative">
+          <div className="rounded-full bg-gradient-to-br from-gold-soft via-gold to-ember p-[2px]">
+            {/* eslint-disable-next-line @next/next/no-img-element -- foto externa de TikTok. */}
+            <img
+              src={tiktok.avatarUrl}
+              alt={tiktok.displayName}
+              className="h-14 w-14 rounded-full border-2 border-obsidian object-cover"
+            />
+          </div>
+          <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-obsidian bg-obsidian text-gold-soft">
+            <TikTokIcon className="h-2.5 w-2.5" />
+          </span>
+        </div>
+        <span className="mt-1 max-w-[130px] truncate text-[12px] text-bone">{tiktok.displayName}</span>
+        <span className="font-display text-lg font-semibold leading-none text-gold-soft">
+          {tiktok.followerCount.toLocaleString("es")}
         </span>
-        {/* eslint-disable-next-line @next/next/no-img-element -- foto externa de TikTok. */}
-        <img src={tiktok.avatarUrl} alt={tiktok.displayName} className="h-11 w-11 rounded-full object-cover" />
-        <span className="flex items-center gap-1 font-mono text-[11px] uppercase tracking-wide text-gold-soft">
-          <TikTokIcon className="h-3 w-3 shrink-0" />
-          {tiktok.followerCount.toLocaleString("es")} seguidores
-        </span>
+        <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-ash">Seguidores</span>
       </a>
+
       {tiktok.videos.length > 0 ? (
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="grid w-full grid-cols-2 gap-1.5">
           {tiktok.videos.map((v) => (
-            <a key={v.id} href={v.shareUrl} target="_blank" rel="noopener noreferrer" className="block aspect-9/16 overflow-hidden rounded-lg">
+            <a
+              key={v.id}
+              href={v.shareUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group block aspect-9/16 overflow-hidden rounded-lg border border-white/10"
+            >
               {/* eslint-disable-next-line @next/next/no-img-element -- miniatura externa de TikTok. */}
-              <img src={v.coverImageUrl} alt="" className="h-full w-full object-cover" />
+              <img
+                src={v.coverImageUrl}
+                alt=""
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+              />
             </a>
           ))}
         </div>
       ) : null}
+
+      <a
+        href={tiktok.profileDeepLink}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="w-full rounded-lg border border-gold/30 py-1.5 text-center font-mono text-[10px] uppercase tracking-wide text-gold-soft transition-colors hover:border-gold hover:bg-gold/10"
+      >
+        Ver perfil
+      </a>
     </div>
   );
 }
