@@ -5,6 +5,7 @@ import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { WhatsAppButton } from "@/components/layout/WhatsAppButton";
+import { SideBanners } from "@/components/layout/SideBanners";
 import { StarsField } from "@/components/layout/StarsField";
 import { ToastProvider } from "@/components/ui/Toast";
 import { siteConfig } from "@/config/site";
@@ -116,6 +117,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               whatsappNumber={siteConfig.contact.whatsappNumber}
               isOnline={presence.isOnline}
             />
+            <SideBanners />
           </div>
         </ToastProvider>
         <Analytics

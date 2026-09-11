@@ -380,6 +380,27 @@ model ManualPaymentMethod {
   updatedAt    DateTime @updatedAt
 }
 
+enum PromoBannerPosition {
+  LEFT
+  RIGHT
+}
+
+/// Banner promocional en las barras laterales del sitio (pantallas anchas)
+/// -- Beto los sube/edita solo desde /admin/configuracion, sin tocar
+/// código, igual que los métodos de pago propios de arriba.
+model PromoBanner {
+  id        String              @id @default(cuid())
+  imageUrl  String
+  linkUrl   String
+  position  PromoBannerPosition
+  sortOrder Int                 @default(0)
+  active    Boolean             @default(true)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@index([position, active])
+}
+
 /// Logo alternativo (subido por el admin) para CUALQUIER método de pago --
 /// tanto uno fijo del enum PaymentMethod (`method` = el nombre del enum,
 /// ej. "ZELLE") como uno de ManualPaymentMethod (`method` = su id). Si no

@@ -11,7 +11,9 @@ import { ReminderHoursForm } from "@/components/admin/ReminderHoursForm";
 import { FixedMethodLogoEditor } from "@/components/admin/FixedMethodLogoEditor";
 import { ManualPaymentMethodsManager } from "@/components/admin/ManualPaymentMethodsManager";
 import { TikTokConnectionPanel } from "@/components/admin/TikTokConnectionPanel";
+import { PromoBannersManager } from "@/components/admin/PromoBannersManager";
 import { isTikTokConnected, getTikTokSectionData } from "@/server/tiktok";
+import { listPromoBannersAdmin } from "@/server/admin/promo-banners";
 import type { PaymentMethod } from "@prisma/client";
 
 export const metadata: Metadata = { title: "Panel — Configuración", robots: { index: false } };
@@ -32,7 +34,7 @@ interface PageProps {
 
 export default async function AdminSettingsPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const [manualPayment, faqItems, reminderHours, customMethods, logoOverrides, tiktokConnected, tiktokData] = await Promise.all([
+  const [manualPayment, faqItems, reminderHours, customMethods, logoOverrides, tiktokConnected, tiktokData, promoBanners] = await Promise.all([
     getManualPaymentInstructions(),
     getFaqItems(),
     getSetting<number[]>("reminder_hours_before", [24, 2]),
@@ -40,6 +42,7 @@ export default async function AdminSettingsPage({ searchParams }: PageProps) {
     getPaymentMethodLogoOverrides(),
     isTikTokConnected(),
     getTikTokSectionData(),
+    listPromoBannersAdmin(),
   ]);
 
   const tabs: TabItem[] = [
@@ -82,14 +85,23 @@ export default async function AdminSettingsPage({ searchParams }: PageProps) {
     },
     {
       id: "redes",
-      label: "Redes sociales",
+      label: "Redes y banners",
       content: (
-        <TikTokConnectionPanel
-          connected={tiktokConnected}
-          profile={tiktokData ? { displayName: tiktokData.profile.displayName, avatarUrl: tiktokData.profile.avatarUrl, followerCount: tiktokData.profile.followerCount } : null}
-          notice={params.tiktok_connected ? "TikTok conectado correctamente." : undefined}
-          noticeError={params.tiktok_error}
-        />
+        <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-3">
+            <span className="eyebrow">TikTok</span>
+            <TikTokConnectionPanel
+              connected={tiktokConnected}
+              profile={tiktokData ? { displayName: tiktokData.profile.displayName, avatarUrl: tiktokData.profile.avatarUrl, followerCount: tiktokData.profile.followerCount } : null}
+              notice={params.tiktok_connected ? "TikTok conectado correctamente." : undefined}
+              noticeError={params.tiktok_error}
+            />
+          </div>
+          <div className="flex flex-col gap-3 border-t border-white/10 pt-6">
+            <span className="eyebrow">Banners promocionales</span>
+            <PromoBannersManager banners={promoBanners} />
+          </div>
+        </div>
       ),
     },
   ];

@@ -4,6 +4,7 @@ import { ServiceGrid } from "@/components/sections/ServiceGrid";
 import { RitualBanner } from "@/components/sections/RitualBanner";
 import { Testimonials } from "@/components/sections/Testimonials";
 import { TikTokSection } from "@/components/sections/TikTokSection";
+import { PromoBannerStrip } from "@/components/sections/PromoBannerStrip";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { CTASection } from "@/components/sections/CTASection";
 import { Reveal } from "@/components/ui/Reveal";
@@ -85,6 +86,8 @@ export default async function HomePage() {
       <Testimonials testimonials={testimonials} />
 
       {tiktokData ? <TikTokSection profile={tiktokData.profile} videos={tiktokData.videos} /> : null}
+
+      <PromoBannerStrip />
 
       <CTASection
         eyebrow="Reserva tu consulta"

@@ -51,6 +51,12 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];
   },
+  images: {
+    // Archivos subidos por el admin (logos de métodos de pago, banners
+    // promocionales) viven en Vercel Blob, con un subdominio aleatorio por
+    // proyecto -- de ahí el comodín, en vez de listar un hostname fijo.
+    remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }],
+  },
 };
 
 export default nextConfig;

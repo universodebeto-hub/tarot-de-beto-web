@@ -15,9 +15,15 @@ import {
   setPaymentMethodLogo,
 } from "@/server/admin/payment-methods";
 import { getTikTokAuthorizeUrl, disconnectTikTok } from "@/server/tiktok";
+import {
+  createPromoBanner,
+  updatePromoBanner,
+  togglePromoBannerActive,
+  deletePromoBanner,
+} from "@/server/admin/promo-banners";
 import type { ManualPaymentInstructions } from "@/server/settings";
 import type { FaqItem } from "@/types/content";
-import type { PaymentMethod } from "@prisma/client";
+import type { PaymentMethod, PromoBannerPosition } from "@prisma/client";
 
 export async function connectTikTokAction(): Promise<{ error?: string }> {
   const result = await getTikTokAuthorizeUrl();
@@ -28,6 +34,42 @@ export async function connectTikTokAction(): Promise<{ error?: string }> {
 export async function disconnectTikTokAction(): Promise<{ error?: string }> {
   const result = await disconnectTikTok();
   if (!result.error) revalidatePath("/admin/configuracion");
+  return result;
+}
+
+function revalidatePromoBannerPages() {
+  revalidatePath("/admin/configuracion");
+  revalidatePath("/", "layout");
+}
+
+export async function createPromoBannerAction(input: {
+  imageUrl: string;
+  linkUrl: string;
+  position: PromoBannerPosition;
+}): Promise<{ error?: string }> {
+  const result = await createPromoBanner(input);
+  if (!result.error) revalidatePromoBannerPages();
+  return result;
+}
+
+export async function updatePromoBannerAction(
+  id: string,
+  input: { imageUrl?: string; linkUrl?: string; position?: PromoBannerPosition },
+): Promise<{ error?: string }> {
+  const result = await updatePromoBanner(id, input);
+  if (!result.error) revalidatePromoBannerPages();
+  return result;
+}
+
+export async function togglePromoBannerActiveAction(id: string): Promise<{ error?: string }> {
+  const result = await togglePromoBannerActive(id);
+  if (!result.error) revalidatePromoBannerPages();
+  return result;
+}
+
+export async function deletePromoBannerAction(id: string): Promise<{ error?: string }> {
+  const result = await deletePromoBanner(id);
+  if (!result.error) revalidatePromoBannerPages();
   return result;
 }
 
