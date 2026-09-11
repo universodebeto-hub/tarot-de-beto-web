@@ -10,6 +10,8 @@ import { FaqEditorForm } from "@/components/admin/FaqEditorForm";
 import { ReminderHoursForm } from "@/components/admin/ReminderHoursForm";
 import { FixedMethodLogoEditor } from "@/components/admin/FixedMethodLogoEditor";
 import { ManualPaymentMethodsManager } from "@/components/admin/ManualPaymentMethodsManager";
+import { TikTokConnectionPanel } from "@/components/admin/TikTokConnectionPanel";
+import { isTikTokConnected, getTikTokSectionData } from "@/server/tiktok";
 import type { PaymentMethod } from "@prisma/client";
 
 export const metadata: Metadata = { title: "Panel — Configuración", robots: { index: false } };
@@ -24,13 +26,20 @@ const FIXED_METHODS: PaymentMethod[] = [
   "BANCOLOMBIA",
 ];
 
-export default async function AdminSettingsPage() {
-  const [manualPayment, faqItems, reminderHours, customMethods, logoOverrides] = await Promise.all([
+interface PageProps {
+  searchParams: Promise<{ tiktok_connected?: string; tiktok_error?: string }>;
+}
+
+export default async function AdminSettingsPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const [manualPayment, faqItems, reminderHours, customMethods, logoOverrides, tiktokConnected, tiktokData] = await Promise.all([
     getManualPaymentInstructions(),
     getFaqItems(),
     getSetting<number[]>("reminder_hours_before", [24, 2]),
     listManualPaymentMethodsAdmin(),
     getPaymentMethodLogoOverrides(),
+    isTikTokConnected(),
+    getTikTokSectionData(),
   ]);
 
   const tabs: TabItem[] = [
@@ -70,6 +79,18 @@ export default async function AdminSettingsPage() {
       id: "recordatorios",
       label: "Recordatorios",
       content: <ReminderHoursForm initial={reminderHours} />,
+    },
+    {
+      id: "redes",
+      label: "Redes sociales",
+      content: (
+        <TikTokConnectionPanel
+          connected={tiktokConnected}
+          profile={tiktokData ? { displayName: tiktokData.profile.displayName, avatarUrl: tiktokData.profile.avatarUrl, followerCount: tiktokData.profile.followerCount } : null}
+          notice={params.tiktok_connected ? "TikTok conectado correctamente." : undefined}
+          noticeError={params.tiktok_error}
+        />
+      ),
     },
   ];
 

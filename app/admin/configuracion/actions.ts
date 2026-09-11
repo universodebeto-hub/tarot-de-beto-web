@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import {
   updateManualPaymentInstructions,
   updateFaqItems,
@@ -13,9 +14,22 @@ import {
   deleteManualPaymentMethod,
   setPaymentMethodLogo,
 } from "@/server/admin/payment-methods";
+import { getTikTokAuthorizeUrl, disconnectTikTok } from "@/server/tiktok";
 import type { ManualPaymentInstructions } from "@/server/settings";
 import type { FaqItem } from "@/types/content";
 import type { PaymentMethod } from "@prisma/client";
+
+export async function connectTikTokAction(): Promise<{ error?: string }> {
+  const result = await getTikTokAuthorizeUrl();
+  if (result.error || !result.url) return { error: result.error ?? "No se pudo iniciar la conexión." };
+  redirect(result.url);
+}
+
+export async function disconnectTikTokAction(): Promise<{ error?: string }> {
+  const result = await disconnectTikTok();
+  if (!result.error) revalidatePath("/admin/configuracion");
+  return result;
+}
 
 export async function updateManualPaymentInstructionsAction(
   data: ManualPaymentInstructions,

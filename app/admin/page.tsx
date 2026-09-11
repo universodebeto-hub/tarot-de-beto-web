@@ -12,6 +12,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CleanupBookingsButton } from "@/components/admin/CleanupBookingsButton";
 import { CollapsibleSection } from "@/components/admin/CollapsibleSection";
 import { VALUE_TONE } from "@/components/admin/SummaryBar";
+import { refreshTikTokDataIfNeeded } from "@/server/tiktok";
 
 export const metadata: Metadata = { title: "Panel — Resumen", robots: { index: false } };
 
@@ -27,6 +28,7 @@ async function runMaintenanceAction(): Promise<void> {
   await requireAdmin();
   await expireAndNotify();
   await sendDueReminders();
+  await refreshTikTokDataIfNeeded(true);
   revalidatePath("/admin");
 }
 

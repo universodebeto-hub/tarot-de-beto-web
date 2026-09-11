@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { expireAndNotify } from "@/server/notifications/expiry";
 import { sendDueReminders } from "@/server/notifications/reminders";
+import { refreshTikTokDataIfNeeded } from "@/server/tiktok";
 
 /**
  * Tareas de mantenimiento periódicas: expira reservas vencidas (avisando
@@ -23,6 +24,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }
 
-  const [expiry, reminders] = await Promise.all([expireAndNotify(), sendDueReminders()]);
+  const [expiry, reminders] = await Promise.all([expireAndNotify(), sendDueReminders(), refreshTikTokDataIfNeeded()]);
   return NextResponse.json({ expired: expiry.expired, remindersSent: reminders.sent });
 }

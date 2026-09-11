@@ -3,12 +3,14 @@ import { HowItWorks } from "@/components/sections/HowItWorks";
 import { ServiceGrid } from "@/components/sections/ServiceGrid";
 import { RitualBanner } from "@/components/sections/RitualBanner";
 import { Testimonials } from "@/components/sections/Testimonials";
+import { TikTokSection } from "@/components/sections/TikTokSection";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { CTASection } from "@/components/sections/CTASection";
 import { Reveal } from "@/components/ui/Reveal";
 import { getFeaturedServices, getServices } from "@/server/services";
 import { getPublishedTestimonials } from "@/server/testimonials";
 import { getFaqItems } from "@/server/settings";
+import { getTikTokSectionData } from "@/server/tiktok";
 import { RITUAL_BANNER_SLIDES, RITUAL_BANNER_TAGLINE } from "@/lib/ritual-gallery";
 
 // Nota: esta ruta ya es dinámica (el layout raíz lee la cookie de sesión
@@ -16,11 +18,12 @@ import { RITUAL_BANNER_SLIDES, RITUAL_BANNER_TAGLINE } from "@/lib/ritual-galler
 // servicios/testimonios en vivo.
 
 export default async function HomePage() {
-  const [services, allServices, testimonials, faqItems] = await Promise.all([
+  const [services, allServices, testimonials, faqItems, tiktokData] = await Promise.all([
     getFeaturedServices(3),
     getServices(),
     getPublishedTestimonials(),
     getFaqItems(),
+    getTikTokSectionData(),
   ]);
 
   const bannerItems = RITUAL_BANNER_SLIDES.flatMap((slide) => {
@@ -80,6 +83,8 @@ export default async function HomePage() {
       </div>
 
       <Testimonials testimonials={testimonials} />
+
+      {tiktokData ? <TikTokSection profile={tiktokData.profile} videos={tiktokData.videos} /> : null}
 
       <CTASection
         eyebrow="Reserva tu consulta"
