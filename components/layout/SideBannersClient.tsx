@@ -2,46 +2,60 @@
 
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { TikTokIcon, InstagramIcon, FacebookIcon, WhatsAppIcon } from "@/components/ui/social-icons";
 import type { PromoBanner } from "@prisma/client";
-
-const ICONS = { TikTok: TikTokIcon, Instagram: InstagramIcon, Facebook: FacebookIcon, WhatsApp: WhatsAppIcon } as const;
-
-export interface SocialLink {
-  href: string;
-  label: keyof typeof ICONS;
-}
+import type { TikTokVideo } from "@/server/tiktok";
 
 /** Rutas "de aplicación" (paneles con su propio menú lateral) donde estas barras no deben mostrarse -- se superponen con el menú del panel, no con contenido de la página pública. */
 const HIDDEN_PREFIXES = ["/admin", "/panel-tarotista", "/dashboard"];
 
-function Rail({ side, banners, socials }: { side: "left" | "right"; banners: PromoBanner[]; socials: SocialLink[] }) {
+export interface TikTokWidgetData {
+  displayName: string;
+  avatarUrl: string;
+  followerCount: number;
+  profileDeepLink: string;
+  videos: TikTokVideo[];
+}
+
+function TikTokWidget({ tiktok }: { tiktok: TikTokWidgetData }) {
+  return (
+    <div className="glass flex w-[160px] flex-col items-center gap-2.5 rounded-xl p-3">
+      <a href={tiktok.profileDeepLink} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1.5">
+        {/* eslint-disable-next-line @next/next/no-img-element -- foto externa de TikTok. */}
+        <img src={tiktok.avatarUrl} alt={tiktok.displayName} className="h-11 w-11 rounded-full object-cover" />
+        <span className="font-mono text-[11px] uppercase tracking-wide text-gold-soft">
+          {tiktok.followerCount.toLocaleString("es")} seguidores
+        </span>
+      </a>
+      {tiktok.videos.length > 0 ? (
+        <div className="grid grid-cols-2 gap-1.5">
+          {tiktok.videos.map((v) => (
+            <a key={v.id} href={v.shareUrl} target="_blank" rel="noopener noreferrer" className="block aspect-9/16 overflow-hidden rounded-lg">
+              {/* eslint-disable-next-line @next/next/no-img-element -- miniatura externa de TikTok. */}
+              <img src={v.coverImageUrl} alt="" className="h-full w-full object-cover" />
+            </a>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function Rail({
+  side,
+  banners,
+  tiktok,
+}: {
+  side: "left" | "right";
+  banners: PromoBanner[];
+  tiktok: TikTokWidgetData | null;
+}) {
   return (
     <aside
       className={`no-print fixed top-1/2 z-20 hidden -translate-y-1/2 flex-col items-center gap-3 2xl:flex ${
         side === "left" ? "left-4" : "right-4"
       }`}
     >
-      {socials.length > 0 ? (
-        <div className="glass flex flex-col items-center gap-2.5 rounded-xl px-2 py-3">
-          {socials.map(({ href, label }) => {
-            const Icon = ICONS[label];
-            return (
-              <a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={label}
-                title={label}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-bone-dim transition-colors hover:text-gold-soft"
-              >
-                <Icon className="h-[18px] w-[18px]" />
-              </a>
-            );
-          })}
-        </div>
-      ) : null}
+      {tiktok ? <TikTokWidget tiktok={tiktok} /> : null}
 
       {banners.slice(0, 1).map((b) => (
         <a
@@ -66,19 +80,19 @@ function Rail({ side, banners, socials }: { side: "left" | "right"; banners: Pro
 export function SideBannersClient({
   left,
   right,
-  socials,
+  tiktok,
 }: {
   left: PromoBanner[];
   right: PromoBanner[];
-  socials: SocialLink[];
+  tiktok: TikTokWidgetData | null;
 }) {
   const pathname = usePathname();
   if (HIDDEN_PREFIXES.some((p) => pathname?.startsWith(p))) return null;
 
   return (
     <>
-      <Rail side="left" banners={left} socials={socials} />
-      <Rail side="right" banners={right} socials={socials} />
+      <Rail side="left" banners={left} tiktok={tiktok} />
+      <Rail side="right" banners={right} tiktok={tiktok} />
     </>
   );
 }
