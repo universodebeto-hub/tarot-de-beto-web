@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { createPaypalOrder, capturePaypalOrder, getPaypalOrder, isPaypalConfigured } from "@/lib/paypal";
+import { getPaymentMethodsEnabled } from "@/server/settings";
 import { effectivePrice } from "@/lib/booking-price";
 import { expireStaleBookings } from "@/server/availability";
 import { notifyPaymentConfirmed } from "@/server/notifications/send";
@@ -22,6 +23,9 @@ export interface OrderResult {
 export async function createOrderForBooking(bookingId: string): Promise<OrderResult> {
   if (!isPaypalConfigured()) {
     return { error: "PayPal todavía no está configurado en este entorno." };
+  }
+  if (!(await getPaymentMethodsEnabled()).paypal) {
+    return { error: "El pago con PayPal está desactivado por el momento." };
   }
 
   await expireStaleBookings();

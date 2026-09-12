@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import type { ManualPaymentInstructions } from "@/server/settings";
+import type { ManualPaymentInstructions, PaymentMethodsEnabled } from "@/server/settings";
 import { PAYMENT_METHOD_LABEL, PAYMENT_METHOD_LOGO_SLUG } from "@/lib/booking-labels";
 import { PayPalButton } from "@/components/booking/PayPalButton";
 import { requestCreditBookingAction } from "@/app/reservas/[id]/credit-actions";
@@ -22,6 +22,17 @@ const MANUAL_METHODS: ManualMethod[] = [
   "MONEYGRAM",
   "BANCOLOMBIA",
 ];
+
+/** Cada método fijo de arriba con su clave equivalente en PaymentMethodsEnabled (server/settings.ts) -- para saber cuáles ocultar cuando el admin los desactivó desde /admin/configuracion, sin tocar ManualPaymentInstructions ni MANUAL_METHODS. */
+const ENABLED_KEY_BY_METHOD: Record<ManualMethod, keyof PaymentMethodsEnabled> = {
+  PAGO_MOVIL: "pagoMovil",
+  ZELLE: "zelle",
+  BINANCE: "binance",
+  REMITLY: "remitly",
+  WESTERN_UNION: "westernUnion",
+  MONEYGRAM: "moneygram",
+  BANCOLOMBIA: "bancolombia",
+};
 
 export interface CustomPaymentMethod {
   id: string;
@@ -44,6 +55,8 @@ interface ManualPaymentPanelProps {
   customMethods?: CustomPaymentMethod[];
   /** Logo alternativo (subido por el admin) para un método fijo -- si no está acá, se usa el archivo estático de siempre. */
   logoOverrides?: Record<string, string>;
+  /** Activo/inactivo por método fijo (server/settings.ts) -- un método en `false` no aparece como opción, sin que el admin haya tenido que borrar sus datos de cuenta. Si no llega (reserva ya no pendiente), se asume que no hay nada que filtrar. */
+  enabledMethods?: PaymentMethodsEnabled | null;
 }
 
 /**
@@ -63,6 +76,7 @@ export function ManualPaymentPanel({
   whatsappNumber,
   customMethods = [],
   logoOverrides = {},
+  enabledMethods = null,
 }: ManualPaymentPanelProps) {
   const router = useRouter();
   const [method, setMethod] = useState<PickableMethod | null>(null);
@@ -178,7 +192,7 @@ export function ManualPaymentPanel({
   }
 
   const manualMethods: (ManualMethod | "CREDITO_BETO")[] = [
-    ...MANUAL_METHODS,
+    ...MANUAL_METHODS.filter((m) => enabledMethods?.[ENABLED_KEY_BY_METHOD[m]] !== false),
     ...(creditEnabled ? (["CREDITO_BETO"] as const) : []),
   ];
 

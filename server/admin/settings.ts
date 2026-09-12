@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAdminAction } from "@/server/audit";
 import type { CurrentUser } from "@/lib/auth/session";
-import type { ManualPaymentInstructions } from "@/server/settings";
+import { getPaymentMethodsEnabled } from "@/server/settings";
+import type { ManualPaymentInstructions, PaymentMethodsEnabled, FixedPaymentMethodKey } from "@/server/settings";
 import type { FaqItem } from "@/types/content";
 
 export async function listSettingsAdmin() {
@@ -26,6 +27,17 @@ export async function updateManualPaymentInstructions(
   currentUser?: CurrentUser | null,
 ): Promise<{ error?: string }> {
   await saveSettingValue("manual_payment_instructions", data, currentUser);
+  return {};
+}
+
+/** Prende/apaga un método de pago FIJO (PayPal o uno de los 7 manuales) sin tocar sus datos de cuenta ni credenciales -- setting `payment_methods_enabled`. Para los métodos agregados por el admin, ver toggleManualPaymentMethodActive() en server/admin/payment-methods.ts. */
+export async function togglePaymentMethodEnabled(
+  key: FixedPaymentMethodKey,
+  currentUser?: CurrentUser | null,
+): Promise<{ error?: string }> {
+  const current = await getPaymentMethodsEnabled();
+  const next: PaymentMethodsEnabled = { ...current, [key]: !current[key] };
+  await saveSettingValue("payment_methods_enabled", next, currentUser);
   return {};
 }
 

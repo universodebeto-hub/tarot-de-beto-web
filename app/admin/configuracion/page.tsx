@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getManualPaymentInstructions, getFaqItems, getSetting } from "@/server/settings";
+import { getManualPaymentInstructions, getFaqItems, getSetting, getPaymentMethodsEnabled } from "@/server/settings";
 import { listManualPaymentMethodsAdmin } from "@/server/admin/payment-methods";
 import { getPaymentMethodLogoOverrides } from "@/server/payment-methods";
 import { PAYMENT_METHOD_LABEL, PAYMENT_METHOD_LOGO_SLUG } from "@/lib/booking-labels";
@@ -34,8 +34,9 @@ interface PageProps {
 
 export default async function AdminSettingsPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const [manualPayment, faqItems, reminderHours, customMethods, logoOverrides, tiktokConnected, tiktokData, promoBanners] = await Promise.all([
+  const [manualPayment, paymentMethodsEnabled, faqItems, reminderHours, customMethods, logoOverrides, tiktokConnected, tiktokData, promoBanners] = await Promise.all([
     getManualPaymentInstructions(),
+    getPaymentMethodsEnabled(),
     getFaqItems(),
     getSetting<number[]>("reminder_hours_before", [24, 2]),
     listManualPaymentMethodsAdmin(),
@@ -49,7 +50,7 @@ export default async function AdminSettingsPage({ searchParams }: PageProps) {
     {
       id: "pago",
       label: "Datos de pago",
-      content: <ManualPaymentInstructionsForm initial={manualPayment} />,
+      content: <ManualPaymentInstructionsForm initial={manualPayment} initialEnabled={paymentMethodsEnabled} />,
     },
     {
       id: "metodos",

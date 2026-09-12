@@ -2,6 +2,8 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { expireStaleBookings } from "@/server/availability";
 import { notifyAdminsPendingApproval } from "@/server/notifications/send";
+import { getPaymentMethodsEnabled } from "@/server/settings";
+import type { PaymentMethodsEnabled } from "@/server/settings";
 import type { PaymentMethod } from "@prisma/client";
 
 const MANUAL_METHODS: PaymentMethod[] = [
@@ -13,6 +15,17 @@ const MANUAL_METHODS: PaymentMethod[] = [
   "MONEYGRAM",
   "BANCOLOMBIA",
 ];
+
+/** Mismo mapeo que ManualPaymentPanel.tsx (ENABLED_KEY_BY_METHOD) -- acá server-side, para rechazar el envío aunque alguien salte la interfaz y mande el método desactivado directo a la API. */
+const ENABLED_KEY_BY_METHOD: Partial<Record<PaymentMethod, keyof PaymentMethodsEnabled>> = {
+  PAGO_MOVIL: "pagoMovil",
+  ZELLE: "zelle",
+  BINANCE: "binance",
+  REMITLY: "remitly",
+  WESTERN_UNION: "westernUnion",
+  MONEYGRAM: "moneygram",
+  BANCOLOMBIA: "bancolombia",
+};
 
 export interface ManualPaymentResult {
   success?: boolean;
@@ -43,6 +56,12 @@ export async function submitManualPaymentProof(
     const customMethod = await prisma.manualPaymentMethod.findUnique({ where: { id: manualPaymentMethodId } });
     if (!customMethod || !customMethod.active) return { error: "Ese método de pago ya no está disponible." };
     manualPaymentMethodLabel = customMethod.name;
+  } else {
+    const enabledKey = ENABLED_KEY_BY_METHOD[method];
+    if (enabledKey) {
+      const enabled = await getPaymentMethodsEnabled();
+      if (!enabled[enabledKey]) return { error: "Ese método de pago ya no está disponible." };
+    }
   }
 
   await expireStaleBookings();

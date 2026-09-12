@@ -56,3 +56,33 @@ export async function getManualPaymentInstructions(): Promise<ManualPaymentInstr
     bancolombia: { ...DEFAULT_MANUAL_PAYMENT_INSTRUCTIONS.bancolombia, ...stored.bancolombia },
   };
 }
+
+/** Métodos de pago "fijos" (no los agregados por el admin vía ManualPaymentMethod, esos ya tienen su propio `active`) que se pueden activar/desactivar desde /admin/configuracion sin borrar sus datos de cuenta ni sus credenciales. */
+export type FixedPaymentMethodKey =
+  | "paypal"
+  | "pagoMovil"
+  | "zelle"
+  | "binance"
+  | "remitly"
+  | "westernUnion"
+  | "moneygram"
+  | "bancolombia";
+
+export type PaymentMethodsEnabled = Record<FixedPaymentMethodKey, boolean>;
+
+const DEFAULT_PAYMENT_METHODS_ENABLED: PaymentMethodsEnabled = {
+  paypal: true,
+  pagoMovil: true,
+  zelle: true,
+  binance: true,
+  remitly: true,
+  westernUnion: true,
+  moneygram: true,
+  bancolombia: true,
+};
+
+/** Activo/inactivo por método fijo (setting `payment_methods_enabled`, JSON) -- todos activos por defecto, así que un admin que nunca tocó esto ve exactamente el comportamiento de siempre. */
+export async function getPaymentMethodsEnabled(): Promise<PaymentMethodsEnabled> {
+  const stored = await getSetting<Partial<PaymentMethodsEnabled>>("payment_methods_enabled", {});
+  return { ...DEFAULT_PAYMENT_METHODS_ENABLED, ...stored };
+}

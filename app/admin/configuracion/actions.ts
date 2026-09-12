@@ -6,6 +6,7 @@ import {
   updateManualPaymentInstructions,
   updateFaqItems,
   updateReminderHours,
+  togglePaymentMethodEnabled,
 } from "@/server/admin/settings";
 import {
   createManualPaymentMethod,
@@ -21,7 +22,7 @@ import {
   togglePromoBannerActive,
   deletePromoBanner,
 } from "@/server/admin/promo-banners";
-import type { ManualPaymentInstructions } from "@/server/settings";
+import type { ManualPaymentInstructions, FixedPaymentMethodKey } from "@/server/settings";
 import type { FaqItem } from "@/types/content";
 import type { PaymentMethod, PromoBannerPosition, PromoBannerMediaType } from "@prisma/client";
 
@@ -80,6 +81,15 @@ export async function updateManualPaymentInstructionsAction(
   const result = await updateManualPaymentInstructions(data);
   revalidatePath("/admin/configuracion");
   revalidatePath("/reservas", "layout");
+  return result;
+}
+
+export async function togglePaymentMethodEnabledAction(key: FixedPaymentMethodKey): Promise<{ error?: string }> {
+  const result = await togglePaymentMethodEnabled(key);
+  if (!result.error) {
+    revalidatePath("/admin/configuracion");
+    revalidatePath("/reservas", "layout");
+  }
   return result;
 }
 
