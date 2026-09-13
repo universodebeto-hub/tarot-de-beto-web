@@ -170,7 +170,7 @@ function BannerRow({ banner }: { banner: PromoBannerItem }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative h-16 w-10 overflow-hidden rounded-lg bg-white">
-            <BannerPreview url={imageUrl} mediaType={mediaType} className="h-full w-full object-cover" />
+            <BannerPreview url={imageUrl} mediaType={mediaType} className="h-full w-full object-cover object-top" />
           </div>
           <StatusBadge label={banner.active ? "Activo" : "Inactivo"} tone={banner.active ? "success" : "neutral"} />
           <span className="font-mono text-[10px] uppercase tracking-wide text-ash">{mediaType === "VIDEO" ? "Video" : "Imagen"}</span>

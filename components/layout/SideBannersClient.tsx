@@ -104,10 +104,11 @@ function Rail({
           rel={b.linkUrl.startsWith("/") ? undefined : "noopener noreferrer"}
           className="glass block h-[600px] w-[160px] overflow-hidden rounded-xl transition-opacity hover:opacity-90"
         >
+          {/* object-top (no el centro por defecto de object-cover): si la imagen que sube Beto no viene exactamente en 160x600, el recorte automático se lleva parejo de arriba y de abajo -- y el título/logo casi siempre está arriba del diseño, así que centrar el recorte se lo comía. Ancla el recorte arriba para no perder nunca esa parte. */}
           {b.mediaType === "VIDEO" ? (
-            <video src={b.imageUrl} className="h-full w-full object-cover" muted autoPlay loop playsInline />
+            <video src={b.imageUrl} className="h-full w-full object-cover object-top" muted autoPlay loop playsInline />
           ) : (
-            <Image src={b.imageUrl} alt="" width={160} height={600} className="h-full w-full object-cover" />
+            <Image src={b.imageUrl} alt="" width={160} height={600} className="h-full w-full object-cover object-top" />
           )}
         </a>
       ))}
