@@ -1,10 +1,39 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import type { PromoBanner } from "@prisma/client";
 import type { TikTokVideo } from "@/server/tiktok";
 import { TikTokLogoMark } from "@/components/ui/social-icons";
+
+/**
+ * Alto REAL del navbar, medido en vivo -- no la variable CSS --header-h
+ * (que Navbar.tsx usa como min-h, no como alto fijo: con logo+menú, el
+ * navbar real mide más que ese mínimo, ej. 121px vs los 84px de
+ * --header-h). Usar la variable acá dejaba estas barras empezando por
+ * DEBAJO del navbar real pero por ARRIBA de su borde visible, tapadas
+ * detrás de él y generando el hueco vacío que reportó Beto ("quiero que
+ * este mas pegada a el panel de arriba, que no haya espacio"). Se mide
+ * con ResizeObserver (no solo al montar) porque el alto real del navbar
+ * puede cambiar -- ej. el menú angosto pasa a dos filas en pantallas
+ * intermedias.
+ */
+function useHeaderHeight(): number | null {
+  const [height, setHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    const header = document.querySelector("header");
+    if (!header) return;
+    const update = () => setHeight(header.getBoundingClientRect().height);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+
+  return height;
+}
 
 /** Rutas "de aplicación" (paneles con su propio menú lateral) donde estas barras no deben mostrarse -- se superponen con el menú del panel, no con contenido de la página pública. */
 const HIDDEN_PREFIXES = ["/admin", "/panel-tarotista", "/dashboard"];
@@ -83,21 +112,26 @@ function Rail({
   side,
   banners,
   tiktok,
+  headerHeight,
 }: {
   side: "left" | "right";
   banners: PromoBanner[];
   tiktok: TikTokWidgetData | null;
+  headerHeight: number | null;
 }) {
+  // Antes de medir el navbar real (primer render / SSR), --header-h sigue
+  // siendo la mejor aproximación disponible -- apenas se mide el valor
+  // real (ver useHeaderHeight arriba), el inline style lo pisa.
   return (
     <aside
-      // COMANDO real ("quiero que este mas pegada a el panel de arriba, que
-      // no haya espacio entre la imagen y el panel"): antes había 16px de
-      // aire entre el navbar y el primer banner/widget -- ahora arranca
-      // pegado justo debajo del navbar (top-[var(--header-h)], sin sumarle
-      // nada), en los dos lados por igual para no romper el nivelado.
       className={`no-print fixed top-[var(--header-h)] z-20 hidden max-h-[calc(100vh-var(--header-h)-16px)] flex-col items-center gap-3 overflow-y-auto 2xl:flex ${
         side === "left" ? "left-4" : "right-4"
       }`}
+      style={
+        headerHeight != null
+          ? { top: headerHeight, maxHeight: `calc(100vh - ${headerHeight}px - 16px)` }
+          : undefined
+      }
     >
       {tiktok ? <TikTokWidget tiktok={tiktok} /> : null}
 
@@ -133,13 +167,14 @@ export function SideBannersClient({
   tiktok: TikTokWidgetData | null;
 }) {
   const pathname = usePathname();
+  const headerHeight = useHeaderHeight();
   if (HIDDEN_PREFIXES.some((p) => pathname?.startsWith(p))) return null;
 
   return (
     <>
-      <Rail side="left" banners={left} tiktok={tiktok} />
+      <Rail side="left" banners={left} tiktok={tiktok} headerHeight={headerHeight} />
       {/* Solo un lado muestra el widget de TikTok -- mostrarlo en los dos era repetir la misma info dos veces. La derecha arranca sin nada arriba, a la misma altura que el widget de TikTok de la izquierda (COMANDO real: "el objetivo es que quede al nivel del tiktok", no al nivel del banner de abajo). */}
-      <Rail side="right" banners={right} tiktok={null} />
+      <Rail side="right" banners={right} tiktok={null} headerHeight={headerHeight} />
     </>
   );
 }
