@@ -90,7 +90,12 @@ function Rail({
 }) {
   return (
     <aside
-      className={`no-print fixed top-[calc(var(--header-h)+16px)] z-20 hidden max-h-[calc(100vh-var(--header-h)-32px)] flex-col items-center gap-3 overflow-y-auto 2xl:flex ${
+      // COMANDO real ("quiero que este mas pegada a el panel de arriba, que
+      // no haya espacio entre la imagen y el panel"): antes había 16px de
+      // aire entre el navbar y el primer banner/widget -- ahora arranca
+      // pegado justo debajo del navbar (top-[var(--header-h)], sin sumarle
+      // nada), en los dos lados por igual para no romper el nivelado.
+      className={`no-print fixed top-[var(--header-h)] z-20 hidden max-h-[calc(100vh-var(--header-h)-16px)] flex-col items-center gap-3 overflow-y-auto 2xl:flex ${
         side === "left" ? "left-4" : "right-4"
       }`}
     >
