@@ -83,13 +83,10 @@ function Rail({
   side,
   banners,
   tiktok,
-  reserveTikTokSpace,
 }: {
   side: "left" | "right";
   banners: PromoBanner[];
   tiktok: TikTokWidgetData | null;
-  /** Solo en el lado derecho, cuando el widget de TikTok existe pero se muestra únicamente a la izquierda: reserva el mismo alto que ocuparía acá (invisible, mismo contenido real -- así el alto es siempre exacto, sin un número mágico que se desactualice si el widget cambia de tamaño), para que el primer banner de la derecha arranque a la misma altura que el de la izquierda. COMANDO real ("quiero que este al mismo nivel de los otros banner de la izquierda"). */
-  reserveTikTokSpace?: boolean;
 }) {
   return (
     <aside
@@ -97,12 +94,7 @@ function Rail({
         side === "left" ? "left-4" : "right-4"
       }`}
     >
-      {tiktok && !reserveTikTokSpace ? <TikTokWidget tiktok={tiktok} /> : null}
-      {tiktok && reserveTikTokSpace ? (
-        <div className="invisible" aria-hidden="true">
-          <TikTokWidget tiktok={tiktok} />
-        </div>
-      ) : null}
+      {tiktok ? <TikTokWidget tiktok={tiktok} /> : null}
 
       {/* COMANDO real ("pondré más banner"): antes solo se mostraba el primero de cada lado (banners.slice(0, 1)) -- ahora se muestran todos los activos, apilados, uno por fila. */}
       {banners.map((b) => (
@@ -141,8 +133,8 @@ export function SideBannersClient({
   return (
     <>
       <Rail side="left" banners={left} tiktok={tiktok} />
-      {/* Solo la izquierda MUESTRA el widget de TikTok -- mostrarlo en los dos era repetir la misma info dos veces. La derecha igual recibe los mismos datos para reservar el mismo espacio en blanco (invisible) y que sus banners arranquen a la misma altura que los de la izquierda. */}
-      <Rail side="right" banners={right} tiktok={tiktok} reserveTikTokSpace />
+      {/* Solo un lado muestra el widget de TikTok -- mostrarlo en los dos era repetir la misma info dos veces. La derecha arranca sin nada arriba, a la misma altura que el widget de TikTok de la izquierda (COMANDO real: "el objetivo es que quede al nivel del tiktok", no al nivel del banner de abajo). */}
+      <Rail side="right" banners={right} tiktok={null} />
     </>
   );
 }
