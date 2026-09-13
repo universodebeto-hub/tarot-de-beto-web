@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { upload } from "@vercel/blob/client";
 import Image from "next/image";
 import {
   createPromoBannerAction,
@@ -25,15 +24,34 @@ export interface PromoBannerItem {
 
 const ACCEPT = "image/jpeg,image/png,image/webp,video/mp4,video/webm";
 
-/** Sube directo del navegador a Vercel Blob (no pasa por nuestro servidor) -- necesario para que un video de varios MB no choque con el límite de tamaño de body de las funciones serverless. Ver app/api/uploads/promo-banner/route.ts. */
+/**
+ * Sube el archivo a través de nuestro propio servidor (ver
+ * app/api/uploads/promo-banner/route.ts) -- antes iba directo del
+ * navegador a Vercel Blob (`upload()` de @vercel/blob/client) para
+ * esquivar el límite de tamaño de body de las funciones serverless (un
+ * video pesa más que una imagen), pero ese store rechaza la subida
+ * directa con "Access denied" (restricción de red del plan actual) y el
+ * botón quedaba trabado en "Subiendo…" para siempre, sin avisar nada.
+ * COMANDO real ("trato de subirlo y se queda colgado dice subiendo").
+ * Con esta vía, un archivo que supere el tope real (~4 MB) recibe un
+ * mensaje de error claro en vez de colgarse en silencio.
+ */
 async function uploadBannerFile(file: File): Promise<{ url?: string; mediaType?: PromoBannerMediaType; error?: string }> {
   const mediaType: PromoBannerMediaType = file.type.startsWith("video/") ? "VIDEO" : "IMAGE";
   try {
-    const blob = await upload(`promo-banners/${Date.now()}-${file.name}`, file, {
-      access: "public",
-      handleUploadUrl: "/api/uploads/promo-banner",
-    });
-    return { url: blob.url, mediaType };
+    const form = new FormData();
+    form.set("file", file);
+    const res = await fetch("/api/uploads/promo-banner", { method: "POST", body: form });
+    let data: { url?: string; error?: string } = {};
+    try {
+      data = await res.json();
+    } catch {
+      return { error: res.status === 413 ? "El archivo pesa demasiado (máximo ~4 MB)." : "No se pudo subir el archivo." };
+    }
+    if (!res.ok || !data.url) {
+      return { error: data.error ?? "No se pudo subir el archivo." };
+    }
+    return { url: data.url, mediaType };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "No se pudo subir el archivo." };
   }
@@ -101,7 +119,7 @@ function AddBannerForm() {
         />
       </label>
       <label className="flex flex-col gap-1 text-sm">
-        Imagen o video del banner (video: corto, mudo, en loop -- hasta 30 MB)
+        Imagen o video del banner (video: corto, mudo, en loop -- hasta ~4 MB)
         <input
           type="file"
           accept={ACCEPT}
