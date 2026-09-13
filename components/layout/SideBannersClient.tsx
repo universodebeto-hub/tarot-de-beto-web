@@ -104,11 +104,11 @@ function Rail({
           rel={b.linkUrl.startsWith("/") ? undefined : "noopener noreferrer"}
           className="glass block h-[600px] w-[160px] overflow-hidden rounded-xl transition-opacity hover:opacity-90"
         >
-          {/* object-top (no el centro por defecto de object-cover): si la imagen que sube Beto no viene exactamente en 160x600, el recorte automático se lleva parejo de arriba y de abajo -- y el título/logo casi siempre está arriba del diseño, así que centrar el recorte se lo comía. Ancla el recorte arriba para no perder nunca esa parte. */}
+          {/* object-contain, no object-cover: un banner tipo "afiche" (más ancho en proporción que este recuadro angosto y alto) se recortaba de los COSTADOS con object-cover -- object-top solo ajusta el recorte vertical, no ayuda cuando lo que sobra es ancho. object-contain nunca corta nada (deja ver la imagen completa, con el fondo "glass" de sobra arriba/abajo si la proporción no calza exacto) -- para que ningún diseño futuro pierda texto sin importar su forma. */}
           {b.mediaType === "VIDEO" ? (
-            <video src={b.imageUrl} className="h-full w-full object-cover object-top" muted autoPlay loop playsInline />
+            <video src={b.imageUrl} className="h-full w-full object-contain" muted autoPlay loop playsInline />
           ) : (
-            <Image src={b.imageUrl} alt="" width={160} height={600} className="h-full w-full object-cover object-top" />
+            <Image src={b.imageUrl} alt="" width={160} height={600} className="h-full w-full object-contain" />
           )}
         </a>
       ))}

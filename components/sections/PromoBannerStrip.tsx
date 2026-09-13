@@ -18,11 +18,11 @@ export async function PromoBannerStrip() {
               rel={b.linkUrl.startsWith("/") ? undefined : "noopener noreferrer"}
               className="glass block h-[525px] w-[140px] shrink-0 overflow-hidden rounded-xl"
             >
-              {/* object-top -- mismo criterio que components/layout/SideBannersClient.tsx: si la imagen no viene exacta en 140x525, ancla el recorte arriba para no comerse el título/logo del diseño. */}
+              {/* object-contain -- mismo criterio que components/layout/SideBannersClient.tsx: si la proporción de la imagen no calza con este recuadro angosto y alto, object-cover le recorta los costados o arriba/abajo; object-contain nunca corta nada. */}
               {b.mediaType === "VIDEO" ? (
-                <video src={b.imageUrl} className="h-full w-full object-cover object-top" muted autoPlay loop playsInline />
+                <video src={b.imageUrl} className="h-full w-full object-contain" muted autoPlay loop playsInline />
               ) : (
-                <Image src={b.imageUrl} alt="" width={140} height={525} className="h-full w-full object-cover object-top" />
+                <Image src={b.imageUrl} alt="" width={140} height={525} className="h-full w-full object-contain" />
               )}
             </a>
           ))}
