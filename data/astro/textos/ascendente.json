@@ -1,0 +1,90 @@
+{
+  "estado": "borrador",
+  "nota": "Borrador para que Beto lo revise y ajuste a su voz (Fase 2). El Ascendente describe la primera impresión y la manera de afrontar el mundo. Reglas: español neutro, tú, cálido, retos como oportunidades de crecimiento, sin predicciones de salud, muerte, embarazos ni dinero.",
+  "entradas": {
+    "aries": {
+      "titulo": "Ascendente en Aries",
+      "esencia": "La primera impresión que das es la de alguien seguro, enérgico y directo. Con el Ascendente en Aries afrontas el mundo de frente: tomas la iniciativa, te mueves rápido y no te escondes. Los demás suelen verte como una persona valiente, competitiva y con presencia, incluso cuando por dentro dudas. Tu forma de relacionarte con lo nuevo es lanzarte primero y ajustar después. Tu aprendizaje es suavizar el ritmo cuando hace falta: escuchar antes de actuar muestra que tu fuerza también sabe acompañar.",
+      "luz": ["determinación", "presencia", "iniciativa"],
+      "sombra": ["brusquedad", "prisa"],
+      "consejo": "Cuando conozcas a alguien, regálate una pausa para escuchar; tu energía natural impresiona y tu atención conquista."
+    },
+    "tauro": {
+      "titulo": "Ascendente en Tauro",
+      "esencia": "La primera impresión que das es de calma, solidez y confiabilidad. Con el Ascendente en Tauro te acercas a la vida despacio y con los pies en la tierra: observas, tomas tiempo y avanzas cuando te sientes seguro o segura. Los demás te perciben como alguien tranquilo, paciente y sensual, con buen gusto y presencia serena. Tu forma de afrontar lo nuevo es cuidadosa y práctica. Tu reto es no confundir prudencia con resistencia: probar cosas distintas de vez en cuando enriquece tu estabilidad.",
+      "luz": ["serenidad", "fiabilidad", "buen gusto"],
+      "sombra": ["lentitud para cambiar", "terquedad"],
+      "consejo": "Date permiso de decir sí a un plan nuevo de vez en cuando; tu calma natural te sostiene también fuera de lo conocido."
+    },
+    "geminis": {
+      "titulo": "Ascendente en Géminis",
+      "esencia": "La primera impresión que das es la de alguien curioso, conversador y ágil. Con el Ascendente en Géminis te presentas con ingenio, sonrisa y preguntas; conectas rápido con personas distintas y te adaptas con facilidad. Los demás te ven como alguien joven de espíritu, comunicativo e inquieto. Tu forma de afrontar el mundo es explorar muchas opciones antes de quedarte con una. Tu reto es mostrar también la parte más profunda y constante de ti: cuando permites que te conozcan más allá de la ligereza, tus vínculos ganan raíces.",
+      "luz": ["ingenio", "sociabilidad", "adaptabilidad"],
+      "sombra": ["superficialidad aparente", "inquietud"],
+      "consejo": "Cuéntale a alguien algo que de verdad te importa; mostrar profundidad no te quita ligereza, la completa."
+    },
+    "cancer": {
+      "titulo": "Ascendente en Cáncer",
+      "esencia": "La primera impresión que das es de ternura, cercanía y sensibilidad. Con el Ascendente en Cáncer te acercas a la vida con cautela emocional: lees el ambiente, cuidas a quienes te rodean y te abres cuando sientes confianza. Los demás te ven como alguien acogedor, protector y empático. Tu forma de afrontar lo desconocido es buscar un lugar seguro desde donde mirar. Tu reto es no esconderte detrás de tu caparazón: cuando muestras tu calidez desde el inicio, atraes vínculos que te respetan y te cuidan.",
+      "luz": ["calidez", "empatía", "instinto protector"],
+      "sombra": ["timidez inicial", "susceptibilidad"],
+      "consejo": "Da el primer paso en confianza aunque te dé nervios; tu sensibilidad es lo que más conecta con las personas."
+    },
+    "leo": {
+      "titulo": "Ascendente en Leo",
+      "esencia": "La primera impresión que das es de calidez, magnetismo y confianza. Con el Ascendente en Leo entras a un lugar con presencia: tienes un modo expresivo, generoso y a veces teatral de mostrarte, y los demás tienden a notarte. Te ven como alguien carismático, orgulloso en el buen sentido y con ganas de brillar. Tu forma de afrontar la vida es con el corazón por delante. Tu reto es no depender del reconocimiento para sentirte valioso o valiosa: tu luz también está presente cuando nadie aplaude.",
+      "luz": ["carisma", "generosidad", "seguridad"],
+      "sombra": ["necesidad de ser visto", "orgullo"],
+      "consejo": "Comparte el protagonismo con quienes te rodean; brillar acompañando a otros multiplica tu luz."
+    },
+    "virgo": {
+      "titulo": "Ascendente en Virgo",
+      "esencia": "La primera impresión que das es de discreción, inteligencia y cuidado en los detalles. Con el Ascendente en Virgo te muestras reservado o reservada, observador u observadora, atento o atenta y dispuesto o dispuesta a ayudar. Los demás te ven como alguien sensato, trabajador y confiable, con un estilo sencillo y ordenado. Tu forma de afrontar el mundo es analizar antes de actuar. Tu reto es no ser tan crítico o crítica contigo al presentarte: mostrarte con naturalidad, sin buscar la perfección, hace que los demás se sientan más cerca.",
+      "luz": ["sensatez", "atención al detalle", "amabilidad práctica"],
+      "sombra": ["autocrítica", "reserva excesiva"],
+      "consejo": "Preséntate sin repasar mentalmente cada detalle; tu naturalidad inspira más confianza que la perfección."
+    },
+    "libra": {
+      "titulo": "Ascendente en Libra",
+      "esencia": "La primera impresión que das es de amabilidad, elegancia y equilibrio. Con el Ascendente en Libra te acercas a los demás con tacto y cortesía, y se nota tu interés por que todos se sientan cómodos. Te ven como alguien encantador, diplomático y con buen sentido estético. Tu forma de afrontar la vida es a través de la relación: te sientes más tú en compañía. Tu reto es no perder tu propia voz por agradar: cuando expresas lo que piensas con la misma gentileza, tu encanto gana autenticidad.",
+      "luz": ["encanto", "diplomacia", "elegancia"],
+      "sombra": ["complacencia", "indecisión"],
+      "consejo": "Expresa tu opinión aunque difiera de la del grupo; puedes ser amable y claro a la vez."
+    },
+    "escorpio": {
+      "titulo": "Ascendente en Escorpio",
+      "esencia": "La primera impresión que das es de magnetismo, intensidad y misterio. Con el Ascendente en Escorpio tu mirada y tu presencia transmiten profundidad; observas mucho, hablas medido y no sueles mostrar todo de entrada. Los demás te ven como alguien fuerte, reservado y perceptivo. Tu forma de afrontar el mundo es cautelosa y atenta a las intenciones ocultas. Tu reto es que tu reserva no se perciba como frialdad: cuando dejas ver tu lado cálido poco a poco, tus vínculos se vuelven leales y profundos.",
+      "luz": ["magnetismo", "perspicacia", "fortaleza"],
+      "sombra": ["reserva extrema", "desconfianza inicial"],
+      "consejo": "Regala una sonrisa o un comentario cálido al conocer a alguien; mostrar un poco de ti abre puertas sin quitarte tu misterio."
+    },
+    "sagitario": {
+      "titulo": "Ascendente en Sagitario",
+      "esencia": "La primera impresión que das es de optimismo, apertura y buen humor. Con el Ascendente en Sagitario te presentas con una sonrisa franca, ganas de conversar y entusiasmo por lo que viene. Los demás te ven como alguien aventurero, sincero y fácil de tratar. Tu forma de afrontar la vida es confiar y explorar: prefieres ver el lado luminoso de las cosas. Tu reto es medir el impacto de tu franqueza y mantener tus compromisos aunque aparezca algo más emocionante: así tu optimismo inspira confianza.",
+      "luz": ["optimismo", "apertura", "sinceridad"],
+      "sombra": ["franqueza excesiva", "inconstancia"],
+      "consejo": "Antes de comentar lo que piensas, pregúntate si ayuda; tu honestidad llega más lejos cuando también cuida."
+    },
+    "capricornio": {
+      "titulo": "Ascendente en Capricornio",
+      "esencia": "La primera impresión que das es de seriedad, madurez y confiabilidad. Con el Ascendente en Capricornio te muestras reservado o reservada, responsable y con aire de saber lo que haces; da la impresión de que puedes con todo. Los demás te ven como alguien serio, capaz y trabajador, a veces mayor de lo que eres. Tu forma de afrontar el mundo es con planificación y prudencia. Tu reto es dejar ver tu calidez y tu sentido del humor: cuando te muestras cercano o cercana, tu solidez se vuelve aún más atractiva.",
+      "luz": ["madurez", "responsabilidad", "autocontrol"],
+      "sombra": ["frialdad aparente", "exceso de seriedad"],
+      "consejo": "Deja que otros vean tu lado divertido y vulnerable; la cercanía fortalece la autoridad que ya transmites."
+    },
+    "acuario": {
+      "titulo": "Ascendente en Acuario",
+      "esencia": "La primera impresión que das es de originalidad, independencia y mente abierta. Con el Ascendente en Acuario te presentas con un estilo propio, amistoso pero algo distante, curioso por las ideas y poco preocupado por encajar. Los demás te ven como alguien diferente, interesante e inteligente. Tu forma de afrontar el mundo es observar desde cierta distancia y moverte por tus propios criterios. Tu reto es que tu independencia no se lea como indiferencia: mostrar tu interés genuino acerca a las personas sin quitarte libertad.",
+      "luz": ["originalidad", "mente abierta", "autenticidad"],
+      "sombra": ["distancia", "rebeldía por costumbre"],
+      "consejo": "Demuestra con un gesto concreto que te importan las personas; tu singularidad se disfruta más cuando se siente cercana."
+    },
+    "piscis": {
+      "titulo": "Ascendente en Piscis",
+      "esencia": "La primera impresión que das es de dulzura, sensibilidad y un aire soñador. Con el Ascendente en Piscis te adaptas al ambiente casi sin darte cuenta, y los demás perciben tu empatía y tu mirada profunda. Te ven como alguien amable, intuitivo o intuitiva y con un toque de misterio o de magia. Tu forma de afrontar la vida es sentir primero y razonar después. Tu reto es poner límites claros para no diluirte en lo que otros esperan: mostrar quién eres, con tus necesidades, hace que te quieran como eres.",
+      "luz": ["dulzura", "empatía", "intuición"],
+      "sombra": ["adaptación excesiva", "falta de límites"],
+      "consejo": "Al relacionarte, decide qué necesitas tú antes de adaptarte a los demás; tu sensibilidad gana fuerza con límites amables."
+    }
+  }
+}

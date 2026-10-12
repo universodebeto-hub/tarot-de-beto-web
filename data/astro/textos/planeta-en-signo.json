@@ -1,0 +1,174 @@
+{
+  "estado": "borrador",
+  "nota": "Borrador para que Beto lo revise y ajuste a su voz (Fase 2). Cubre solo Sol y Luna; el resto de planetas los redacta la IA a partir de los datos de la carta. Reglas: español neutro, tú, cálido, retos como oportunidades de crecimiento, sin predicciones de salud, muerte, embarazos ni dinero.",
+  "entradas": {
+    "sol-aries": {
+      "titulo": "Sol en Aries",
+      "esencia": "Tu esencia es la de quien abre camino. Con el Sol en Aries llegas a la vida con ganas de empezar, de decidir y de moverte antes de que otros terminen de pensarlo. Tu energía es directa, valiente y honesta: dices lo que sientes y prefieres actuar a quedarte esperando. Necesitas retos que te hagan sentir vivo y sentir que tu vida avanza por decisión propia. Tu aprendizaje consiste en darle a tu fuerza un ritmo sostenible: la chispa inicial es un regalo, y la constancia le da dirección.",
+      "luz": ["iniciativa", "valentía", "franqueza"],
+      "sombra": ["impaciencia", "impulsividad"],
+      "consejo": "Antes de lanzarte, respira y pregúntate qué quieres de verdad; tu impulso llega más lejos cuando tiene rumbo."
+    },
+    "sol-tauro": {
+      "titulo": "Sol en Tauro",
+      "esencia": "Tu esencia busca construir algo sólido y disfrutarlo. Con el Sol en Tauro valoras la calma, la coherencia y todo lo que se pueda sentir real: una buena comida, un lugar donde te sientas en paz, una relación en la que confiar. Avanzas con paso firme y, cuando decides algo, te cuesta soltarlo. Esa constancia es tu gran fortaleza, y también tu reto: aprender a distinguir cuándo mantenerte firme es sabiduría y cuándo es resistencia al cambio. Tu seguridad crece cuando confías en tu propio ritmo.",
+      "luz": ["constancia", "lealtad", "sentido práctico"],
+      "sombra": ["terquedad", "apego a lo conocido"],
+      "consejo": "Permítete probar algo nuevo cada cierto tiempo; descubrir que el cambio también puede darte seguridad amplía tu zona de confort."
+    },
+    "sol-geminis": {
+      "titulo": "Sol en Géminis",
+      "esencia": "Tu esencia es curiosa, ágil y comunicativa. Con el Sol en Géminis necesitas aprender, conversar y mirar la vida desde varios ángulos; te aburres con lo repetitivo y te iluminas con las ideas nuevas. Tienes facilidad para conectar con personas muy distintas y para explicar lo complejo de forma sencilla. Tu reto está en no dispersarte: tu mente salta de un interés a otro y a veces cuesta profundizar. Cuando eliges en qué enfocar tu curiosidad, tu versatilidad se convierte en un talento poderoso.",
+      "luz": ["curiosidad", "ingenio", "adaptabilidad"],
+      "sombra": ["dispersión", "inquietud mental"],
+      "consejo": "Escribir o conversar sobre lo que piensas te ayuda a ordenar ideas; elige una o dos prioridades y dales tiempo de verdad."
+    },
+    "sol-cancer": {
+      "titulo": "Sol en Cáncer",
+      "esencia": "Tu esencia es sensible, protectora y profundamente afectiva. Con el Sol en Cáncer entiendes la vida desde el cuidado: de tu familia, de tus vínculos, de ese espacio al que llamas hogar. Percibes lo que otros sienten, recuerdas lo que importa y das calidez a quienes te rodean. Tu reto es aprender a cuidarte a ti con la misma ternura, y a no guardar demasiado dentro cuando algo te duele. Cuando te permites mostrar tu vulnerabilidad, tus relaciones se vuelven más honestas y más fuertes.",
+      "luz": ["empatía", "ternura", "intuición"],
+      "sombra": ["susceptibilidad", "tendencia a retraerte"],
+      "consejo": "Ponle palabras a lo que sientes antes de que se acumule; pedir apoyo no te resta fuerza, te acerca a las personas que te quieren."
+    },
+    "sol-leo": {
+      "titulo": "Sol en Leo",
+      "esencia": "Tu esencia brilla cuando te expresas con autenticidad. Con el Sol en Leo traes calidez, creatividad y un corazón generoso que inspira a los demás; necesitas sentir que tu vida tiene un propósito del que puedes sentirte orgulloso o orgullosa. Disfrutas dar y recibir reconocimiento, y tu presencia suele llenar de ánimo los espacios. Tu reto es no depender solo de la mirada externa para valorarte: tu luz no se apaga cuando otros no aplauden. Cuando brillas desde la confianza interior, iluminas sin esfuerzo.",
+      "luz": ["generosidad", "creatividad", "confianza"],
+      "sombra": ["orgullo herido", "necesidad de aprobación"],
+      "consejo": "Haz algo creativo solo por el gusto de hacerlo, sin público; así recuerdas que tu valor no depende del aplauso."
+    },
+    "sol-virgo": {
+      "titulo": "Sol en Virgo",
+      "esencia": "Tu esencia es la de quien quiere hacer las cosas bien y ser útil. Con el Sol en Virgo tienes ojo para el detalle, capacidad de análisis y una vocación natural de servicio: notas lo que se puede mejorar y te gusta aportar soluciones concretas. Eres discreto o discreta y trabajas con dedicación, sin buscar protagonismo. Tu reto es la autoexigencia: a veces te juzgas con más dureza que a nadie. Aprender a valorar lo que ya haces bien, y a aceptar que lo suficientemente bueno también es valioso, te devuelve ligereza.",
+      "luz": ["dedicación", "análisis", "espíritu de servicio"],
+      "sombra": ["autocrítica", "perfeccionismo"],
+      "consejo": "Cierra el día reconociendo tres cosas que hiciste bien; tratarte con la amabilidad que das a los demás te hace más eficaz, no menos."
+    },
+    "sol-libra": {
+      "titulo": "Sol en Libra",
+      "esencia": "Tu esencia busca equilibrio, belleza y buenas relaciones. Con el Sol en Libra tienes sensibilidad para la armonía, un fuerte sentido de la justicia y la habilidad de ver todas las partes de una situación. Te sientes más tú cuando compartes: en pareja, en amistad, en colaboración. Tu reto es la indecisión y la tendencia a evitar el conflicto para mantener la paz, aun a costa de tus propias necesidades. Cuando aprendes a decir lo que quieres con amabilidad pero con claridad, tus vínculos ganan autenticidad.",
+      "luz": ["diplomacia", "sentido estético", "cooperación"],
+      "sombra": ["indecisión", "evitar el conflicto"],
+      "consejo": "Antes de consultar a todos, anota qué quieres tú; elegir desde tu propio criterio no rompe la armonía, la hace honesta."
+    },
+    "sol-escorpio": {
+      "titulo": "Sol en Escorpio",
+      "esencia": "Tu esencia es intensa, profunda y transformadora. Con el Sol en Escorpio no te conformas con la superficie: buscas la verdad detrás de las cosas y vives las emociones y los vínculos con entrega total. Tienes gran fuerza interior y una capacidad notable de reinventarte después de los momentos difíciles. Tu reto es la desconfianza y el deseo de controlar, que nacen del miedo a ser herido o herida. Cuando te permites confiar poco a poco y soltar lo que ya cumplió su ciclo, tu intensidad se vuelve una fuente de sanación.",
+      "luz": ["profundidad", "resiliencia", "lealtad"],
+      "sombra": ["desconfianza", "necesidad de control"],
+      "consejo": "Comparte una verdad pequeña con alguien de confianza; abrirte en pasos cortos te enseña que la entrega no te hace vulnerable al daño."
+    },
+    "sol-sagitario": {
+      "titulo": "Sol en Sagitario",
+      "esencia": "Tu esencia es optimista, libre y curiosa por el sentido de la vida. Con el Sol en Sagitario te mueves hacia horizontes nuevos: viajar, estudiar, creer en algo más grande que lo cotidiano. Tu entusiasmo contagia y tu honestidad es refrescante, aunque a veces sea demasiado directa. Necesitas espacio y sentir que creces. Tu reto es sostener los compromisos cuando el entusiasmo inicial baja, y medir el impacto de tus palabras. Cuando unes tu visión amplia con constancia, conviertes tus ideales en logros reales.",
+      "luz": ["optimismo", "amplitud de miras", "honestidad"],
+      "sombra": ["exceso de franqueza", "dificultad para comprometerte"],
+      "consejo": "Elige una meta que te inspire y dale seguimiento semanal; tu libertad crece cuando tus sueños tienen camino concreto."
+    },
+    "sol-capricornio": {
+      "titulo": "Sol en Capricornio",
+      "esencia": "Tu esencia es responsable, perseverante y ambiciosa en el mejor sentido. Con el Sol en Capricornio entiendes la vida como una escalada: paso a paso, con disciplina, construyes aquello que perdura. Te tomas en serio tus compromisos y los demás saben que pueden contar contigo. Tu reto es la severidad contigo mismo o misma y la dificultad para descansar o pedir ayuda. Cuando te permites disfrutar el camino y no solo la cima, tu fortaleza se vuelve más amable y tus logros más plenos.",
+      "luz": ["disciplina", "responsabilidad", "visión a largo plazo"],
+      "sombra": ["rigidez", "exceso de autoexigencia"],
+      "consejo": "Agenda tiempo de descanso con la misma seriedad que tus metas; recuperar energía también es parte de construir algo duradero."
+    },
+    "sol-acuario": {
+      "titulo": "Sol en Acuario",
+      "esencia": "Tu esencia es original, independiente y orientada al futuro. Con el Sol en Acuario piensas con libertad, te interesan las ideas que mejoran la vida de muchos y te sientes cómodo o cómoda siendo diferente. Valoras la amistad, la honestidad y el respeto por el espacio propio. Tu reto es que, a veces, tu necesidad de independencia o tu mirada racional te hacen parecer distante, aun cuando sí te importa. Cuando compartes también lo que sientes, no solo lo que piensas, tus vínculos se vuelven más cercanos.",
+      "luz": ["originalidad", "independencia", "ideales humanitarios"],
+      "sombra": ["distancia emocional", "terquedad en tus ideas"],
+      "consejo": "Dile a alguien cercano cómo te sientes, aunque te resulte inusual; la cercanía emocional complementa tu libertad."
+    },
+    "sol-piscis": {
+      "titulo": "Sol en Piscis",
+      "esencia": "Tu esencia es compasiva, imaginativa y espiritual. Con el Sol en Piscis sientes el mundo con una sensibilidad muy amplia: captas lo que no se dice, te conmueves con facilidad y tienes una vida interior rica. Tu intuición y tu creatividad son regalos que dan profundidad a todo lo que haces. Tu reto es poner límites: absorbes las emociones ajenas y, a veces, te evades para no sentirlas. Cuando creas rutinas que te sostengan y espacios de silencio, tu sensibilidad se transforma en sabiduría y apoyo para los demás.",
+      "luz": ["compasión", "imaginación", "intuición"],
+      "sombra": ["evasión", "límites difusos"],
+      "consejo": "Dedica un momento diario a estar a solas y en calma; conocer qué emociones son tuyas te ayuda a cuidar de los demás sin agotarte."
+    },
+    "luna-aries": {
+      "titulo": "Luna en Aries",
+      "esencia": "Tu mundo emocional es vivo, directo y rápido. Con la Luna en Aries sientes con intensidad y reaccionas al instante: te enciendes, lo expresas y, con la misma rapidez, sueles pasar página. Te sientes seguro o segura cuando puedes actuar, moverte y decidir por ti mismo o misma; quedarte quieto con una emoción incómoda se te hace difícil. Tu aprendizaje es darte un segundo antes de responder desde el impulso, para que tu sinceridad llegue como puente y no como choque. Tu necesidad de independencia emocional es válida y merece espacio.",
+      "luz": ["espontaneidad", "valentía emocional", "energía"],
+      "sombra": ["reacciones impulsivas", "poca paciencia"],
+      "consejo": "Cuando algo te altere, camina o haz ejercicio antes de hablar; descargar la energía primero te permite expresarte con claridad."
+    },
+    "luna-tauro": {
+      "titulo": "Luna en Tauro",
+      "esencia": "Tu mundo emocional busca calma, estabilidad y comodidad. Con la Luna en Tauro te sientes en paz cuando tu entorno es predecible, cuando disfrutas de lo sencillo —buena comida, contacto físico, un lugar tranquilo— y cuando sabes que los vínculos son de confianza. Procesas las emociones despacio y, una vez que te entregas, eres muy leal. Tu reto es que los cambios inesperados te desestabilizan y puedes aferrarte a lo conocido. Reconocer que tu seguridad vive dentro de ti te ayuda a recibir lo nuevo con más serenidad.",
+      "luz": ["serenidad", "fidelidad", "capacidad de disfrutar"],
+      "sombra": ["resistencia al cambio", "apego material o afectivo"],
+      "consejo": "Crea pequeños rituales de calma —un café, una caminata, tu música—; tener anclas estables te da libertad para afrontar cambios."
+    },
+    "luna-geminis": {
+      "titulo": "Luna en Géminis",
+      "esencia": "Tu mundo emocional pasa por la palabra y la mente. Con la Luna en Géminis necesitas hablar, escribir o entender lo que sientes para sentirte tranquilo o tranquila; las emociones se procesan mejor cuando las nombras. Te estimulan la variedad, las conversaciones y la información nueva, y tu ánimo puede cambiar con rapidez. Tu reto es que a veces analizas tanto lo que sientes que cuesta sentirlo de verdad. Darte permiso para vivir la emoción sin explicarla siempre te acerca a una conexión más profunda contigo y con los demás.",
+      "luz": ["expresividad", "ligereza", "adaptabilidad emocional"],
+      "sombra": ["racionalizar las emociones", "nerviosismo"],
+      "consejo": "Escribe lo que sientes en un cuaderno; ordenar tus emociones en palabras te calma, y después permítete simplemente sentirlas."
+    },
+    "luna-cancer": {
+      "titulo": "Luna en Cáncer",
+      "esencia": "Tu mundo emocional es profundo, protector y muy receptivo. La Luna está en casa en Cáncer: sientes con gran intensidad, recuerdas con ternura y necesitas un espacio —físico y afectivo— donde sentirte a salvo. Cuidas a quienes quieres casi por instinto y absorbes el ambiente emocional que te rodea. Tu reto es que las heridas del pasado pueden tardar en sanar, y que a veces te cierras para protegerte. Aprender a pedir cuidado y a poner límites amables te permite dar desde la abundancia y no desde el agotamiento.",
+      "luz": ["cuidado", "memoria afectiva", "sensibilidad"],
+      "sombra": ["retraimiento", "sobreprotección"],
+      "consejo": "Crea en tu casa un rincón solo para ti; cuidar tu espacio emocional es la base para cuidar bien de los demás."
+    },
+    "luna-leo": {
+      "titulo": "Luna en Leo",
+      "esencia": "Tu mundo emocional es cálido, expresivo y generoso. Con la Luna en Leo necesitas sentirte querido o querida, valorado o valorada y reconocido o reconocida por quien eres; cuando recibes cariño floreces. Das afecto con el corazón abierto y disfrutas celebrar, crear y compartir alegría. Tu reto es que, si sientes que no te ven, puedes sentirte herido o herida en tu orgullo y esconderlo tras una actitud fuerte. Pedir de forma clara el afecto que necesitas, y recordar que tu valor no depende de la aprobación ajena, te fortalece.",
+      "luz": ["calidez", "generosidad afectiva", "alegría"],
+      "sombra": ["orgullo emocional", "necesidad de atención"],
+      "consejo": "Di con sencillez cuándo necesitas cariño o reconocimiento; pedirlo no te quita dignidad, abre la puerta a recibirlo."
+    },
+    "luna-virgo": {
+      "titulo": "Luna en Virgo",
+      "esencia": "Tu mundo emocional se calma cuando puedes ordenar, ayudar y sentirte útil. Con la Luna en Virgo muestras el cariño con gestos concretos —un favor, un detalle, una solución— más que con grandes palabras. Eres observador u observadora y sensible a los pequeños cambios de ánimo en los demás. Tu reto es la preocupación constante y la autocrítica emocional: puedes sentir que nunca haces lo suficiente. Tratarte con comprensión, descansar sin culpa y aceptar que los sentimientos no necesitan estar perfectos te devuelve tranquilidad.",
+      "luz": ["detallismo afectuoso", "discreción", "disposición para ayudar"],
+      "sombra": ["preocupación excesiva", "autoexigencia emocional"],
+      "consejo": "Haz una pausa sin tareas cada día y respira; tu bienestar emocional no necesita ganarse con productividad."
+    },
+    "luna-libra": {
+      "titulo": "Luna en Libra",
+      "esencia": "Tu mundo emocional busca armonía y compañía. Con la Luna en Libra te sientes bien cuando hay paz a tu alrededor, cuando compartes tiempo con alguien de confianza y cuando los vínculos son equilibrados y amables. Tienes tacto, escuchas con atención y te cuesta tolerar el conflicto abierto. Tu reto es que, por mantener la calma, puedes callar lo que sientes o depender del ánimo de los demás para estar bien. Aprender a sostener tu propio equilibrio, aun cuando haya desacuerdos, te permite relacionarte desde la verdad y no solo desde la cortesía.",
+      "luz": ["tacto", "capacidad de escucha", "búsqueda de equilibrio"],
+      "sombra": ["evitar discusiones necesarias", "dependencia afectiva"],
+      "consejo": "Practica decir un 'no' o un 'esto me incomoda' con amabilidad; cuidar la relación incluye cuidar tu verdad."
+    },
+    "luna-escorpio": {
+      "titulo": "Luna en Escorpio",
+      "esencia": "Tu mundo emocional es intenso, profundo y reservado. Con la Luna en Escorpio sientes todo con una fuerza enorme, pero muestras poco: necesitas confiar mucho antes de abrirte, y cuando lo haces, tu entrega es total y leal. Percibes lo que hay debajo de las palabras y no te conformas con relaciones superficiales. Tu reto es soltar el control y la desconfianza, que nacen del temor a ser herido o herida, y dejar ir lo que ya no suma. Cuando permites que otros vean tu mundo interior, tus emociones se convierten en poder de transformación.",
+      "luz": ["profundidad emocional", "lealtad", "capacidad de regenerarte"],
+      "sombra": ["secretismo", "rencor guardado"],
+      "consejo": "Elige a una persona segura para compartir algo que normalmente callas; hablar libera la intensidad que cargas en silencio."
+    },
+    "luna-sagitario": {
+      "titulo": "Luna en Sagitario",
+      "esencia": "Tu mundo emocional necesita aire, aventura y esperanza. Con la Luna en Sagitario te recuperas mirando hacia adelante: un viaje, una idea inspiradora, una conversación con sentido te renuevan. Eres optimista por naturaleza y tu franqueza emocional es refrescante, aunque a veces eludes lo incómodo con humor o con movimiento. Tu reto es quedarte con una emoción difícil el tiempo suficiente para entenderla, y no sentirte atrapado o atrapada cuando alguien te pide cercanía constante. Cuando honras tu libertad y también tus compromisos, tus afectos ganan estabilidad.",
+      "luz": ["optimismo", "entusiasmo", "franqueza afectiva"],
+      "sombra": ["evitar emociones difíciles", "inquietud"],
+      "consejo": "Antes de huir de una emoción incómoda, dale unos minutos de atención; entenderla te libera más que evitarla."
+    },
+    "luna-capricornio": {
+      "titulo": "Luna en Capricornio",
+      "esencia": "Tu mundo emocional es contenido, serio y muy responsable. Con la Luna en Capricornio te sientes seguro o segura cuando hay orden, estructura y metas claras; tiendes a cuidar a los demás cumpliendo, resolviendo y sosteniendo. Muestras poco lo que sientes y puedes haber aprendido pronto a depender de ti mismo o misma. Tu reto es permitirte la ternura y la vulnerabilidad sin sentir que pierdes control o fuerza. Pedir apoyo y descansar emocionalmente no te resta solidez: te permite sostener lo importante sin cargarlo todo en soledad.",
+      "luz": ["madurez emocional", "constancia", "sentido del deber"],
+      "sombra": ["contención excesiva", "dificultad para pedir ayuda"],
+      "consejo": "Permítete mostrar una emoción cada día, aunque sea pequeña; la vulnerabilidad compartida fortalece tus vínculos."
+    },
+    "luna-acuario": {
+      "titulo": "Luna en Acuario",
+      "esencia": "Tu mundo emocional es independiente, curioso y algo distante en la superficie. Con la Luna en Acuario te sientes bien cuando tienes espacio propio, libertad de pensamiento y vínculos basados en la amistad y la honestidad. Procesas lo que sientes a través de la reflexión y puedes parecer desapegado o desapegada, aun cuando te importa mucho. Tu reto es compartir lo emocional sin convertirlo en teoría y sostener la cercanía cuando se vuelve intensa. Cuando comunicas qué necesitas, tu independencia deja de sentirse como lejanía y se vuelve una forma de respeto mutuo.",
+      "luz": ["independencia emocional", "objetividad", "espíritu amistoso"],
+      "sombra": ["distancia afectiva", "racionalizar lo que sientes"],
+      "consejo": "Explica a las personas cercanas cuándo necesitas espacio y cuándo necesitas cercanía; así tu libertad no se confunde con desinterés."
+    },
+    "luna-piscis": {
+      "titulo": "Luna en Piscis",
+      "esencia": "Tu mundo emocional es sensible, intuitivo y casi sin fronteras. Con la Luna en Piscis absorbes el ambiente: las emociones de los demás te atraviesan y a veces cuesta distinguir qué es tuyo y qué es ajeno. Tienes una gran compasión, una imaginación vívida y una conexión natural con lo espiritual y artístico. Tu reto es protegerte: necesitas momentos de soledad, descanso y límites claros para no agotarte ni evadirte. Cuando cuidas tu energía con rutinas sencillas, tu sensibilidad se vuelve un don para acompañar y sanar.",
+      "luz": ["compasión", "intuición", "creatividad"],
+      "sombra": ["absorber emociones ajenas", "tendencia a evadirte"],
+      "consejo": "Cuando te sientas saturado o saturada, aléjate unos minutos al silencio o a la naturaleza; recargarte es parte de cuidar a otros."
+    }
+  }
+}

@@ -54,3 +54,16 @@ Ejemplo de entrada:
 ## Costo
 Medir tokens por informe en la Fase 3 y fijar un tope. Usar caché de prompt
 para la guía de estilo y los textos fijos, que se repiten en cada llamada.
+
+## Cómo quedó implementado (Fase 3)
+- `server/astro/interpret.ts` — 8 secciones (`SECCIONES`), una llamada por sección. `construirPeticion()` es una
+  función pura que arma exactamente lo que ve la IA, así se puede revisar y probar.
+- Privacidad: a la IA solo le llegan posiciones calculadas (signo, grado, casa, retrogradación, aspectos). Nunca nombre,
+  fecha, hora, lugar, zona horaria ni coordenadas.
+- Textos base: por ahora solo Sol, Luna y Ascendente (`data/astro/textos/`, ver Fase 2). Para el resto la IA redacta
+  solo a partir de los datos; los archivos de la lista de arriba se irán agregando.
+- `server/astro/validate.ts` — la validación anti-invento es por patrones de frase ("Venus en Libra", "Marte en la
+  casa 4", "casa 7 en Piscis", "Mercurio retrógrado") y no entiende todo lo que se pueda escribir: atrapa errores
+  evidentes y los muestra como avisos en el panel, no los bloquea ni garantiza que no haya otros.
+- Modelo: `claude-opus-5-5` por defecto, esfuerzo medio. Se cambia con `ASTRO_MODEL` / `ASTRO_EFFORT`.
+  La API rechaza `temperature`, `top_p`, `top_k` y `budget_tokens` en este modelo, y el razonamiento no se puede desactivar: por eso el cliente no envía ninguno de esos parámetros.

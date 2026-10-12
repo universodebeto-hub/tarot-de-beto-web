@@ -41,18 +41,39 @@ se deja un "Resumen" de lo que incluye**, para saber qué se avanzó.
 - **Exactitud comprobada:** 111 pruebas automáticas pasan (83 nuevas). Los planetas coinciden con un motor independiente dentro de 0,02° y el Ascendente/Medio Cielo con la fórmula astronómica dentro de 0,01°. Se comprobó además que las pruebas fallan si se adelanta el reloj una hora.
 - **Todo con datos ficticios**, nunca de clientes.
 
-## Fase 2 · Base de textos (paralelo, la lleva Beto)
-- [ ] Generar borradores de `data/astro/textos/*.json` con IA
-- [ ] Beto revisa y ajusta la voz — **empezar solo por Sol, Luna y Ascendente**; la IA redacta el resto
-      con su voz y se va puliendo después
+## Fase 2 · Base de textos — borradores HECHOS (2026-10-12); falta la revisión de Beto
+- [x] Borradores de `data/astro/textos/planeta-en-signo.json` (Sol y Luna × 12 signos) y `ascendente.json` (12 signos): 36 textos
+- [ ] **Beto revisa y ajusta la voz** de los 36 textos (cada archivo dice `"estado": "borrador"`; al terminar, cambiar a `"revisado"`). La IA redacta el resto de los planetas con su voz y se va puliendo después
 - **Terminado cuando:** Sol, Luna y Ascendente (los 12 signos de cada uno) están revisados por Beto.
 
-## Fase 3 · Redacción con IA (2–3 días)
-- [ ] `server/astro/interpret.ts`, una llamada por sección
-- [ ] La IA recibe solo posiciones calculadas (nunca nombre, correo ni lugar)
-- [ ] `server/astro/validate.ts`: avisos anti-invento (signo/casa mencionados deben coincidir con la carta)
-- [ ] Medir tokens y costo por informe
-- **Terminado cuando:** 3 informes de prueba (con datos inventados) leídos por Beto sin errores de datos.
+**Resumen Fase 2 (qué incluye):**
+- 36 textos base de 80–110 palabras cada uno, con la estructura del plan: título, esencia, luz, sombra y consejo.
+- Voz: español neutro, "tú", cálido y de autoconocimiento; los retos se presentan como oportunidades de crecimiento; sin predicciones de salud, muerte, embarazos ni dinero.
+- Cargados por `server/astro/textos.ts` (con tipos). La tríada y la síntesis del informe los usan como voz de la marca.
+- **Cómo revisarlos:** abrir los dos archivos de `data/astro/textos/`, editar el texto de cada entrada directamente y avisar. Los textos de tipo "esencia" son los que más pesan en el informe.
+
+## Fase 3 · Redacción con IA — HECHA en código (2026-10-12); falta probar con la clave real
+- [x] `server/astro/interpret.ts`, una llamada por sección (8 secciones)
+- [x] La IA recibe solo posiciones calculadas (nunca nombre, fecha, hora, lugar ni coordenadas) — verificado con pruebas
+- [x] `server/astro/validate.ts`: avisos anti-invento (signo, casa, cúspide y retrogradación mencionados deben coincidir con la carta; temas sensibles)
+- [ ] **Medir tokens y costo por informe** (necesita `ANTHROPIC_API_KEY`; comando abajo)
+- [ ] **3 informes de prueba** (con datos inventados) leídos por Beto sin errores de datos
+- **Terminado cuando:** 3 informes de prueba leídos por Beto sin errores de datos.
+
+**Resumen Fase 3 (qué incluye):**
+- **8 secciones con IA:** Tu Gran Tríada, Balance de energías, Planetas personales, Planetas sociales y generacionales, Las 12 casas, Aspectos principales, Nodos lunares y Quirón, Síntesis y consejos (esta cierra con 5 consejos). Con hora desconocida se omiten las casas y la tríada pasa a Sol + Luna.
+- **Qué recibe la IA por sección:** solo los datos de esa sección (posiciones ya calculadas) y los textos base de los signos que corresponden. Nada personal. Hay pruebas que fallan si alguna vez se filtra el nombre, la fecha, la hora, la ciudad, la zona horaria o las coordenadas.
+- **Reglas fijas** (prompt de sistema, con caché): usar exclusivamente los datos, no inventar posiciones, español neutro en "tú", retos como oportunidades, sin predicciones de salud/muerte/embarazos/dinero, aviso en una frase si la hora es aproximada o desconocida.
+- **Validación después de redactar:** avisa si el texto dice "Venus en Géminis" y la carta tiene Venus en Libra, o la casa, la cúspide o la retrogradación equivocadas; y marca palabras sensibles (muerte, enfermedad, embarazo, fortuna...) para revisión. Son avisos para el panel, no bloquean.
+- **Regenerar una sola sección** es una llamada (`redactarSeccion`); el informe completo es `redactarInforme`.
+- **Modelo y costo:** por defecto `claude-opus-5-5` con esfuerzo medio (configurable con `ASTRO_MODEL` y `ASTRO_EFFORT`). Registra tokens y estima el costo en dólares por informe.
+- **Pruebas:** 32 nuevas con una IA simulada (sin gastar nada); además se comprobó que fallan si se filtra la ciudad o se desactiva la validación. El cliente real se prueba con el SDK simulado: parámetros correctos, manejo de rechazo, texto cortado y respuesta vacía.
+
+**Cómo medir el costo real (cuando tengas la clave):**
+```
+ANTHROPIC_API_KEY=tu-clave ASTRO_LIVE_AI=1 npx vitest run tests/server/astro-interpret.live.test.ts
+```
+Redacta un informe completo de una persona ficticia, imprime tokens y costo estimado, y deja el texto en `informe-de-prueba.md` (ignorado por git) para que lo leas.
 
 ## Fase 4 · PDF (2–3 días)
 - [ ] Rueda SVG con colores de la marca
