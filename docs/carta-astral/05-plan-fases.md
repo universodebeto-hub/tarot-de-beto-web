@@ -75,11 +75,17 @@ ANTHROPIC_API_KEY=tu-clave ASTRO_LIVE_AI=1 npx vitest run tests/server/astro-int
 ```
 Redacta un informe completo de una persona ficticia, imprime tokens y costo estimado, y deja el texto en `informe-de-prueba.md` (ignorado por git) para que lo leas.
 
-## Fase 4 · PDF (2–3 días)
-- [ ] Rueda SVG con colores de la marca
-- [ ] Plantilla con portada, tablas, secciones y pie de página (`@react-pdf/renderer`)
-- [ ] El PDF se genera al momento de descargarlo; **no se guarda en ningún almacenamiento**
-- **Terminado cuando:** el PDF se ve bien en celular y computador.
+## Fase 4 · PDF — HECHA en código (2026-10-12); falta tu visto bueno del diseño
+- [x] Portada oscura con el logo completo, nombre, fecha/lugar y Sol · Luna · Ascendente
+- [x] Encabezado en cada página (emblema + "TAROT DE BETO" + nombre del cliente) y pie con "Página X de Y"
+- [x] Rueda natal en SVG vectorial a página completa (colores de la marca, aspectos, casas, retrógrados)
+- [x] Tabla técnica (planetas, casas, aspectos), cómo leer el informe + leyenda, balance de elementos/modalidades
+- [x] Las 8 secciones, cierre con firma (imagen o letra manuscrita), aviso, servicios y datos de contacto
+- [x] Se genera al momento de descargarlo; **no se guarda en ningún almacenamiento**
+- [x] Pruebas: PDF válido, portada, sin páginas en blanco, encabezado/pie en todas, firma, variante sin hora
+- Firma: por ahora el nombre en letra manuscrita; la imagen real se sube en privado desde el panel (Fase 6).
+- Tipografías con licencia abierta en `data/astro/fonts/` (con sus LICENSE).
+- **Terminado cuando:** Beto aprueba cómo se ve el PDF de muestra.
 
 ## Fase 5 · Integración con reservas (2–3 días)
 - [ ] Modelo `AstroReport` + migración (ver el cuidado con las preview en `04-arquitectura-web.md`)

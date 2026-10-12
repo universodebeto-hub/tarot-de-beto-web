@@ -47,3 +47,4 @@ next-env.d.ts
 
 # Salida de la prueba real de redaccion con IA (tests/server/astro-interpret.live.test.ts)
 informe-de-prueba.md
+_demo.pdf

@@ -1,0 +1,14 @@
+{
+  "estado": "borrador",
+  "nota": "Textos fijos del informe (iguales en todos los informes). Borrador para que Beto lo revise y ajuste a su voz.",
+  "comoLeer": "### Qué es una carta astral\nTu carta natal es un mapa del cielo en el momento y el lugar exactos en que naciste: muestra dónde estaban el Sol, la Luna y los planetas, y cómo se relacionan entre sí. No es un veredicto sobre tu vida; es una herramienta para conocerte mejor.\n\n### Planetas, signos y casas\n- **Los planetas** muestran *qué* energías hay en ti: cómo piensas, cómo amas, cómo actúas.\n- **Los signos** muestran *cómo* se expresa cada una de esas energías.\n- **Las casas** muestran *en qué áreas de tu vida* se manifiestan: el hogar, la pareja, el trabajo, las amistades.\n\n### Los aspectos\nSon los ángulos que forman los planetas entre sí. Los armónicos (trígonos y sextiles) fluyen con facilidad. Los desafiantes (cuadraturas y oposiciones) piden esfuerzo y suelen ser tus mayores motores de crecimiento. Las conjunciones fusionan dos energías en una sola. Cuanto menor es el orbe, es decir, la distancia al ángulo exacto, más se siente el aspecto.\n\n### Cómo aprovechar este informe\nLéelo con calma, subraya lo que te resuene y deja de lado lo que no. Las posiciones están calculadas con precisión astronómica; la interpretación es una guía de autoconocimiento y no una predicción.",
+  "cierre": "Gracias por confiarme tu carta. Ojalá estas páginas te ayuden a mirarte con más cariño y a entender tus propios ritmos. Si quieres profundizar en algún tema o tienes una pregunta sobre lo que leíste, aquí estaré.",
+  "aviso": "Este informe es una herramienta de autoconocimiento y reflexión. No sustituye el consejo médico, psicológico, legal ni financiero, y no pretende predecir hechos ni decidir por ti. Las decisiones importantes de tu vida son siempre tuyas.",
+  "firmaNombre": "Alberto Arango",
+  "firmaCargo": "Tarotista y guía espiritual",
+  "servicios": [
+    "Consultas de tarot personalizadas",
+    "Informe numerológico",
+    "Rituales energéticos"
+  ]
+}

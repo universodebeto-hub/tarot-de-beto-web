@@ -47,6 +47,15 @@ const SECURITY_HEADERS = [
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
 ];
 
+// Binario nativo de sweph, efemérides, tipografías y logos del PDF: se leen por ruta dinámica y el
+// rastreo automático de Vercel no los detecta.
+const ASTRO_ARCHIVOS = [
+  "./node_modules/sweph/prebuilds/linux-x64/**/*",
+  "./data/astro/ephe/**/*",
+  "./data/astro/fonts/**/*",
+  "./public/assets/logo/*.png",
+];
+
 const nextConfig: NextConfig = {
   // sweph (Swiss Ephemeris, carta astral -- docs/carta-astral/) es un módulo
   // nativo (.node): no se puede empaquetar con el bundler, se carga con require.
@@ -59,9 +68,9 @@ const nextConfig: NextConfig = {
   // También viaja el archivo de efemérides de Quirón (data/astro/ephe/seas_18.se1),
   // que sweph abre en tiempo de ejecución por ruta y el rastreo tampoco detecta.
   outputFileTracingIncludes: {
-    "/api/astro/*": ["./node_modules/sweph/prebuilds/linux-x64/**/*", "./data/astro/ephe/**/*"],
-    "/admin/informes/*": ["./node_modules/sweph/prebuilds/linux-x64/**/*", "./data/astro/ephe/**/*"],
-    "/api/admin/informes/*": ["./node_modules/sweph/prebuilds/linux-x64/**/*", "./data/astro/ephe/**/*"],
+    "/api/astro/*": ASTRO_ARCHIVOS,
+    "/admin/informes/*": ASTRO_ARCHIVOS,
+    "/api/admin/informes/*": ASTRO_ARCHIVOS,
   },
   async headers() {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];
