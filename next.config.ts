@@ -48,6 +48,18 @@ const SECURITY_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
+  // sweph (Swiss Ephemeris, carta astral -- docs/carta-astral/) es un módulo
+  // nativo (.node): no se puede empaquetar con el bundler, se carga con require.
+  serverExternalPackages: ["sweph"],
+  // sweph carga su binario con node-gyp-build (búsqueda dinámica en
+  // prebuilds/<plataforma>-<arquitectura>/), que el rastreo de archivos de
+  // Next no detecta: sin esto, el .node de Linux (el que usa Vercel) no
+  // viaja con la función y falla en producción aunque en local funcione.
+  // Medido en la Fase 0: pesa < 1 MB, solo se agrega a las rutas de la carta astral.
+  outputFileTracingIncludes: {
+    "/api/astro/*": ["./node_modules/sweph/prebuilds/linux-x64/**/*"],
+    "/admin/informes/*": ["./node_modules/sweph/prebuilds/linux-x64/**/*"],
+  },
   async headers() {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];
   },

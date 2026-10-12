@@ -13,54 +13,69 @@ lib/astro/
 server/astro/
   geocode.ts            # ciudad/país → { lat, lon, timezone }
   engine.ts             # interfaz única: calcularCarta(datos) → CartaNatal
-  engine-<impl>.ts      # implementación elegida en la Fase 0
-  interpret.ts          # CartaNatal + textos base → secciones (IA)
-  render.ts             # secciones + carta → HTML → PDF
-  pipeline.ts           # orquesta todo para una reserva y guarda el estado
+  interpret.ts          # CartaNatal + textos base → UNA sección por llamada (IA)
+  validate.ts           # avisos: la IA no puede contradecir la carta calculada
+  pdf.ts                # secciones + carta → PDF (al momento, sin guardarlo)
+  pipeline.ts           # pasos del informe y su estado, uno por clic
 data/astro/textos/      # base de interpretaciones (JSON)
-app/api/cron/astro/     # reintenta informes pendientes o fallidos
-app/admin/informes/     # revisar, aprobar, regenerar y reenviar
+app/admin/informes/     # panel de revisión (lista + detalle)
+app/api/admin/informes/[id]/pdf/route.ts   # descarga del PDF, solo admin
 ```
 
 Regla: `engine.ts` expone una sola función con tipos de `lib/astro/types.ts`.
 Así se puede cambiar de motor sin tocar el resto.
 
-## Motor de cálculo: opciones (decidir en la Fase 0)
+## Motor de cálculo: ELEGIDA la opción A (Fase 0)
 
-| Opción | Cómo | A favor | En contra |
-| --- | --- | --- | --- |
-| A. Swiss Ephemeris en Node | Paquete npm con binding nativo de Swiss Ephemeris | Todo en TypeScript, máxima precisión, sin costo por informe | Módulo nativo: hay que probar que compile en Vercel; AGPL o licencia pro |
-| B. Función Python en Vercel | Kerykeion en una función Python dentro del mismo proyecto | Kerykeion trae casas, aspectos, rueda SVG en español y serializador para IA | Dos lenguajes en el repo; confirmar soporte de funciones Python junto a Next en Vercel; AGPL |
-| C. API externa | Astrologer API (Kerykeion alojado, de pago) | Cero infraestructura, sin obligación AGPL, trae SVG | Costo mensual/por llamada, dependencia de un tercero |
-| D. Librería JS pura | Motor astronómico MIT + cálculo propio de casas y aspectos | Licencia libre, sin binarios | Más trabajo; sin Quirón ni algunos puntos; hay que validar mucho |
+**`sweph`** (Swiss Ephemeris para Node, módulo nativo N-API). Resultados de la Fase 0:
 
-Recomendación: probar **A** en la Fase 0 (un endpoint de prueba desplegado en
-una preview de Vercel). Si no compila o pesa demasiado, pasar a **C** para salir
-rápido y evaluar **B** después.
+- Trae binarios precompilados para `linux-x64` (el que usa Vercel), `linux-arm64`,
+  `win32-x64` y `darwin-arm64`: no hace falta compilar nada.
+- Cruce con un motor independiente (`astronomy-engine`, MIT) en 4 fechas y los 10 planetas:
+  diferencia máxima 0,005° (tolerancia del plan: 0,1°). El Sol en J2000 da 280,3689°
+  (referencia publicada ~280,37°). Casas Placidus y Ascendente calculan correctamente.
+  Script reproducible: `node scripts/astro-probe.mjs`.
+- Sin archivos de efemérides funciona en modo interno (Moshier), suficiente para Sol a Plutón
+  y nodos. **Quirón necesita el archivo `seas_18.se1`** (~220 KB, del repo oficial de
+  Astrodienst, también AGPL): se agrega en la Fase 1.
+- Requiere dos cosas en `next.config.ts` (ya aplicadas): `serverExternalPackages: ["sweph"]` y
+  `outputFileTracingIncludes` para el binario de Linux, porque `node-gyp-build` lo busca de
+  forma dinámica y el rastreo de Next no lo detecta (sin esto falla solo en producción).
+  Verificado: el binario de Linux queda dentro del paquete de la ruta.
+- Falta confirmarlo corriendo en una preview de Vercel (ver `05-plan-fases.md`).
+
+Alternativas descartadas por ahora: B (Python en Vercel), C (API externa de pago) y D (librería
+JS pura, sin Quirón ni casas). C queda como plan B si algo falla en Vercel.
 
 ## Rueda de la carta
-- Opción A/D: dibujar la rueda como componente SVG propio (React), con los
-  colores de la marca.
-- Opción B/C: usar el SVG que entrega Kerykeion / la API.
+Dibujar la rueda como componente SVG propio (React), con los colores de la marca.
 
 ## PDF
-Funciones serverless no traen navegador. Opciones a probar en la Fase 4:
-1. `@react-pdf/renderer` (puro JS, maquetación con componentes React).
-2. Chromium serverless + Puppeteer (HTML/CSS completo, más pesado).
-3. Servicio externo de HTML→PDF.
-Empezar por la 1.
+Las funciones serverless no traen navegador. Empezar por `@react-pdf/renderer` (puro JS,
+maquetación con componentes React; ya está en la lista de paquetes externos que Next reconoce).
+El PDF se genera cuando Beto lo descarga y **no se guarda en ningún almacenamiento**.
 
-## Disparo y tiempos
-- Al quedar una reserva `carta-astral` en `paymentStatus = PAID`, crear un
-  registro de informe en estado `PENDIENTE` (no generar dentro de la petición del
-  pago: puede exceder el tiempo límite).
-- El cron `app/api/cron/astro` toma pendientes, ejecuta el pipeline y avanza el
-  estado. Reintenta hasta 3 veces.
-- Estados: `PENDIENTE → CALCULADO → REDACTADO → PDF_LISTO → EN_REVISION → ENVIADO` (o `ERROR`).
-- Al enviar: correo con el enlace/adjunto, reserva → `COMPLETED`.
+## Flujo y tiempos
+- Al quedar una reserva `carta-astral` en `paymentStatus = PAID`, el informe aparece en el panel
+  como `PENDIENTE` (se puede crear al abrir el panel; no hace falta tocar el flujo de pago).
+- Beto pulsa "Generar borrador": el panel avanza los pasos uno por uno
+  (datos → carta → cada sección). Cada paso es una petición corta, con avance visible y
+  reintento por paso, así no hay límite de tiempo que cruzar.
+- Estados: `PENDIENTE → CALCULADO → REDACTADO → ENTREGADO` (o `ERROR` en un paso concreto).
+- "Marcar como entregado" deja la reserva en `COMPLETED`.
+- Aviso al cliente por correo: opcional y para después; la entrega la hace Beto.
+
+## Panel `/admin/informes` (qué muestra por informe)
+1. Datos de entrada y cómo los interpretó el sistema: fecha, hora y ciudad del cliente + coordenadas
+   encontradas, zona horaria usada y hora convertida a UTC.
+2. La carta: rueda, tabla de planetas (signo, grado, casa, retrógrado), 12 casas, aspectos con orbe.
+3. Cada sección del informe: texto editable, factores usados y botón para regenerarla.
+4. Avisos de validación: signo o casa mencionados que no coinciden con la carta calculada.
+5. Vista previa del PDF y botón de descarga.
+6. Acciones: regenerar, descargar, marcar como entregado. Solo usuarios `ADMIN`.
 
 ## Cambios en la base de datos (Prisma)
-Nuevo modelo sugerido (migración en la Fase 5):
+Nuevo modelo sugerido (migración en la Fase 5). **No hay `pdfUrl`**: el PDF no se guarda.
 
 ```prisma
 model AstroReport {
@@ -69,20 +84,22 @@ model AstroReport {
   booking     Booking  @relation(fields: [bookingId], references: [id])
   status      String   // ver estados arriba
   chartJson   Json?    // CartaNatal calculada
-  sections    Json?    // textos por sección
-  pdfUrl      String?  // Vercel Blob
-  svgUrl      String?
-  attempts    Int      @default(0)
+  sections    Json?    // textos por sección (editables por el admin)
+  warnings    Json?    // avisos de validación
   lastError   String?
-  reviewedBy  String?
-  sentAt      DateTime?
+  deliveredAt DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 ```
 
+> **Cuidado con las preview de Vercel:** el script de build del proyecto ejecuta
+> `prisma migrate deploy`. Si las preview usan la misma `DATABASE_URL` que producción,
+> una rama con migraciones nuevas las aplicaría sobre la base real. Antes de la Fase 5,
+> confirmar que las preview tengan su propia base de datos, o aplicar la migración
+> con cuidado.
+
 ## Variables de entorno nuevas (`.env.example`)
-- `ANTHROPIC_API_KEY`
+- `ANTHROPIC_API_KEY` (redacción)
 - `GEONAMES_USERNAME` (si se usa GeoNames)
-- `ASTRO_REVIEW_REQUIRED` = `true` | `false` (revisión manual antes de enviar)
-- `ASTROLOGER_API_KEY` (solo opción C)
+- La ruta temporal `/api/astro/probe` (solo Fase 0) no pide credenciales (devuelve solo el Sol de una fecha astronómica) y responde 404 en producción. Se borra al terminar la fase.

@@ -50,26 +50,36 @@ Cartas de referencia en `tests/` comparadas contra astro.com: tolerancia ±0,1°
 planetas y ±0,5° en cúspides. Incluir al menos: una persona nacida en Bogotá en
 1992–1993 (horario de verano), una del hemisferio sur, una con hora desconocida.
 
-## Licencias (importante para vender)
-Swiss Ephemeris y las librerías construidas sobre ella (Kerykeion, bindings de
-Node) son **AGPL-3.0** o requieren la licencia profesional de Astrodienst.
-Como esta web es un servicio público, hay que elegir **antes de lanzar**:
-1. Publicar el código del sistema bajo AGPL (este repo ya es público, pero
-   habría que declarar la licencia), o
-2. Comprar la licencia profesional de Swiss Ephemeris, o
+## Licencias (importante para vender) — DECISIÓN PENDIENTE
+Motor elegido en la Fase 0: `sweph`. Según su propio README, desde la versión 2.10.1 se
+distribuye bajo **AGPL-3.0**, y solo se puede usar bajo LGPL-3.0 si se tiene la
+**licencia profesional** de Swiss Ephemeris (Astrodienst). Como esta web es un servicio
+público, hay que elegir **antes de lanzar**:
+1. Publicar el código bajo AGPL. Este repo ya es público, así que es la opción más barata,
+   pero implica declarar la licencia (archivo `LICENSE`) y que **todo el código de la web**
+   quede disponible bajo esos términos; conviene revisar si eso es aceptable.
+2. Comprar la licencia profesional de Swiss Ephemeris.
 3. Usar una API externa de pago (ej. Astrologer API, motor Kerykeion) — sin
    obligación de abrir el código, pero con costo por informe.
 
-No es asesoría legal; revisarlo antes del lanzamiento.
+No es asesoría legal; revisarlo con alguien que sepa de licencias antes del lanzamiento.
 
 ## Privacidad
 El repo es **público**: nunca subir datos reales de clientes, PDFs generados ni
 cartas de prueba de personas reales. Las cartas de referencia usan personas
 públicas o datos inventados.
 
+Reglas adicionales (acordadas el 2026-10-12):
+- Los datos de nacimiento y las cartas calculadas viven solo en la base de datos privada.
+- **El PDF no se guarda** en Vercel Blob ni en ningún otro almacenamiento: se genera al
+  momento de descargarlo desde el panel admin.
+- A la IA solo se le envían posiciones ya calculadas (ej. "Sol en Leo, casa 5"); nunca el
+  nombre, el correo ni el lugar exacto de nacimiento.
+- El panel `/admin/informes` y la descarga del PDF solo funcionan con usuario `ADMIN`.
+
 ## Riesgos
 - Hora mal dada → Ascendente errado. Mitigación: campo de precisión + aviso.
 - Ciudades homónimas → región opcional + confirmación cuando haya varios resultados.
 - Textos genéricos o repetidos → base propia + IA que combine factores.
 - Costo de IA por informe → medir en la Fase 3 y fijar tope.
-- Tiempo límite de funciones en Vercel → generación en segundo plano (ver arquitectura).
+- Tiempo límite de funciones en Vercel → generación por pasos cortos, uno por clic de Beto (ver arquitectura).
