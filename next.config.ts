@@ -56,9 +56,12 @@ const nextConfig: NextConfig = {
   // Next no detecta: sin esto, el .node de Linux (el que usa Vercel) no
   // viaja con la función y falla en producción aunque en local funcione.
   // Medido en la Fase 0: pesa < 1 MB, solo se agrega a las rutas de la carta astral.
+  // También viaja el archivo de efemérides de Quirón (data/astro/ephe/seas_18.se1),
+  // que sweph abre en tiempo de ejecución por ruta y el rastreo tampoco detecta.
   outputFileTracingIncludes: {
-    "/api/astro/*": ["./node_modules/sweph/prebuilds/linux-x64/**/*"],
-    "/admin/informes/*": ["./node_modules/sweph/prebuilds/linux-x64/**/*"],
+    "/api/astro/*": ["./node_modules/sweph/prebuilds/linux-x64/**/*", "./data/astro/ephe/**/*"],
+    "/admin/informes/*": ["./node_modules/sweph/prebuilds/linux-x64/**/*", "./data/astro/ephe/**/*"],
+    "/api/admin/informes/*": ["./node_modules/sweph/prebuilds/linux-x64/**/*", "./data/astro/ephe/**/*"],
   },
   async headers() {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];

@@ -8,8 +8,8 @@ se deja un "Resumen" de lo que incluye**, para saber qué se avanzó.
 - [x] Verificar que el binario de Linux viaja con la función (`outputFileTracingIncludes`)
 - [ ] Abrir `<url de la preview>/api/astro/probe` (con sesión de Vercel) y comprobar `plataforma: linux` y `ok: true`
 - [ ] Si falla en Vercel, probar opción C (API externa) y anotar costo por informe
-- [ ] Confirmar configuración: tropical, Placidus, puntos y orbes (`01-especificacion.md`)
-- [ ] Decidir el camino de licencia (`01-especificacion.md`, sección Licencias)
+- [x] Confirmar configuración: tropical, Placidus, puntos y orbes (`01-especificacion.md`) — aprobada el 2026-10-12
+- [x] Decidir el camino de licencia — decisión 2026-10-12: **AGPL** (publicar el código). Falta agregar el archivo `LICENSE` y revisarlo con alguien que sepa de licencias (Fase 7)
 - **Terminado cuando:** un endpoint de prueba devuelve el Sol de una fecha conocida correcto al 0,1° **en Vercel**.
 
 **Resumen Fase 0 (avance al 2026-10-12):**
@@ -22,13 +22,24 @@ se deja un "Resumen" de lo que incluye**, para saber qué se avanzó.
 - Compilación, tipos y pruebas existentes: sin errores.
 - Pendiente: correrlo en una preview de Vercel (no hay Linux local para probarlo) y decisiones de configuración y licencia.
 
-## Fase 1 · Cálculo (2–3 días)
-- [ ] `server/astro/geocode.ts` con zona horaria histórica
-- [ ] `server/astro/engine.ts` devolviendo `CartaNatal` completa
-- [ ] Agregar `seas_18.se1` para Quirón
-- [ ] Casos: hora exacta, aproximada, desconocida
-- [ ] Pruebas con 5 cartas de referencia vs astro.com (vitest)
-- **Terminado cuando:** las 5 cartas cuadran dentro de la tolerancia.
+## Fase 1 · Cálculo — HECHA en código (2026-10-12); falta tu comparación manual
+- [x] `server/astro/geocode.ts` (ciudad/país → coordenadas) y zona horaria por coordenadas
+- [x] `lib/astro/time.ts`: hora local → UTC con husos históricos y avisos
+- [x] `server/astro/engine.ts` devolviendo `CartaNatal` completa
+- [x] Agregar `seas_18.se1` para Quirón (`data/astro/ephe/`)
+- [x] Casos: hora exacta, aproximada, desconocida (y latitudes extremas)
+- [x] Pruebas automáticas (vitest) contra cálculos independientes — `tests/server/astro-*.test.ts`, `tests/lib/astro-*.test.ts`
+- [ ] **Beto compara las 5 cartas de `06-cartas-de-prueba.md` contra astro.com** (último control antes de lanzar)
+- **Terminado cuando:** las 5 cartas cuadran contra astro.com dentro de la tolerancia (±0°06' planetas, ±0°30' cúspides).
+
+**Resumen Fase 1 (qué incluye):**
+- **Geocodificación:** Nominatim (OpenStreetMap), sin cuenta ni clave, con una sola consulta por informe. Devuelve el mejor lugar y las alternativas, y avisa si hay ciudades homónimas a más de 50 km. La zona horaria sale de las coordenadas con `tz-lookup` (sin internet).
+- **Hora de nacimiento a UTC** con las reglas históricas de cada zona (Colombia con verano 1992–93, Venezuela en UTC−4:30 de 2007 a 2016, etc.). Avisa si la hora no existió o se repitió por un cambio de horario, y si el año es anterior a 1930.
+- **Carta completa:** Sol, Luna, Mercurio a Plutón, Quirón, Nodo Norte y Sur (verdadero), Ascendente y Medio Cielo, 12 casas Placidus, casa de cada punto, retrogradación, aspectos mayores con orbes y si son aplicativos, balance de elementos y modalidades, y fase lunar.
+- **Tres casos de hora:** exacta (carta completa); aproximada (completa + aviso sobre Ascendente y casas); desconocida (carta solar a mediodía, sin Ascendente ni casas, con aviso, y aviso extra si la Luna cambia de signo ese día).
+- **Latitudes extremas:** sobre 66° Placidus no existe, se usan Signos Enteros con aviso.
+- **Exactitud comprobada:** 111 pruebas automáticas pasan (83 nuevas). Los planetas coinciden con un motor independiente dentro de 0,02° y el Ascendente/Medio Cielo con la fórmula astronómica dentro de 0,01°. Se comprobó además que las pruebas fallan si se adelanta el reloj una hora.
+- **Todo con datos ficticios**, nunca de clientes.
 
 ## Fase 2 · Base de textos (paralelo, la lleva Beto)
 - [ ] Generar borradores de `data/astro/textos/*.json` con IA
@@ -64,7 +75,7 @@ se deja un "Resumen" de lo que incluye**, para saber qué se avanzó.
 - **Terminado cuando:** Beto puede revisar a detalle, ajustar, descargar y marcar como entregado desde el panel.
 
 ## Fase 7 · Lanzamiento
-- [ ] Licencia resuelta
+- [ ] Licencia resuelta: agregar archivo `LICENSE` (AGPL-3.0) y revisarlo con alguien que sepa de licencias
 - [ ] Borrar la ruta temporal `/api/astro/probe`
 - [ ] Actualizar `REPORT_DELIVERY_TEXT` para carta astral si cambia el plazo prometido
 - [ ] Probar con 5 clientes reales antes de anunciarlo

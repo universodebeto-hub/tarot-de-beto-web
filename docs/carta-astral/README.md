@@ -40,6 +40,7 @@ promete entrega en "3 a 7 días" y todo el informe se arma a mano.
 3. [03-interpretaciones.md](03-interpretaciones.md) — cómo se escriben los textos (base propia + IA)
 4. [04-arquitectura-web.md](04-arquitectura-web.md) — cómo se integra en esta app Next.js y motor de cálculo elegido
 5. [05-plan-fases.md](05-plan-fases.md) — plan por fases con criterios de terminado y resumen de cada fase
+6. [06-cartas-de-prueba.md](06-cartas-de-prueba.md) — 5 cartas ficticias con los resultados del sistema, para comparar a mano con astro.com
 
 Tipos compartidos de la carta: `lib/astro/types.ts`.
 

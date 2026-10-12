@@ -28,8 +28,8 @@ Reglas:
 | --- | --- | --- |
 | Efemérides | [Swiss Ephemeris](https://www.astro.com/swisseph/swephinfo_e.htm) (Astrodienst) | Posiciones planetarias; basada en JPL DE441 de la NASA, precisión ~0,001" |
 | Motor de cálculo | Ver opciones en `04-arquitectura-web.md` | Planetas, casas, aspectos, rueda |
-| Coordenadas | [GeoNames](https://www.geonames.org/login) (usuario gratis) o Nominatim (OpenStreetMap) | Ciudad → lat/lon |
-| Zona horaria | Búsqueda por coordenadas + base IANA (`date-fns-tz` ya está instalado) | Hora local → UTC con horarios de verano históricos |
+| Coordenadas | Nominatim (OpenStreetMap), sin cuenta (decidido en la Fase 1; GeoNames queda como alternativa) | Ciudad → lat/lon |
+| Zona horaria | `tz-lookup` (coordenadas → zona IANA) + `date-fns-tz` (hora local → UTC con las reglas históricas) | Hora local → UTC con horarios de verano históricos |
 | Textos | Base propia en JSON + API de Claude | Interpretaciones |
 | PDF | HTML/CSS → PDF (ver arquitectura) | Informe con marca |
 

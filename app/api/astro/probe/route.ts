@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import sweph from "sweph";
+import { calcularCarta } from "@/server/astro/engine";
 
 export const runtime = "nodejs";
 
@@ -24,12 +25,35 @@ export async function GET() {
   const longitud = r.data[0];
   const esperado = 280.37;
 
+  // Carta completa de una persona FICTICIA (Fase 1): comprueba también que el
+  // archivo de efemérides de Quirón viaje con la función y que Placidus calcule.
+  let cartaPrueba: Record<string, unknown>;
+  try {
+    const carta = calcularCarta(
+      { nombre: "Persona de prueba", fecha: "1992-09-20", hora: "14:45", precision: "exacta", ciudad: "Bogotá", pais: "Colombia" },
+      { nombreMostrado: "Bogotá", lat: 4.711, lon: -74.0721, zonaHoraria: "America/Bogota" },
+    );
+    const pos = (p: string) => carta.puntos.find((x) => x.punto === p);
+    cartaPrueba = {
+      utc: carta.utc,
+      sistemaCasas: carta.configuracion.sistemaCasas,
+      sol: `${pos("sol")?.signo} ${pos("sol")?.grado.toFixed(2)}`,
+      ascendente: `${pos("ascendente")?.signo} ${pos("ascendente")?.grado.toFixed(2)}`,
+      quiron: `${pos("quiron")?.signo} ${pos("quiron")?.grado.toFixed(2)}`,
+      aspectos: carta.aspectos.length,
+      ok: pos("sol")?.signo === "virgo" && pos("ascendente")?.signo === "capricornio" && pos("quiron") !== undefined,
+    };
+  } catch (error) {
+    cartaPrueba = { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+
   return NextResponse.json({
     plataforma: process.platform,
     arquitectura: process.arch,
     node: process.version,
     sol_J2000: longitud,
     esperado,
-    ok: !r.error && Math.abs(longitud - esperado) < 0.1,
+    cartaPrueba,
+    ok: !r.error && Math.abs(longitud - esperado) < 0.1 && cartaPrueba.ok === true,
   });
 }

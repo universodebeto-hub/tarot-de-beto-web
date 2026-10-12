@@ -36,16 +36,25 @@ Así se puede cambiar de motor sin tocar el resto.
   (referencia publicada ~280,37°). Casas Placidus y Ascendente calculan correctamente.
   Script reproducible: `node scripts/astro-probe.mjs`.
 - Sin archivos de efemérides funciona en modo interno (Moshier), suficiente para Sol a Plutón
-  y nodos. **Quirón necesita el archivo `seas_18.se1`** (~220 KB, del repo oficial de
-  Astrodienst, también AGPL): se agrega en la Fase 1.
+  y nodos. **Quirón usa el archivo `seas_18.se1`** (223 KB, del repo oficial de
+  Astrodienst, también AGPL), ya incluido en `data/astro/ephe/` (Fase 1).
 - Requiere dos cosas en `next.config.ts` (ya aplicadas): `serverExternalPackages: ["sweph"]` y
-  `outputFileTracingIncludes` para el binario de Linux, porque `node-gyp-build` lo busca de
-  forma dinámica y el rastreo de Next no lo detecta (sin esto falla solo en producción).
-  Verificado: el binario de Linux queda dentro del paquete de la ruta.
+  `outputFileTracingIncludes` para el binario de Linux **y el archivo de Quirón**, porque
+  `node-gyp-build` y sweph los abren de forma dinámica y el rastreo de Next no los detecta (sin esto
+  falla solo en producción). Verificado: ambos quedan dentro del paquete de las rutas.
 - Falta confirmarlo corriendo en una preview de Vercel (ver `05-plan-fases.md`).
 
 Alternativas descartadas por ahora: B (Python en Vercel), C (API externa de pago) y D (librería
 JS pura, sin Quirón ni casas). C queda como plan B si algo falla en Vercel.
+
+## Geocodificación y zona horaria (Fase 1)
+- `server/astro/geocode.ts`: Nominatim (OpenStreetMap), una consulta por informe, con User-Agent propio
+  (su política pide identificarse y no pasar de 1 consulta por segundo). Si algún día hace falta otro
+  proveedor (ej. GeoNames), solo cambia ese archivo. Open-Meteo se descartó: su plan gratuito es solo para uso no comercial.
+- Zona horaria: `tz-lookup` (dominio público, polígonos incluidos en el paquete, sin llamadas de red).
+- Hora local → UTC en `lib/astro/time.ts` con `date-fns-tz` y las reglas históricas de la zona IANA.
+- Pendiente para el panel (Fase 6): poder corregir a mano las coordenadas o elegir una alternativa cuando el
+  servicio no encuentra el lugar o hay ciudades homónimas.
 
 ## Rueda de la carta
 Dibujar la rueda como componente SVG propio (React), con los colores de la marca.
@@ -101,5 +110,5 @@ model AstroReport {
 
 ## Variables de entorno nuevas (`.env.example`)
 - `ANTHROPIC_API_KEY` (redacción)
-- `GEONAMES_USERNAME` (si se usa GeoNames)
+- (Ya no hace falta `GEONAMES_USERNAME`: la geocodificación usa Nominatim, sin cuenta ni clave.)
 - La ruta temporal `/api/astro/probe` (solo Fase 0) no pide credenciales (devuelve solo el Sol de una fecha astronómica) y responde 404 en producción. Se borra al terminar la fase.

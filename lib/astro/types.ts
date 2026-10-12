@@ -89,6 +89,17 @@ export interface CartaNatal {
     modalidades: Record<Modalidad, number>;
   };
   faseLunar?: string;
+  /** Avisos para quien revisa el informe (hora ambigua, Luna aproximada, casas alternativas...). Vacío si no hay nada que señalar. */
+  advertencias: string[];
   /** Rueda de la carta, si el motor la entrega */
   svg?: string;
+}
+
+/** Resultado de geocodificar ciudad + país (server/astro/geocode.ts). */
+export interface ResultadoGeocodificacion {
+  /** Mejor coincidencia. */
+  lugar: Lugar;
+  /** Otras coincidencias, para que el admin pueda elegir si había ambigüedad. */
+  alternativas: Lugar[];
+  advertencias: string[];
 }
