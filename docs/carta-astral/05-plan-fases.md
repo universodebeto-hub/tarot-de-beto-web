@@ -87,11 +87,15 @@ Redacta un informe completo de una persona ficticia, imprime tokens y costo esti
 - Tipografías con licencia abierta en `data/astro/fonts/` (con sus LICENSE).
 - **Terminado cuando:** Beto aprueba cómo se ve el PDF de muestra.
 
-## Fase 5 · Integración con reservas (2–3 días)
-- [ ] Modelo `AstroReport` + migración (ver el cuidado con las preview en `04-arquitectura-web.md`)
-- [ ] Campos nuevos en `lib/service-intake.ts` (nombre del informe, precisión de hora, región); agregar tipo `select`
-- [ ] Un informe aparece como `PENDIENTE` cuando la reserva queda pagada
-- [ ] Pipeline por pasos (datos → carta → secciones), uno por petición
+## Fase 5 · Integración con reservas — HECHA en código (2026-10-12); falta probarla con un pago real en sandbox
+- [x] Modelo `AstroReport` + migración `20261012000000_add_astro_report` (**solo agrega una tabla**, no toca nada existente; ya aplicada a la base de pruebas)
+- [x] Formulario de reserva (web): campos nuevos opcionales —nombre para el informe, "¿qué tan segura es la hora?" (nuevo tipo `select`), estado/departamento—; la hora deja de ser obligatoria si el cliente no la sabe
+- [x] Reservas viejas y la app móvil siguen funcionando: los campos nuevos son opcionales y, sin precisión, se asume "exacta"
+- [x] Un informe aparece como `PENDIENTE` al abrir el panel si la reserva `carta-astral` está pagada (`asegurarInformesPagados`, sin duplicar; no se toca el flujo de pago)
+- [x] Pipeline por pasos (`avanzarInforme`): carta (datos → ubicación → cálculo) y luego una sección por paso → `REDACTADO`; un fallo deja el estado intacto y guarda el error para reintentar ese mismo paso
+- [x] Se guardan en la base privada: datos interpretados, lugar, carta, secciones, tokens y costo
+- [x] Pruebas: creación sin duplicar, avance paso a paso, la IA nunca recibe datos personales, datos inválidos, reintento tras fallo de la IA
+- Pendiente de la app móvil (repo aparte): mostrar los campos nuevos en su formulario (hasta entonces funciona sin ellos).
 - **Terminado cuando:** una reserva pagada en sandbox genera su borrador paso a paso.
 
 ## Fase 6 · Panel admin `/admin/informes` (3–4 días)

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createInstantConsultationAction } from "@/app/tarotistas/[slug]/actions";
 import { submitReportRequest } from "@/server/booking-actions";
 import { isReportOnlyService } from "@/lib/service-fulfillment";
-import { intakeFieldsFor } from "@/lib/service-intake";
+import { intakeFieldsFor, intakeFieldRequired } from "@/lib/service-intake";
 import { effectivePrice } from "@/lib/booking-price";
 import type { Service } from "@/types/content";
 
@@ -234,17 +234,39 @@ export function ConsultationForm({ tarotistaId, services, isLoggedIn }: Consulta
                             <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-gold-soft">
                               Datos para el informe
                             </span>
-                            {sFields.map((f) => (
-                              <input
-                                key={f.key}
-                                type={f.type}
-                                required
-                                placeholder={f.label}
-                                value={intakeData[f.key] ?? ""}
-                                onChange={(e) => setIntakeValue(f.key, e.target.value)}
-                                className="rounded-lg border border-white/15 bg-obsidian/60 px-3 py-2 text-sm text-bone"
-                              />
-                            ))}
+                            {sFields.map((f) => {
+                              const cls = "rounded-lg border border-white/15 bg-obsidian/60 px-3 py-2 text-sm text-bone";
+                              const required = intakeFieldRequired(f, intakeData);
+                              const label = required ? f.label : `${f.label} (opcional)`;
+                              return f.type === "select" ? (
+                                <select
+                                  key={f.key}
+                                  required={required}
+                                  aria-label={label}
+                                  value={intakeData[f.key] ?? ""}
+                                  onChange={(e) => setIntakeValue(f.key, e.target.value)}
+                                  className={cls}
+                                >
+                                  <option value="">{label}</option>
+                                  {f.options?.map((o) => (
+                                    <option key={o.value} value={o.value}>
+                                      {o.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <input
+                                  key={f.key}
+                                  type={f.type}
+                                  required={required}
+                                  placeholder={label}
+                                  aria-label={label}
+                                  value={intakeData[f.key] ?? ""}
+                                  onChange={(e) => setIntakeValue(f.key, e.target.value)}
+                                  className={cls}
+                                />
+                              );
+                            })}
                           </div>
                         ) : null}
                       </div>

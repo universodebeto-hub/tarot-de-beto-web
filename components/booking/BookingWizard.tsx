@@ -6,7 +6,7 @@ import { submitReportRequest } from "@/server/booking-actions";
 import { ServicePicker } from "@/components/agenda/ServicePicker";
 import { StepIndicator, REPORT_STEPS } from "@/components/booking/StepIndicator";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { intakeFieldsFor, hasRequiredIntakeData } from "@/lib/service-intake";
+import { intakeFieldsFor, hasRequiredIntakeData, intakeFieldRequired } from "@/lib/service-intake";
 import { REPORT_DELIVERY_TEXT } from "@/lib/service-fulfillment";
 import type { Service } from "@/types/content";
 
@@ -179,21 +179,37 @@ export function BookingWizard({ services, currentUser, initialServiceId }: Booki
               <p className="mb-0 text-sm text-bone-dim">
                 {selectedService.name} requiere estos datos para poder realizarse correctamente.
               </p>
-              {intakeFields.map((field) => (
-                <div key={field.key}>
-                  <label htmlFor={`intake-${field.key}`} className={labelClass}>
-                    {field.label}
-                  </label>
-                  <input
-                    id={`intake-${field.key}`}
-                    type={field.type}
-                    value={intakeData[field.key] ?? ""}
-                    onChange={(e) => setIntakeData((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                    required
-                    className={inputClass}
-                  />
-                </div>
-              ))}
+              {intakeFields.map((field) => {
+                const required = intakeFieldRequired(field, intakeData);
+                const common = {
+                  id: `intake-${field.key}`,
+                  value: intakeData[field.key] ?? "",
+                  required,
+                  className: inputClass,
+                };
+                const onChange = (value: string) => setIntakeData((prev) => ({ ...prev, [field.key]: value }));
+                return (
+                  <div key={field.key}>
+                    <label htmlFor={common.id} className={labelClass}>
+                      {field.label}
+                      {required ? "" : " (opcional)"}
+                    </label>
+                    {field.type === "select" ? (
+                      <select {...common} onChange={(e) => onChange(e.target.value)}>
+                        <option value="">Elige una opción</option>
+                        {field.options?.map((o) => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input {...common} type={field.type} onChange={(e) => onChange(e.target.value)} />
+                    )}
+                    {field.hint ? <p className="mb-0 mt-1 text-xs text-bone-dim">{field.hint}</p> : null}
+                  </div>
+                );
+              })}
             </GlassCard>
           ) : null}
 
