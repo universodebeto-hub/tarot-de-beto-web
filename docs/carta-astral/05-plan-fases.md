@@ -113,9 +113,20 @@ Redacta un informe completo de una persona ficticia, imprime tokens y costo esti
 - Los pasos de IA usan `maxDuration = 60` en las páginas del panel (Vercel Hobby puede limitar a 10–60 s según plan: confirmar en Vercel).
 - **Terminado cuando:** Beto puede revisar a detalle, ajustar, descargar y marcar como entregado desde el panel.
 
-## Fase 7 · Lanzamiento
-- [ ] Licencia resuelta: agregar archivo `LICENSE` (AGPL-3.0) y revisarlo con alguien que sepa de licencias
-- [ ] Borrar la ruta temporal `/api/astro/probe`
-- [ ] Actualizar `REPORT_DELIVERY_TEXT` para carta astral si cambia el plazo prometido
-- [ ] Probar con 5 clientes reales antes de anunciarlo
+## Fase 7 · Lanzamiento — preparada (2026-10-13); faltan decisiones y pruebas de Beto
+- [x] `LICENSE` (texto oficial AGPL-3.0, 34 523 bytes), `NOTICE` (por qué AGPL, componentes de terceros y sus licencias), `"license": "AGPL-3.0-or-later"` en `package.json` y sección "Licencia" en el README
+- [x] Enlace "Código fuente" en el pie del sitio (la AGPL, sección 13, exige ofrecer el código a quienes usan el programa por red)
+- [ ] **Revisión legal** de la licencia por alguien que sepa (esto no lo puede hacer Claude)
+- [ ] Borrar `/api/astro/probe`: **se deja hasta que Beto confirme la prueba de Vercel** (`plataforma: linux` y `ok: true`); es la única forma de verificar el cálculo en producción antes de usarlo
+- [ ] `REPORT_DELIVERY_TEXT` (hoy "3 a 7 días", compartido con el informe numerológico): Beto decide si el plazo de la carta astral cambia
+- [ ] Probar con 5 clientes reales antes de anunciarlo (con la clave `ANTHROPIC_API_KEY` ya puesta en Vercel)
 - [ ] Ideas siguientes: aviso por correo de "tu informe está listo", revolución solar, sinastría, mini-carta gratis para TikTok LIVE
+
+### Lista de salida (antes de anunciar)
+1. Unir la rama `carta-astral` a `main` (aplica sola la migración `AstroReport`, que solo agrega una tabla).
+2. Poner en Vercel (Production): `ANTHROPIC_API_KEY`, y revisar `ASTRO_MODEL`/`ASTRO_EFFORT` si quieres cambiar los valores por defecto.
+3. Confirmar en Vercel que el plan permite funciones de 60 s (la redacción con IA).
+4. Subir tu firma en `/admin/informes`.
+5. Comparar las 5 cartas de `06-cartas-de-prueba.md` con astro.com y revisar los textos borrador (`estado: "revisado"`).
+6. Hacer 5 informes reales de punta a punta; entregar a mano; medir el costo real por informe.
+7. Borrar `/api/astro/probe`.

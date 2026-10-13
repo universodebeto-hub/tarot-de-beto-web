@@ -1,0 +1,37 @@
+Tarot de Beto (web) - Universo de Beto
+Copyright (C) 2026 Universo de Beto
+
+Este programa es software libre: puedes redistribuirlo y/o modificarlo bajo los
+terminos de la Licencia Publica General Affero de GNU (AGPL) version 3 o, a tu
+eleccion, cualquier version posterior. Ver el archivo LICENSE.
+
+Se distribuye SIN NINGUNA GARANTIA.
+
+Codigo fuente: https://github.com/universodebeto-hub/tarot-de-beto-web
+
+------------------------------------------------------------------------------
+Por que AGPL
+------------------------------------------------------------------------------
+El calculo de la carta astral usa Swiss Ephemeris (paquete npm `sweph` y el
+archivo de datos data/astro/ephe/seas_18.se1), de Astrodienst AG, que se
+distribuye bajo AGPL-3.0 (o con licencia profesional de pago). Este repositorio
+publica su codigo bajo AGPL-3.0 para cumplir esa licencia. Como el programa se
+usa por red, la AGPL (seccion 13) exige ofrecer el codigo fuente a quienes lo usan:
+el sitio debe enlazar a este repositorio.
+
+Los datos personales de los clientes NUNCA forman parte del repositorio: viven
+solo en la base de datos privada.
+
+------------------------------------------------------------------------------
+Componentes de terceros (resumen)
+------------------------------------------------------------------------------
+- sweph / Swiss Ephemeris (Astrodienst AG) .......... AGPL-3.0
+- astronomy-engine (solo pruebas) ................... MIT
+- tz-lookup ......................................... CC0-1.0
+- date-fns-tz ....................................... MIT
+- @react-pdf/renderer ............................... MIT
+- @anthropic-ai/sdk ................................. MIT
+- Tipografias del PDF (data/astro/fonts/) ........... SIL OFL 1.1 (Fraunces,
+  Work Sans, Space Mono, Great Vibes) y licencia Bitstream Vera/DejaVu
+  (DejaVu Sans). Cada una con su LICENSE-*.txt.
+- Resto de dependencias: ver package.json y sus licencias en node_modules.

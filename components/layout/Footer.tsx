@@ -129,6 +129,14 @@ export function Footer() {
             <Link href="/politica-de-reservas" className="hover:text-gold-soft transition-colors">
               Reservas y cancelación
             </Link>
+            <a
+              href="https://github.com/universodebeto-hub/tarot-de-beto-web"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-gold-soft transition-colors"
+            >
+              Código fuente
+            </a>
           </div>
           <p className="mb-0">Lecturas con respeto, sin promesas vacías.</p>
         </div>

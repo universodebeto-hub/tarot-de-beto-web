@@ -202,6 +202,11 @@ npm run test
 
 **Qué NO cubren los tests automatizados, y por qué**: los flujos completos de registro/login/reserva/pago vistos como el usuario los experimenta (formularios reales, redirecciones, Server Actions invocadas por un submit real) — Next.js no expone una forma sencilla de invocar Server Actions/`redirect()`/cookies de escritura fuera de un servidor real corriendo. Esos flujos se verificaron manualmente en navegador, fase por fase, durante el desarrollo (login/registro/reserva de invitado y logueado en la Fase 5, PayPal en la Fase 6 sin credenciales reales — ver `docs/paypal-sandbox.md`, panel admin completo en la Fase 7, los tres emails transaccionales + botón de mantenimiento en la Fase 8, cabeceras/sitemap/robots/canonical/rate-limiting en la Fase 9). Antes de un cambio grande en esas áreas, repetir la verificación manual en navegador sigue siendo necesario — los tests automatizados protegen la lógica de negocio pura y las condiciones de carrera, no la experiencia de usuario de punta a punta.
 
+## Licencia
+Este repositorio se distribuye bajo **AGPL-3.0-or-later** (ver `LICENSE` y `NOTICE`): el cálculo de la carta astral usa
+Swiss Ephemeris, que es AGPL. Si modificas el código y lo ofreces por red, debes publicar tus cambios bajo la misma licencia.
+Los datos de los clientes nunca van en el repo.
+
 ## Despliegue
 
 Guía completa paso a paso: [`docs/deploy-vercel.md`](docs/deploy-vercel.md) — base de datos gestionada (Neon/Supabase), variables de entorno de producción, dominio/SSL, paso de PayPal Sandbox → Live, cron de mantenimiento en Vercel, backups/logs, y qué hacer con el usuario admin de prueba del seed. **Sin desplegar todavía** — no hay cuenta de Vercel ni base de datos gestionada conectadas desde este entorno de desarrollo; la guía queda lista para cuando decidas publicar.
