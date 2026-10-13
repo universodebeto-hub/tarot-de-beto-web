@@ -68,7 +68,6 @@ const nextConfig: NextConfig = {
   // También viaja el archivo de efemérides de Quirón (data/astro/ephe/seas_18.se1),
   // que sweph abre en tiempo de ejecución por ruta y el rastreo tampoco detecta.
   outputFileTracingIncludes: {
-    "/api/astro/*": ASTRO_ARCHIVOS,
     "/admin/informes/*": ASTRO_ARCHIVOS,
     "/api/admin/informes/*": ASTRO_ARCHIVOS,
   },

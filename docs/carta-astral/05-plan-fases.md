@@ -6,7 +6,7 @@ se deja un "Resumen" de lo que incluye**, para saber qué se avanzó.
 ## Fase 0 · Decidir el motor (1–2 días)
 - [x] Probar opción A (Swiss Ephemeris en Node) en local — `scripts/astro-probe.mjs`
 - [x] Verificar que el binario de Linux viaja con la función (`outputFileTracingIncludes`)
-- [ ] Abrir `<url de la preview>/api/astro/probe` (con sesión de Vercel) y comprobar `plataforma: linux` y `ok: true`
+- [x] Abrir `<url de la preview>/api/astro/probe` y comprobar `plataforma: linux` y `ok: true` — **confirmado por Beto el 2026-10-13** (Linux x64, Node 24; Sol, Ascendente Capricornio 23.38°, Quirón y 26 aspectos correctos)
 - [ ] Si falla en Vercel, probar opción C (API externa) y anotar costo por informe
 - [x] Confirmar configuración: tropical, Placidus, puntos y orbes (`01-especificacion.md`) — aprobada el 2026-10-12
 - [x] Decidir el camino de licencia — decisión 2026-10-12: **AGPL** (publicar el código). Falta agregar el archivo `LICENSE` y revisarlo con alguien que sepa de licencias (Fase 7)
@@ -117,7 +117,7 @@ Redacta un informe completo de una persona ficticia, imprime tokens y costo esti
 - [x] `LICENSE` (texto oficial AGPL-3.0, 34 523 bytes), `NOTICE` (por qué AGPL, componentes de terceros y sus licencias), `"license": "AGPL-3.0-or-later"` en `package.json` y sección "Licencia" en el README
 - [x] Enlace "Código fuente" en el pie del sitio (la AGPL, sección 13, exige ofrecer el código a quienes usan el programa por red)
 - [ ] **Revisión legal** de la licencia por alguien que sepa (esto no lo puede hacer Claude)
-- [ ] Borrar `/api/astro/probe`: **se deja hasta que Beto confirme la prueba de Vercel** (`plataforma: linux` y `ok: true`); es la única forma de verificar el cálculo en producción antes de usarlo
+- [x] Ruta `/api/astro/probe` borrada (2026-10-13), tras la confirmación de Vercel
 - [ ] `REPORT_DELIVERY_TEXT` (hoy "3 a 7 días", compartido con el informe numerológico): Beto decide si el plazo de la carta astral cambia
 - [ ] Probar con 5 clientes reales antes de anunciarlo (con la clave `ANTHROPIC_API_KEY` ya puesta en Vercel)
 - [ ] Ideas siguientes: aviso por correo de "tu informe está listo", revolución solar, sinastría, mini-carta gratis para TikTok LIVE
@@ -129,4 +129,3 @@ Redacta un informe completo de una persona ficticia, imprime tokens y costo esti
 4. Subir tu firma en `/admin/informes`.
 5. Comparar las 5 cartas de `06-cartas-de-prueba.md` con astro.com y revisar los textos borrador (`estado: "revisado"`).
 6. Hacer 5 informes reales de punta a punta; entregar a mano; medir el costo real por informe.
-7. Borrar `/api/astro/probe`.

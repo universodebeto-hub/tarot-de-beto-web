@@ -111,4 +111,4 @@ model AstroReport {
 ## Variables de entorno nuevas (`.env.example`)
 - `ANTHROPIC_API_KEY` (redacción)
 - (Ya no hace falta `GEONAMES_USERNAME`: la geocodificación usa Nominatim, sin cuenta ni clave.)
-- La ruta temporal `/api/astro/probe` (solo Fase 0) no pide credenciales (devuelve solo el Sol de una fecha astronómica) y responde 404 en producción. Se borra al terminar la fase.
+- La ruta temporal `/api/astro/probe` (solo Fase 0) no pide credenciales (devuelve solo el Sol de una fecha astronómica) y responde 404 en producción. **Ya borrada** (2026-10-13), tras confirmar el cálculo en Vercel.
