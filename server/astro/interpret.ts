@@ -366,7 +366,7 @@ export function crearLlamadaAnthropic(): LlamarIA {
   };
 }
 
-const MODELO_GEMINI_POR_DEFECTO = "gemini-2.5-pro";
+const MODELO_GEMINI_POR_DEFECTO = "gemini-3.1-pro-preview";
 const TIMEOUT_GEMINI_MS = 55_000;
 
 interface RespuestaGemini {
@@ -380,7 +380,7 @@ interface RespuestaGemini {
 /**
  * Cliente de Gemini (API REST de Google, sin dependencias nuevas). Variables de entorno:
  * - `GEMINI_API_KEY` (obligatoria)
- * - `ASTRO_MODEL` (opcional, por defecto gemini-2.5-pro)
+ * - `ASTRO_MODEL` (opcional, por defecto gemini-3.1-pro-preview)
  * Solo se le envían posiciones astrales: nunca nombre, fecha, hora, lugar ni coordenadas.
  */
 export function crearLlamadaGemini(fetchImpl: typeof fetch = fetch): LlamarIA {

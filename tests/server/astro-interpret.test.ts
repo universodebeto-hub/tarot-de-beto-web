@@ -263,7 +263,7 @@ describe("crearLlamadaGemini (con fetch simulado)", () => {
     const f = vi.fn().mockResolvedValue(respuesta(ok));
     await crearLlamadaGemini(f)({ system: "SISTEMA", user: "USUARIO", maxTokens: 1234 });
     const [url, init] = f.mock.calls[0];
-    expect(url).toBe("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent");
+    expect(url).toBe("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent");
     expect(String(url)).not.toContain("clave-gemini");
     expect(init.headers["x-goog-api-key"]).toBe("clave-gemini-de-prueba");
     const cuerpo = JSON.parse(init.body);
