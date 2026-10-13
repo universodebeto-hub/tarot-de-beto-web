@@ -19,10 +19,12 @@ import {
   guardarFirma,
   guardarSeccion,
   hayFirma,
+  obtenerFirmaPng,
   listarInformes,
   marcarEntregado,
   obtenerInforme,
   quitarFirma,
+  registrarSolicitudManual,
 } from "@/server/admin/informes";
 import type { CartaNatal } from "@/lib/astro/types";
 import { resetDb, createTestService, createTestUser } from "../helpers/db";
@@ -155,6 +157,12 @@ describe("panel de informes de carta astral", () => {
     expect((await corregirLugar(informeId, { ciudad: "X" }, admin)).error).toMatch(/ya fue entregado/);
   });
 
+  it("sin firma subida usa la firma por defecto del proyecto (PNG válido)", async () => {
+    const png = await obtenerFirmaPng();
+    expect(png.subarray(1, 4).toString()).toBe("PNG");
+    expect(await hayFirma(admin)).toBe(false);
+  });
+
   it("la firma solo acepta PNG pequeños y vive en la base de datos", async () => {
     expect(await hayFirma(admin)).toBe(false);
     expect((await guardarFirma(Buffer.from("no soy un png"), admin)).error).toMatch(/PNG/);
@@ -171,4 +179,31 @@ describe("panel de informes de carta astral", () => {
     expect(r.pdf.subarray(0, 5).toString()).toBe("%PDF-");
     expect(r.nombreArchivo).toBe("Carta-Astral-Zulema-Quintanilla.pdf");
   }, 60_000);
+
+  it("registrar una solicitud manual crea la reserva pagada, el informe y no pide nada raro", async () => {
+    const base = {
+      nombre: "Cliente de WhatsApp",
+      telefono: "+57 300 0000000",
+      metodoPago: "ZELLE" as const,
+      datos: { fechaNacimiento: "1985-03-02", horaNacimiento: "03:20", ciudadNacimiento: "Buenos Aires", paisNacimiento: "Argentina" },
+    };
+    const r = await registrarSolicitudManual(base, admin);
+    expect(r.error).toBeUndefined();
+    const informe = await prisma.astroReport.findUniqueOrThrow({ where: { id: r.informeId }, include: { booking: true } });
+    expect(informe.status).toBe("PENDIENTE");
+    expect(informe.booking).toMatchObject({ status: "CONFIRMED", paymentStatus: "PAID", paymentMethod: "ZELLE", guestName: "Cliente de WhatsApp" });
+    expect(informe.booking.guestEmail).toBeNull();
+    expect(informe.booking.startsAt.getTime()).toBe(informe.booking.endsAt.getTime());
+    // Aparece en la lista y se puede generar con el mismo pipeline.
+    expect((await listarInformes(admin)).some((f) => f.id === r.informeId)).toBe(true);
+
+    // Validaciones
+    expect((await registrarSolicitudManual({ ...base, nombre: " " }, admin)).error).toMatch(/nombre/);
+    expect((await registrarSolicitudManual({ ...base, datos: { ...base.datos, ciudadNacimiento: "" } }, admin)).error).toMatch(/Faltan/);
+    expect((await registrarSolicitudManual({ ...base, datos: { ...base.datos, fechaNacimiento: "1985-13-45" } }, admin)).error).toMatch(/fecha/);
+    expect((await registrarSolicitudManual({ ...base, metodoPago: "CREDITO_BETO" }, admin)).error).toMatch(/cómo pagó/);
+    const cliente = await createTestUser({ role: "CLIENT" });
+    const noAdmin = (await loadCurrentUser({ userId: cliente.id, role: "CLIENT" }))!;
+    await expect(registrarSolicitudManual(base, noAdmin)).rejects.toThrow("No autorizado.");
+  });
 });

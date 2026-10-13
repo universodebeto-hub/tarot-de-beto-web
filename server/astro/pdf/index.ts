@@ -4,6 +4,8 @@ import { SECCIONES } from "../interpret";
 import { InformePdf, type DatosPdf, type SeccionPdf } from "./documento";
 import { registrarFuentes } from "./estilos";
 
+export { leerFirmaPorDefecto } from "./estilos";
+
 export type { ContactoPdf, DatosPdf, FirmaPdf, SeccionPdf } from "./documento";
 
 /** Ordena las secciones como en el informe (las que no se reconocen van al final, en su orden). */

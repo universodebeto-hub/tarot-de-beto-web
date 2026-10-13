@@ -11,8 +11,8 @@ export function FirmaInformeForm({ hayFirma }: { hayFirma: boolean }) {
     <div className="flex flex-col gap-3">
       <p className="mb-0 text-sm text-bone-dim">
         {hayFirma
-          ? "Hay una firma guardada: aparece al final de cada informe."
-          : "Todavía no hay firma: los informes llevan tu nombre en letra manuscrita."}
+          ? "Hay una firma subida: reemplaza a la de siempre y aparece al final de cada informe."
+          : "Los informes llevan la firma «Alberto Arango» que viene con el proyecto. Puedes subir otra si quieres cambiarla."}
       </p>
       <form action={formAction} className="flex flex-wrap items-end gap-3">
         <div>
@@ -22,13 +22,13 @@ export function FirmaInformeForm({ hayFirma }: { hayFirma: boolean }) {
           <input id="firma-png" name="firma" type="file" accept="image/png" required className="text-sm text-bone-dim" />
         </div>
         <button type="submit" disabled={pending} className="btn btn-ghost">
-          {pending ? "Subiendo…" : hayFirma ? "Reemplazar firma" : "Subir firma"}
+          {pending ? "Subiendo…" : hayFirma ? "Reemplazar firma" : "Subir otra firma"}
         </button>
       </form>
       {hayFirma ? (
         <form action={quitarFirmaAction}>
           <button type="submit" className="btn btn-ghost text-ember">
-            Quitar firma
+            Volver a la firma de siempre
           </button>
         </form>
       ) : null}

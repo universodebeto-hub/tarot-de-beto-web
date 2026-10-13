@@ -4,9 +4,13 @@ import { requireAdmin } from "@/lib/auth/session";
 import { logAdminAction } from "@/server/audit";
 import { siteConfig } from "@/config/site";
 import { setBookingStatus } from "@/server/admin/bookings";
+import { nextBookingNumber } from "@/server/booking-number";
+import { hasRequiredIntakeData } from "@/lib/service-intake";
+import { intakeADatosNacimiento } from "@/lib/astro/intake";
 import { calcularCarta } from "@/server/astro/engine";
 import { geocodificar } from "@/server/astro/geocode";
 import {
+  SLUG_CARTA_ASTRAL,
   asegurarInformesPagados,
   avanzarInforme,
   type EstadoInforme,
@@ -15,9 +19,10 @@ import {
 } from "@/server/astro/informes";
 import { crearLlamadaIA, redactarSeccion, SECCIONES, type SeccionId } from "@/server/astro/interpret";
 import { validarTexto } from "@/server/astro/validate";
-import { generarInformePdf, type FirmaPdf } from "@/server/astro/pdf";
+import { generarInformePdf, leerFirmaPorDefecto, type FirmaPdf } from "@/server/astro/pdf";
 import type { CartaNatal, DatosNacimiento, Lugar } from "@/lib/astro/types";
 import type { CurrentUser } from "@/lib/auth/session";
+import type { PaymentMethod } from "@prisma/client";
 
 /** Panel de informes de carta astral (Fase 6). Cada función exige administrador. */
 
@@ -315,9 +320,10 @@ export async function marcarEntregado(id: string, currentUser?: CurrentUser | nu
 
 /* ───────────────────────────── Firma (privada, en la base de datos) ───────────────────────────── */
 
-export async function obtenerFirmaPng(): Promise<Buffer | null> {
+/** La firma subida en el panel; si no hay, la firma por defecto del proyecto (Alberto Arango). */
+export async function obtenerFirmaPng(): Promise<Buffer> {
   const fila = await prisma.setting.findUnique({ where: { key: CLAVE_FIRMA } });
-  return fila ? Buffer.from(fila.value, "base64") : null;
+  return fila ? Buffer.from(fila.value, "base64") : leerFirmaPorDefecto();
 }
 
 export async function hayFirma(currentUser?: CurrentUser | null): Promise<boolean> {
@@ -355,7 +361,7 @@ export async function generarPdfDeInforme(
   const carta = i?.chartJson as unknown as CartaNatal | null | undefined;
   if (!i || !carta) return null;
   const png = await obtenerFirmaPng();
-  const firma: FirmaPdf | undefined = png ? { tipo: "imagen", png } : undefined;
+  const firma: FirmaPdf = { tipo: "imagen", png };
   const secciones = ((i.sections ?? []) as unknown as SeccionGuardada[]).map((s) => ({
     id: s.id,
     titulo: s.titulo,
@@ -378,4 +384,83 @@ export async function generarPdfDeInforme(
     .replace(/[^a-zA-Z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
   return { pdf, nombreArchivo: `Carta-Astral-${limpio || "informe"}.pdf` };
+}
+
+/* ───────────────────────────── Solicitud registrada a mano ───────────────────────────── */
+
+/** Formas de cobro que se pueden anotar para una solicitud que no entró por la web. */
+export const METODOS_SOLICITUD_MANUAL: PaymentMethod[] = [
+  "PAGO_MOVIL",
+  "ZELLE",
+  "BINANCE",
+  "PAYPAL",
+  "BANCOLOMBIA",
+  "REMITLY",
+  "WESTERN_UNION",
+  "MONEYGRAM",
+  "CORTESIA",
+];
+
+export interface SolicitudManualInput {
+  nombre: string;
+  email?: string;
+  telefono?: string;
+  metodoPago: PaymentMethod;
+  referencia?: string;
+  /** Los mismos campos del formulario de reserva de la web (fecha, hora, ciudad, país...). */
+  datos: Record<string, string>;
+}
+
+/**
+ * Para quien no compra por la web (te escribe por WhatsApp, paga en persona...): crea la reserva ya
+ * confirmada y pagada, con los datos de nacimiento, y deja el informe listo para generar. No envía
+ * ningún aviso al cliente.
+ */
+export async function registrarSolicitudManual(
+  input: SolicitudManualInput,
+  currentUser?: CurrentUser | null,
+): Promise<{ error?: string; informeId?: string }> {
+  const admin = await requireAdmin(currentUser);
+  const nombre = input.nombre.trim();
+  if (!nombre) return { error: "Escribe el nombre del cliente." };
+  if (!METODOS_SOLICITUD_MANUAL.includes(input.metodoPago)) return { error: "Elige cómo pagó el cliente." };
+
+  const datos: Record<string, string> = Object.fromEntries(
+    Object.entries(input.datos ?? {}).map(([k, v]) => [k, String(v).trim().slice(0, 200)]),
+  );
+  if (!hasRequiredIntakeData(SLUG_CARTA_ASTRAL, datos)) return { error: "Faltan datos de nacimiento obligatorios." };
+  const convertido = intakeADatosNacimiento(datos, nombre);
+  if ("error" in convertido) return { error: convertido.error };
+
+  const servicio = await prisma.service.findUnique({ where: { slug: SLUG_CARTA_ASTRAL } });
+  if (!servicio) return { error: "No existe el servicio Carta Astral." };
+
+  const ahora = new Date();
+  const reserva = await prisma.booking.create({
+    data: {
+      bookingNumber: await nextBookingNumber(),
+      guestName: nombre,
+      guestEmail: input.email?.trim() || null,
+      guestPhone: input.telefono?.trim() || null,
+      serviceId: servicio.id,
+      startsAt: ahora,
+      endsAt: ahora,
+      status: "CONFIRMED",
+      paymentStatus: "PAID",
+      paidAt: ahora,
+      paymentMethod: input.metodoPago,
+      manualPaymentReference: input.referencia?.trim() || null,
+      paymentDeadline: ahora,
+      intakeData: datos,
+    },
+  });
+  const informe = await prisma.astroReport.create({ data: { bookingId: reserva.id } });
+  await logAdminAction({
+    adminId: admin.id,
+    action: "astro.manual_request_registered",
+    targetType: "AstroReport",
+    targetId: informe.id,
+    details: `${nombre} · ${input.metodoPago}`,
+  });
+  return { informeId: informe.id };
 }

@@ -81,3 +81,8 @@ export type NombreLogo = "emblem.png" | "logo-full.png";
 export function leerLogo(nombre: NombreLogo): { data: Buffer; format: "png" } {
   return { data: readFileSync(path.join(process.cwd(), "public", "assets", "logo", nombre)), format: "png" };
 }
+
+/** Firma por defecto ("Alberto Arango", Qwigley azul) que viaja con el proyecto; la que se sube en el panel la reemplaza. */
+export function leerFirmaPorDefecto(): Buffer {
+  return readFileSync(path.join(process.cwd(), "data", "astro", "firma", "firma-alberto-arango.png"));
+}

@@ -4,6 +4,7 @@ import { hayFirma, listarInformes } from "@/server/admin/informes";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SummaryBar } from "@/components/admin/SummaryBar";
+import { RegistrarSolicitud } from "@/components/admin/informes/RegistrarSolicitud";
 import { FirmaInformeForm } from "@/components/admin/informes/FirmaInformeForm";
 import { ESTADO_INFORME_ETIQUETA, ESTADO_INFORME_TONO } from "@/lib/astro/estado-informe";
 import { VALUE_TONE } from "@/components/admin/SummaryBar";
@@ -31,6 +32,11 @@ export default async function AdminInformesPage() {
           enviarlo tú.
         </p>
       </div>
+
+      <GlassCard className="flex flex-col gap-3">
+        <span className="eyebrow">Solicitud manual</span>
+        <RegistrarSolicitud />
+      </GlassCard>
 
       <SummaryBar
         stats={[

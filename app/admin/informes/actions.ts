@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import {
   avanzarInformeAdmin,
   corregirLugar,
@@ -8,8 +9,10 @@ import {
   guardarSeccion,
   marcarEntregado,
   quitarFirma,
+  registrarSolicitudManual,
   regenerarSeccion,
   type CorreccionLugar,
+  type SolicitudManualInput,
 } from "@/server/admin/informes";
 import type { ResultadoPaso } from "@/server/astro/informes";
 
@@ -71,4 +74,12 @@ export async function guardarFirmaAction(
 export async function quitarFirmaAction(): Promise<void> {
   await quitarFirma();
   revalidatePath("/admin/informes");
+}
+
+/** Registra una solicitud que no entró por la web y abre su informe. */
+export async function registrarSolicitudAction(input: SolicitudManualInput): Promise<{ error?: string }> {
+  const r = await registrarSolicitudManual(input);
+  if (r.error || !r.informeId) return { error: r.error ?? "No se pudo registrar." };
+  revalidatePath("/admin/informes");
+  redirect(`/admin/informes/${r.informeId}`);
 }

@@ -53,6 +53,7 @@ const ASTRO_ARCHIVOS = [
   "./node_modules/sweph/prebuilds/linux-x64/**/*",
   "./data/astro/ephe/**/*",
   "./data/astro/fonts/**/*",
+  "./data/astro/firma/**/*",
   "./public/assets/logo/*.png",
 ];
 
