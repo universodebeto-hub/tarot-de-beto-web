@@ -98,11 +98,19 @@ Redacta un informe completo de una persona ficticia, imprime tokens y costo esti
 - Pendiente de la app móvil (repo aparte): mostrar los campos nuevos en su formulario (hasta entonces funciona sin ellos).
 - **Terminado cuando:** una reserva pagada en sandbox genera su borrador paso a paso.
 
-## Fase 6 · Panel admin `/admin/informes` (3–4 días)
-- [ ] Lista de informes con estado
-- [ ] Detalle con: datos de entrada y conversión (coordenadas, zona horaria, UTC), carta (rueda, planetas,
-      casas, aspectos), secciones editables con botón de regenerar, avisos de validación, vista previa del PDF
-- [ ] Descargar PDF y "marcar como entregado" (reserva → `COMPLETED`)
+## Fase 6 · Panel admin `/admin/informes` — HECHA en código (2026-10-13); falta verla en pantalla con una reserva real
+- [x] Lista de informes con estado y contadores (por empezar / en revisión / entregados); entrada "Informes" en el menú del panel
+- [x] Detalle: lo que escribió el cliente vs. lo que interpretó el sistema (coordenadas, zona horaria, hora en UTC), avisos del lugar y de la carta
+- [x] La carta en números: 12 puntos, cúspides de las casas, aspectos con orbe (la rueda dibujada se ve en la vista previa del PDF)
+- [x] "Generar borrador": avanza de a un paso por petición (carta, luego cada sección) con avance visible, botón de detener y reintento donde quedó
+- [x] Cada sección: leer, editar (se marca "editada a mano" y se vuelve a validar contra la carta), regenerar con IA con confirmación
+- [x] Corregir el lugar (buscar de nuevo con región, o coordenadas + zona a mano): recalcula la carta y descarta los textos
+- [x] Vista previa del PDF dentro del panel y descarga; el PDF se arma al vuelo, `Cache-Control: private, no-store`, nunca se guarda
+- [x] "Marcar como entregado" (solo con el borrador completo): cierra el informe y deja la reserva en `COMPLETED`
+- [x] Firma: subida de PNG (máx. 300 KB, validado) guardada en la base privada (tabla `Setting`), reemplazable y removible
+- [x] Todo exige administrador; cada cambio queda en el registro de auditoría (`astro.*`)
+- [x] Pruebas (`tests/server/astro-panel.test.ts`): permisos, detalle, edición+validación, corrección de lugar (incl. horario de verano), entrega, firma, PDF con firma
+- Los pasos de IA usan `maxDuration = 60` en las páginas del panel (Vercel Hobby puede limitar a 10–60 s según plan: confirmar en Vercel).
 - **Terminado cuando:** Beto puede revisar a detalle, ajustar, descargar y marcar como entregado desde el panel.
 
 ## Fase 7 · Lanzamiento
