@@ -15,6 +15,8 @@ import {
   SECCIONES,
   construirPeticion,
   crearLlamadaAnthropic,
+  crearLlamadaGemini,
+  crearLlamadaIA,
   estimarCostoUSD,
   redactarInforme,
   redactarSeccion,
@@ -235,5 +237,74 @@ describe("crearLlamadaAnthropic (cliente real, con el SDK simulado)", () => {
     await expect(llamar({ system: "s", user: "u", maxTokens: 10 })).rejects.toThrow(/cortado/);
     create.mockResolvedValueOnce({ ...respuestaOk, content: [] });
     await expect(llamar({ system: "s", user: "u", maxTokens: 10 })).rejects.toThrow(/vacía/);
+  });
+});
+
+describe("crearLlamadaGemini (con fetch simulado)", () => {
+  const ok = {
+    candidates: [{ finishReason: "STOP", content: { parts: [{ text: "pensando", thought: true }, { text: "  Texto de Gemini  " }] } }],
+    usageMetadata: { promptTokenCount: 1000, candidatesTokenCount: 400, thoughtsTokenCount: 600, cachedContentTokenCount: 200 },
+  };
+  const respuesta = (cuerpo: unknown, status = 200) => ({ ok: status < 400, status, json: async () => cuerpo }) as unknown as Response;
+
+  beforeEach(() => {
+    vi.stubEnv("GEMINI_API_KEY", "clave-gemini-de-prueba");
+    vi.stubEnv("ASTRO_MODEL", "");
+    vi.stubEnv("ASTRO_PROVIDER", "");
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+  });
+
+  it("falla con un mensaje claro si falta la clave", () => {
+    vi.stubEnv("GEMINI_API_KEY", "");
+    expect(() => crearLlamadaGemini()).toThrow(/Falta GEMINI_API_KEY/);
+  });
+
+  it("manda sistema, usuario y tope de tokens; la clave va en la cabecera, no en la URL", async () => {
+    const f = vi.fn().mockResolvedValue(respuesta(ok));
+    await crearLlamadaGemini(f)({ system: "SISTEMA", user: "USUARIO", maxTokens: 1234 });
+    const [url, init] = f.mock.calls[0];
+    expect(url).toBe("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent");
+    expect(String(url)).not.toContain("clave-gemini");
+    expect(init.headers["x-goog-api-key"]).toBe("clave-gemini-de-prueba");
+    const cuerpo = JSON.parse(init.body);
+    expect(cuerpo.systemInstruction.parts[0].text).toBe("SISTEMA");
+    expect(cuerpo.contents[0].parts[0].text).toBe("USUARIO");
+    expect(cuerpo.generationConfig.maxOutputTokens).toBe(1234);
+  });
+
+  it("devuelve solo el texto (sin los pensamientos) y cuenta el pensar como salida", async () => {
+    const r = await crearLlamadaGemini(vi.fn().mockResolvedValue(respuesta(ok)))({ system: "s", user: "u", maxTokens: 10 });
+    expect(r.texto).toBe("Texto de Gemini");
+    expect(r.uso).toEqual({ entrada: 800, salida: 1000, cacheLeido: 200, cacheEscrito: 0 });
+    expect(estimarCostoUSD(r.uso, r.modelo)).toBeGreaterThan(0);
+  });
+
+  it("usa el modelo de ASTRO_MODEL", async () => {
+    vi.stubEnv("ASTRO_MODEL", "gemini-2.5-flash");
+    const f = vi.fn().mockResolvedValue(respuesta(ok));
+    await crearLlamadaGemini(f)({ system: "s", user: "u", maxTokens: 10 });
+    expect(String(f.mock.calls[0][0])).toContain("models/gemini-2.5-flash:");
+  });
+
+  it.each([
+    ["error de la API", respuesta({ error: { message: "API key not valid" } }, 400), /Gemini respondió 400: API key not valid/],
+    ["texto cortado", respuesta({ candidates: [{ finishReason: "MAX_TOKENS", content: { parts: [{ text: "a" }] } }] }), /quedó cortado/],
+    ["contenido bloqueado", respuesta({ promptFeedback: { blockReason: "SAFETY" } }), /se negó/],
+    ["respuesta vacía", respuesta({ candidates: [{ finishReason: "STOP", content: { parts: [] } }] }), /vacía/],
+  ])("%s: error claro para el panel", async (_n, res, mensaje) => {
+    await expect(crearLlamadaGemini(vi.fn().mockResolvedValue(res))({ system: "s", user: "u", maxTokens: 10 })).rejects.toThrow(mensaje);
+  });
+
+  it("crearLlamadaIA elige el proveedor por ASTRO_PROVIDER o por la clave que haya", () => {
+    expect(() => crearLlamadaIA()).not.toThrow(); // solo hay clave de Gemini
+    vi.stubEnv("ASTRO_PROVIDER", "anthropic");
+    expect(() => crearLlamadaIA()).toThrow(/Falta ANTHROPIC_API_KEY/);
+    vi.stubEnv("ASTRO_PROVIDER", "gemini");
+    expect(() => crearLlamadaIA()).not.toThrow();
+    vi.stubEnv("ASTRO_PROVIDER", "otra");
+    expect(() => crearLlamadaIA()).toThrow(/ASTRO_PROVIDER no válido/);
+    vi.stubEnv("ASTRO_PROVIDER", "");
+    vi.stubEnv("GEMINI_API_KEY", "");
+    expect(() => crearLlamadaIA()).toThrow(/Falta ANTHROPIC_API_KEY/); // sin Gemini cae en Claude
   });
 });

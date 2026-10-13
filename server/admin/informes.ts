@@ -13,7 +13,7 @@ import {
   type ResultadoPaso,
   type SeccionGuardada,
 } from "@/server/astro/informes";
-import { crearLlamadaAnthropic, redactarSeccion, SECCIONES, type SeccionId } from "@/server/astro/interpret";
+import { crearLlamadaIA, redactarSeccion, SECCIONES, type SeccionId } from "@/server/astro/interpret";
 import { validarTexto } from "@/server/astro/validate";
 import { generarInformePdf, type FirmaPdf } from "@/server/astro/pdf";
 import type { CartaNatal, DatosNacimiento, Lugar } from "@/lib/astro/types";
@@ -175,7 +175,7 @@ export async function regenerarSeccion(
   const idx = secciones.findIndex((s) => s.id === seccionId);
   if (!carta || idx < 0) return { error: "La sección no existe." };
   try {
-    const g = await redactarSeccion(secciones[idx].id, carta, crearLlamadaAnthropic());
+    const g = await redactarSeccion(secciones[idx].id, carta, crearLlamadaIA());
     secciones[idx] = {
       id: g.id,
       titulo: g.titulo,

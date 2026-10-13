@@ -288,6 +288,12 @@ const MODELO_POR_DEFECTO = "claude-opus-5-5";
 const PRECIOS_USD_POR_MTOK: Record<string, { entrada: number; salida: number; cacheLeido: number; cacheEscrito: number }> = {
   "claude-opus-5-5": { entrada: 4, salida: 20, cacheLeido: 0.2, cacheEscrito: 5 },
   "claude-sonnet-5-5": { entrada: 2, salida: 10, cacheLeido: 0.2, cacheEscrito: 2.5 },
+  // Gemini (tarifa hasta 200 mil tokens por petición; el "pensar" cuenta como salida).
+  "gemini-2.5-pro": { entrada: 1.25, salida: 10, cacheLeido: 0.31, cacheEscrito: 0 },
+  "gemini-2.5-flash": { entrada: 0.3, salida: 2.5, cacheLeido: 0.075, cacheEscrito: 0 },
+  "gemini-3.6-flash": { entrada: 0.75, salida: 3.75, cacheLeido: 0.075, cacheEscrito: 0 },
+  "gemini-3.8-flash": { entrada: 0.75, salida: 3.75, cacheLeido: 0.075, cacheEscrito: 0 },
+  "gemini-3.1-pro-preview": { entrada: 2, salida: 12, cacheLeido: 0.2, cacheEscrito: 0 },
 };
 
 export function estimarCostoUSD(uso: UsoIA, modelo: string): number | null {
@@ -358,6 +364,83 @@ export function crearLlamadaAnthropic(): LlamarIA {
       },
     };
   };
+}
+
+const MODELO_GEMINI_POR_DEFECTO = "gemini-2.5-pro";
+const TIMEOUT_GEMINI_MS = 55_000;
+
+interface RespuestaGemini {
+  candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] }; finishReason?: string }[];
+  promptFeedback?: { blockReason?: string };
+  usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; thoughtsTokenCount?: number; cachedContentTokenCount?: number };
+  modelVersion?: string;
+  error?: { message?: string };
+}
+
+/**
+ * Cliente de Gemini (API REST de Google, sin dependencias nuevas). Variables de entorno:
+ * - `GEMINI_API_KEY` (obligatoria)
+ * - `ASTRO_MODEL` (opcional, por defecto gemini-2.5-pro)
+ * Solo se le envían posiciones astrales: nunca nombre, fecha, hora, lugar ni coordenadas.
+ */
+export function crearLlamadaGemini(fetchImpl: typeof fetch = fetch): LlamarIA {
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  if (!apiKey) throw new Error("Falta GEMINI_API_KEY: agrégala en las variables de entorno para redactar informes con IA.");
+  const modelo = process.env.ASTRO_MODEL?.trim() || MODELO_GEMINI_POR_DEFECTO;
+
+  return async ({ system, user, maxTokens }) => {
+    const res = await fetchImpl(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelo)}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ role: "user", parts: [{ text: user }] }],
+        generationConfig: { maxOutputTokens: maxTokens },
+      }),
+      signal: AbortSignal.timeout(TIMEOUT_GEMINI_MS),
+    });
+    const datos = (await res.json().catch(() => ({}))) as RespuestaGemini;
+    if (!res.ok) throw new Error(`Gemini respondió ${res.status}: ${datos.error?.message ?? "error desconocido"}.`);
+    if (datos.promptFeedback?.blockReason) throw new Error("La IA se negó a redactar esta sección. Regenérala o escríbela a mano.");
+
+    const candidato = datos.candidates?.[0];
+    if (candidato?.finishReason === "MAX_TOKENS") throw new Error("La IA se quedó sin espacio y el texto quedó cortado. Regenera la sección.");
+    if (candidato?.finishReason === "SAFETY" || candidato?.finishReason === "PROHIBITED_CONTENT") {
+      throw new Error("La IA se negó a redactar esta sección. Regenérala o escríbela a mano.");
+    }
+    const texto = (candidato?.content?.parts ?? [])
+      .filter((p) => !p.thought && p.text)
+      .map((p) => p.text)
+      .join("")
+      .trim();
+    if (!texto) throw new Error("La IA devolvió una respuesta vacía. Regenera la sección.");
+
+    const u = datos.usageMetadata ?? {};
+    const cacheado = u.cachedContentTokenCount ?? 0;
+    return {
+      texto,
+      modelo,
+      uso: {
+        entrada: Math.max(0, (u.promptTokenCount ?? 0) - cacheado),
+        // El "pensar" de Gemini se cobra como salida.
+        salida: (u.candidatesTokenCount ?? 0) + (u.thoughtsTokenCount ?? 0),
+        cacheLeido: cacheado,
+        cacheEscrito: 0,
+      },
+    };
+  };
+}
+
+/**
+ * Elige la IA: `ASTRO_PROVIDER` = "gemini" | "anthropic"; si no está, usa Gemini cuando hay
+ * `GEMINI_API_KEY` y, si no, Claude.
+ */
+export function crearLlamadaIA(): LlamarIA {
+  const proveedor = process.env.ASTRO_PROVIDER?.trim().toLowerCase();
+  if (proveedor === "gemini") return crearLlamadaGemini();
+  if (proveedor === "anthropic") return crearLlamadaAnthropic();
+  if (proveedor) throw new Error(`ASTRO_PROVIDER no válido: "${proveedor}" (usa "gemini" o "anthropic").`);
+  return process.env.GEMINI_API_KEY?.trim() ? crearLlamadaGemini() : crearLlamadaAnthropic();
 }
 
 /* ───────────────────────────── API del módulo ───────────────────────────── */

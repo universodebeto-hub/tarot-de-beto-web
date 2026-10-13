@@ -5,7 +5,7 @@ import type { CartaNatal, DatosNacimiento, Lugar } from "@/lib/astro/types";
 import { calcularCarta } from "./engine";
 import { geocodificar } from "./geocode";
 import {
-  crearLlamadaAnthropic,
+  crearLlamadaIA,
   estimarCostoUSD,
   redactarSeccion,
   seccionesAplicables,
@@ -121,7 +121,7 @@ export async function avanzarInforme(informeId: string, llamar?: LlamarIA): Prom
     }
 
     const id = faltantes[0];
-    const generada = await redactarSeccion(id, carta, llamar ?? crearLlamadaAnthropic());
+    const generada = await redactarSeccion(id, carta, llamar ?? crearLlamadaIA());
     const uso = comoJson<UsoGuardado>(informe.usage);
     const total = sumarUso(uso ?? USO_VACIO, generada.uso);
     const usoNuevo: UsoGuardado = { ...total, costoUSD: estimarCostoUSD(total, generada.modelo) };

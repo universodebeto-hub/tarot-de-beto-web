@@ -112,3 +112,6 @@ model AstroReport {
 - `ANTHROPIC_API_KEY` (redacción)
 - (Ya no hace falta `GEONAMES_USERNAME`: la geocodificación usa Nominatim, sin cuenta ni clave.)
 - La ruta temporal `/api/astro/probe` (solo Fase 0) no pide credenciales (devuelve solo el Sol de una fecha astronómica) y responde 404 en producción. **Ya borrada** (2026-10-13), tras confirmar el cálculo en Vercel.
+
+## IA: Gemini o Claude (2026-10-13)
+`crearLlamadaIA()` elige el proveedor con `ASTRO_PROVIDER` (`gemini` | `anthropic`); si no está definido usa Gemini cuando existe `GEMINI_API_KEY`. Gemini va por la API REST (sin dependencias nuevas), modelo por defecto `gemini-2.5-pro` (cambiable con `ASTRO_MODEL`); el "pensar" de Gemini se cuenta como salida para estimar el costo. Recomendado: una clave **nueva y exclusiva** para la carta astral dentro de la misma cuenta que usan los bots, para que un fallo aquí no afecte los directos.
