@@ -367,7 +367,7 @@ export function crearLlamadaAnthropic(): LlamarIA {
 }
 
 const MODELO_GEMINI_POR_DEFECTO = "gemini-3.1-pro-preview";
-const TIMEOUT_GEMINI_MS = 55_000;
+const TIMEOUT_GEMINI_MS = 58_000;
 
 interface RespuestaGemini {
   candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] }; finishReason?: string }[];
@@ -381,12 +381,16 @@ interface RespuestaGemini {
  * Cliente de Gemini (API REST de Google, sin dependencias nuevas). Variables de entorno:
  * - `GEMINI_API_KEY` (obligatoria)
  * - `ASTRO_MODEL` (opcional, por defecto gemini-3.1-pro-preview)
+ * - `ASTRO_THINKING` (opcional: low | medium | high | off; por defecto low; solo modelos Gemini 3)
  * Solo se le envían posiciones astrales: nunca nombre, fecha, hora, lugar ni coordenadas.
  */
 export function crearLlamadaGemini(fetchImpl: typeof fetch = fetch): LlamarIA {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) throw new Error("Falta GEMINI_API_KEY: agrégala en las variables de entorno para redactar informes con IA.");
   const modelo = process.env.ASTRO_MODEL?.trim() || MODELO_GEMINI_POR_DEFECTO;
+  // Los Gemini 3 "piensan" antes de escribir y con nivel alto una sección larga pasa el límite de tiempo de la
+  // función. Por defecto "low": más rápido y barato, y para redactar con datos ya calculados alcanza.
+  const pensar = (process.env.ASTRO_THINKING?.trim().toLowerCase() || "low") as "low" | "medium" | "high" | "off";
 
   return async ({ system, user, maxTokens }) => {
     const res = await fetchImpl(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelo)}:generateContent`, {
@@ -395,7 +399,10 @@ export function crearLlamadaGemini(fetchImpl: typeof fetch = fetch): LlamarIA {
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: system }] },
         contents: [{ role: "user", parts: [{ text: user }] }],
-        generationConfig: { maxOutputTokens: maxTokens },
+        generationConfig: {
+          maxOutputTokens: maxTokens,
+          ...(pensar !== "off" && /gemini-3/.test(modelo) ? { thinkingConfig: { thinkingLevel: pensar } } : {}),
+        },
       }),
       signal: AbortSignal.timeout(TIMEOUT_GEMINI_MS),
     });

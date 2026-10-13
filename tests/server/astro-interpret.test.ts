@@ -279,6 +279,22 @@ describe("crearLlamadaGemini (con fetch simulado)", () => {
     expect(estimarCostoUSD(r.uso, r.modelo)).toBeGreaterThan(0);
   });
 
+  it("a los Gemini 3 les pide pensar poco (low) por defecto y se puede cambiar o apagar", async () => {
+    const enviado = async () => {
+      const f = vi.fn().mockResolvedValue(respuesta(ok));
+      await crearLlamadaGemini(f)({ system: "s", user: "u", maxTokens: 10 });
+      return JSON.parse(f.mock.calls[0][1].body).generationConfig;
+    };
+    expect((await enviado()).thinkingConfig).toEqual({ thinkingLevel: "low" });
+    vi.stubEnv("ASTRO_THINKING", "high");
+    expect((await enviado()).thinkingConfig).toEqual({ thinkingLevel: "high" });
+    vi.stubEnv("ASTRO_THINKING", "off");
+    expect((await enviado()).thinkingConfig).toBeUndefined();
+    vi.stubEnv("ASTRO_THINKING", "");
+    vi.stubEnv("ASTRO_MODEL", "gemini-2.5-flash"); // no es Gemini 3: no se manda el parámetro
+    expect((await enviado()).thinkingConfig).toBeUndefined();
+  });
+
   it("usa el modelo de ASTRO_MODEL", async () => {
     vi.stubEnv("ASTRO_MODEL", "gemini-2.5-flash");
     const f = vi.fn().mockResolvedValue(respuesta(ok));
