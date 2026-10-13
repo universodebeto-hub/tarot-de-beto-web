@@ -75,18 +75,18 @@ export interface DatosPdf {
 const s = StyleSheet.create({
   paginaClara: {
     backgroundColor: COLOR.papel,
-    paddingTop: 84,
-    paddingBottom: 68,
-    paddingHorizontal: 54,
+    paddingTop: 70,
+    paddingBottom: 56,
+    paddingHorizontal: 44,
     fontFamily: FUENTE.texto,
-    fontSize: 10.5,
+    fontSize: 10,
     color: COLOR.tinta,
   },
   encabezado: {
     position: "absolute",
-    top: 26,
-    left: 54,
-    right: 54,
+    top: 22,
+    left: 44,
+    right: 44,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -110,9 +110,9 @@ const s = StyleSheet.create({
   },
   pie: {
     position: "absolute",
-    bottom: 28,
-    left: 54,
-    right: 54,
+    bottom: 22,
+    left: 44,
+    right: 44,
     height: 24,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -122,15 +122,15 @@ const s = StyleSheet.create({
   },
   pieIzq: {
     position: "absolute",
-    bottom: 28,
-    left: 54,
+    bottom: 22,
+    left: 44,
     width: 330,
     height: 14,
   },
   pieDer: {
     position: "absolute",
-    bottom: 28,
-    right: 54,
+    bottom: 22,
+    right: 44,
     width: 120,
     height: 14,
     textAlign: "right",
@@ -152,7 +152,7 @@ const s = StyleSheet.create({
   h1: {
     fontFamily: FUENTE.titulo,
     fontWeight: 600,
-    fontSize: 26,
+    fontSize: 22,
     lineHeight: 1.15,
     color: COLOR.tinta,
   },
@@ -160,20 +160,20 @@ const s = StyleSheet.create({
     width: 46,
     height: 2,
     backgroundColor: COLOR.oro,
-    marginTop: 10,
-    marginBottom: 18,
+    marginTop: 7,
+    marginBottom: 11,
   },
   h2: {
     fontFamily: FUENTE.titulo,
     fontWeight: 600,
     fontSize: 14.5,
     color: COLOR.oroProfundo,
-    marginTop: 14,
-    marginBottom: 5,
+    marginTop: 10,
+    marginBottom: 4,
   },
-  parrafo: { marginBottom: 8, textAlign: "justify" },
-  lista: { marginBottom: 8 },
-  item: { flexDirection: "row", marginBottom: 4 },
+  parrafo: { marginBottom: 6, textAlign: "justify" },
+  lista: { marginBottom: 5 },
+  item: { flexDirection: "row", marginBottom: 3 },
   vineta: {
     width: 20,
     fontFamily: FUENTE.titulo,
@@ -187,13 +187,13 @@ const s = StyleSheet.create({
     fontWeight: 600,
     fontSize: 13.5,
     color: COLOR.tinta,
-    marginTop: 16,
-    marginBottom: 6,
+    marginTop: 8,
+    marginBottom: 4,
   },
   fila: {
     flexDirection: "row",
     alignItems: "center",
-    minHeight: 17,
+    minHeight: 12.5,
     borderBottomWidth: 0.4,
     borderBottomColor: COLOR.linea,
   },
@@ -210,7 +210,7 @@ const s = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 4,
   },
-  celda: { fontSize: 9.5, paddingVertical: 2, paddingHorizontal: 4 },
+  celda: { fontSize: 8.8, paddingVertical: 0.5, paddingHorizontal: 4 },
   glifo: { fontFamily: FUENTE.simbolos, fontSize: 11, color: COLOR.tinta },
   nota: {
     fontSize: 8.5,
@@ -259,8 +259,8 @@ const s = StyleSheet.create({
     borderWidth: 0.7,
     borderColor: COLOR.linea,
     backgroundColor: COLOR.fondoSuave,
-    padding: 12,
-    marginTop: 18,
+    padding: 10,
+    marginTop: 12,
   },
   cajaTexto: { fontSize: 9, color: COLOR.tintaSuave, lineHeight: 1.5 },
   enlace: { color: COLOR.oroProfundo, textDecoration: "none" },
@@ -329,44 +329,88 @@ function BloqueMarkdown({ bloque }: { bloque: Bloque }) {
   );
 }
 
-export function Markdown({ texto }: { texto: string }) {
+export function Markdown({
+  texto,
+  antes,
+}: {
+  texto: string;
+  /** Contenido que debe quedar pegado al primer bloque (el título de la sección). */
+  antes?: ReactNode;
+}) {
   const bloques = parsearMarkdown(texto);
   const salida: ReactNode[] = [];
+  let pendiente = antes;
   for (let i = 0; i < bloques.length; i++) {
     const bloque = bloques[i];
     const siguiente = bloques[i + 1];
-    if (
+    const agrupa =
       bloque.tipo === "subtitulo" &&
       siguiente &&
       siguiente.tipo !== "subtitulo" &&
-      largoBloque(siguiente) <= LARGO_MAXIMO_AGRUPADO
-    ) {
+      largoBloque(siguiente) <= LARGO_MAXIMO_AGRUPADO;
+    if (agrupa) {
       salida.push(
-        <View key={i} wrap={false}>
+        <View key={i} wrap={false} style={{ flexShrink: 0 }}>
+          {pendiente}
           <BloqueMarkdown bloque={bloque} />
           <BloqueMarkdown bloque={siguiente} />
         </View>,
       );
+      pendiente = null;
       i++;
+    } else if (pendiente && largoBloque(bloque) <= LARGO_MAXIMO_AGRUPADO) {
+      salida.push(
+        <View key={i} wrap={false} style={{ flexShrink: 0 }}>
+          {pendiente}
+          <BloqueMarkdown bloque={bloque} />
+        </View>,
+      );
+      pendiente = null;
     } else {
+      if (pendiente) {
+        salida.push(<View key={`antes-${i}`}>{pendiente}</View>);
+        pendiente = null;
+      }
       salida.push(<BloqueMarkdown key={i} bloque={bloque} />);
     }
   }
+  if (pendiente) salida.push(<View key="antes-fin">{pendiente}</View>);
   return <View>{salida}</View>;
 }
 
 function Seccion({
   titulo,
+  texto,
+  extra,
   children,
+  nuevaPagina = false,
 }: {
   titulo: string;
-  children: ReactNode;
+  /** Markdown de la sección. El título queda siempre pegado a su primer bloque. */
+  texto: string;
+  /** Gráficos que van entre el título y el texto (tarjetas, barras). */
+  extra?: ReactNode;
+  /** Contenido que va después del texto. */
+  children?: ReactNode;
+  /** Abre página nueva; si no, la sección sigue a la anterior (se ahorran hojas medio vacías). */
+  nuevaPagina?: boolean;
 }) {
-  return (
-    <View break>
+  const cabecera = (
+    <>
+      {nuevaPagina ? null : <View style={{ height: 16 }} />}
       <Text style={s.eyebrow}>CARTA ASTRAL</Text>
       <Text style={s.h1}>{titulo}</Text>
       <View style={s.regla} />
+      {extra}
+    </>
+  );
+  return (
+    <View break={nuevaPagina}>
+      {/* Si debajo del título no caben ~150 pt de texto, el título pasa a la hoja siguiente (no queda huérfano). */}
+      <View wrap={false} minPresenceAhead={150}>
+        {cabecera}
+      </View>
+      <Markdown texto={texto} />
       {children}
     </View>
   );
@@ -816,16 +860,16 @@ function TablaCasas({ carta }: { carta: CartaNatal }) {
           flex: 1,
           flexDirection: "row",
           alignItems: "center",
-          minHeight: 17,
+          minHeight: 13.5,
           borderBottomWidth: 0.4,
           borderBottomColor: COLOR.linea,
         }}
       >
         <Text
           style={{
-            width: 52,
+            width: 40,
             fontFamily: FUENTE.etiqueta,
-            fontSize: 8,
+            fontSize: 7,
             color: COLOR.cenizaOscura,
             paddingHorizontal: 4,
           }}
@@ -838,7 +882,7 @@ function TablaCasas({ carta }: { carta: CartaNatal }) {
         >
           {SIMBOLO_SIGNO[c.signo]}
         </Text>
-        <Text style={{ fontSize: 9.5, width: 74 }}>
+        <Text style={{ fontSize: 8.8, width: 54 }}>
           {NOMBRE_SIGNO[c.signo]}
         </Text>
         <Text style={{ fontFamily: FUENTE.etiqueta, fontSize: 8.5 }}>
@@ -850,11 +894,13 @@ function TablaCasas({ carta }: { carta: CartaNatal }) {
   return (
     <View>
       <Text style={s.tablaTitulo}>Cúspides de las casas</Text>
-      {Array.from({ length: 6 }, (_, i) => (
+      {Array.from({ length: 4 }, (_, i) => (
         <View key={i} style={{ flexDirection: "row" }} wrap={false}>
           {celda(i)}
-          <View style={{ width: 18 }} />
-          {celda(i + 6)}
+          <View style={{ width: 14 }} />
+          {celda(i + 4)}
+          <View style={{ width: 14 }} />
+          {celda(i + 8)}
         </View>
       ))}
     </View>
@@ -946,38 +992,56 @@ function Leyenda() {
   ) => (
     <View
       key={k}
-      style={{ flexDirection: "row", alignItems: "center", minHeight: 15 }}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        minHeight: 11.5,
+        lineHeight: 1,
+      }}
       wrap={false}
     >
       <Text
-        style={{ fontFamily: FUENTE.simbolos, fontSize: 11, width: 20, color }}
+        style={{
+          fontFamily: FUENTE.simbolos,
+          fontSize: 10.5,
+          width: 16,
+          color,
+        }}
       >
         {glifo}
       </Text>
-      <Text style={{ fontSize: 9, width: 66 }}>{nombre}</Text>
+      <Text style={{ fontSize: 8.5 }}>{nombre}</Text>
       <Text style={{ fontSize: 8, color: COLOR.ceniza }}>{detalle}</Text>
     </View>
   );
   return (
-    <View style={{ marginTop: 14 }}>
+    <View style={{ marginTop: 6 }} wrap={false}>
       <Text style={s.tablaTitulo}>Leyenda de símbolos</Text>
       <View style={{ flexDirection: "row" }}>
-        <View style={{ flex: 1 }}>
-          {signos.map((sg) =>
-            fila(
-              SIMBOLO_SIGNO[sg],
-              NOMBRE_SIGNO[sg],
-              `${ELEMENTO_DE_SIGNO[sg]} · ${MODALIDAD_DE_SIGNO[sg]}`,
-              COLOR_ELEMENTO[ELEMENTO_DE_SIGNO[sg]],
-              sg,
-            ),
-          )}
-        </View>
-        <View style={{ flex: 1 }}>
-          {puntos.map((pt) =>
-            fila(SIMBOLO_PUNTO[pt], NOMBRE_PUNTO[pt], "", COLOR.tinta, pt),
-          )}
-        </View>
+        {[0, 1, 2].map((g) => (
+          <View key={`sg${g}`} style={{ flex: 1 }}>
+            {signos
+              .slice(g * 4, g * 4 + 4)
+              .map((sg) =>
+                fila(
+                  SIMBOLO_SIGNO[sg],
+                  NOMBRE_SIGNO[sg],
+                  "",
+                  COLOR_ELEMENTO[ELEMENTO_DE_SIGNO[sg]],
+                  sg,
+                ),
+              )}
+          </View>
+        ))}
+        {[0, 1, 2].map((g) => (
+          <View key={`pt${g}`} style={{ flex: 1 }}>
+            {puntos
+              .slice(g * 4, g === 2 ? undefined : g * 4 + 4)
+              .map((pt) =>
+                fila(SIMBOLO_PUNTO[pt], NOMBRE_PUNTO[pt], "", COLOR.tinta, pt),
+              )}
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -1071,7 +1135,7 @@ function Firma({ firma }: { firma: FirmaPdf }) {
     return (
       <Image
         src={{ data: firma.png, format: "png" }}
-        style={{ height: 54, objectFit: "contain", objectPosition: "left" }}
+        style={{ height: 46, objectFit: "contain", objectPosition: "left" }}
       />
     );
   }
@@ -1097,7 +1161,7 @@ function Cierre({ datos }: { datos: DatosPdf }) {
   const { whatsapp, email, sitio } = datos.contacto;
   const wa = whatsapp?.replace(/[^\d]/g, "");
   return (
-    <View break>
+    <View break wrap={false}>
       <Text style={s.eyebrow}>CARTA ASTRAL</Text>
       <Text style={s.h1}>Un último mensaje</Text>
       <View style={s.regla} />
@@ -1239,25 +1303,32 @@ export function InformePdf(datos: DatosPdf) {
         <Pie sitio={contacto.sitio} />
 
         {/* El interlineado va en este contenedor y no en la página: heredado desde la página, react-pdf descarta el número de página del pie. */}
-        <View style={{ lineHeight: 1.55 }}>
+        <View style={{ lineHeight: 1.42 }}>
           <PaginaRueda carta={carta} />
           <PaginaTabla carta={carta} />
 
-          <Seccion titulo="Cómo leer este informe">
-            <Markdown texto={FIJOS.comoLeer} />
+          <Seccion
+            titulo="Cómo leer este informe"
+            texto={FIJOS.comoLeer}
+            nuevaPagina
+          >
             <Leyenda />
           </Seccion>
 
-          {secciones.map((seccion) => (
-            <Seccion key={seccion.id} titulo={seccion.titulo}>
-              {seccion.id === "triada" ? (
-                <TarjetasTriada carta={carta} />
-              ) : null}
-              {seccion.id === "balance" ? (
-                <GraficoBalance carta={carta} />
-              ) : null}
-              <Markdown texto={seccion.markdown} />
-            </Seccion>
+          {secciones.map((seccion, i) => (
+            <Seccion
+              key={seccion.id}
+              titulo={seccion.titulo}
+              texto={seccion.markdown}
+              nuevaPagina
+              extra={
+                seccion.id === "triada" ? (
+                  <TarjetasTriada carta={carta} />
+                ) : seccion.id === "balance" ? (
+                  <GraficoBalance carta={carta} />
+                ) : null
+              }
+            />
           ))}
 
           <Cierre datos={datos} />
